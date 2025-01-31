@@ -145,18 +145,12 @@ func funcAdminInstall(ctx context.Context, c *app.RequestContext) {
 	user.Account = c.PostForm("account")
 	user.UserName = c.PostForm("account")
 	user.Password = c.PostForm("password")
-	user.ChainType = c.PostForm("chainType")
-	user.ChainAddress = c.PostForm("chainAddress")
 	// 重新hash密码,避免拖库后撞库
 	sha3Bytes := sha3.Sum512([]byte(user.Password))
 	user.Password = hex.EncodeToString(sha3Bytes[:])
 
 	loginHtml := "admin/login?message=" + funcT("Congratulations, you have successfully installed MINRAG. Please log in now")
-	if user.ChainAddress != "" && user.ChainType != "" { //如果使用了address作为登录方式
-		user.Account = ""
-		user.UserName = ""
-		loginHtml = "admin/chainlogin"
-	}
+
 	err := insertUser(ctx, user)
 	if err != nil {
 		c.Redirect(http.StatusOK, cRedirecURI("admin/error"))
@@ -270,7 +264,7 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	document := Document{}
-	document.Id = knowledgeBaseId + FuncGenerateStringID()
+	document.Id = FuncGenerateStringID()
 	document.FilePath = filePath
 	document.FileSize = fileSize
 	document.Status = 2
@@ -287,7 +281,8 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		}
 		return zorm.Insert(ctx, &document)
 	})
-	// TODO go 后续提取文档,分析处理
+	// 文档分块,分析处理
+	go updateDocumentChunk(context.Background(), &document)
 
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: filePath})
 }
@@ -417,7 +412,7 @@ func funcDocumentList(ctx context.Context, c *app.RequestContext) {
 	values := make([]interface{}, 0)
 	sql := ""
 	if id != "" {
-		sql = " * from document where id like ?  order by sortNo desc "
+		sql = " * from document where knowledgeBaseID like ?  order by sortNo desc "
 		values = append(values, id+"%")
 	} else {
 		sql = " * from document order by sortNo desc "
@@ -614,28 +609,19 @@ func funcUpdateKnowledgeBase(ctx context.Context, c *app.RequestContext) {
 
 // funcUpdateDocument 更新内容
 func funcUpdateDocument(ctx context.Context, c *app.RequestContext) {
-	now := time.Now().Format("2006-01-02 15:04:05")
 	entity := &Document{}
 	ok := funcUpdateInit(ctx, c, entity)
 	if !ok {
 		return
 	}
-	newId := ""
-	if entity.KnowledgeBaseID != "" {
-		f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
-		zorm.QueryRow(ctx, f, entity)
-		urls := strings.Split(entity.Id, "/")
-		newId = entity.KnowledgeBaseID + urls[len(urls)-1]
+	_, err := updateDocumentChunk(ctx, entity)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to update data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
 	}
-	entity.UpdateTime = now
-	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		funcUpdate(ctx, c, entity, entity.Id)
-		if newId != "" {
-			finder := zorm.NewUpdateFinder(tableDocumentName).Append("id=? WHERE id=?", newId, entity.Id)
-			return zorm.UpdateFinder(ctx, finder)
-		}
-		return nil, nil
-	})
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
 
 }
 

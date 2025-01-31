@@ -20,8 +20,6 @@ CREATE TABLE IF NOT EXISTS user (
 		account         TEXT  NOT NULL,
 		password         TEXT   NOT NULL,
 		userName         TEXT NOT NULL,
-		chainType        TEXT,
-		chainAddress     TEXT,
 		createTime       TEXT,
 		updateTime       TEXT,
 		createUser       TEXT,
@@ -54,6 +52,18 @@ CREATE TABLE IF NOT EXISTS document (
 		filePath          TEXT,
 		fileSize          INT,
 		fileExt           TEXT,
+		createTime        TEXT,
+		updateTime        TEXT,
+		createUser        TEXT,
+		sortNo            INT NOT NULL,
+		status            INT NOT NULL
+	 ) strict ;
+
+CREATE TABLE IF NOT EXISTS document_chunk (
+		id TEXT PRIMARY KEY    NOT NULL,
+		documentID        TEXT NOT NULL,
+		knowledgeBaseID   TEXT NOT NULL,
+		markdown          TEXT,
 		createTime        TEXT,
 		updateTime        TEXT,
 		createUser        TEXT,

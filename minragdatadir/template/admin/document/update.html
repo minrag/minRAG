@@ -32,6 +32,16 @@
 				</div>
 			</div>
 			<div class="layui-col-md4">
+				<label class="layui-form-label">{{T "Sort"}}</label>
+				<div class="layui-input-block">
+					<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off"
+						class="layui-input" value="{{.Data.SortNo}}">
+				</div>
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-col-md4">
 				<label class="layui-form-label">{{T "Knowledge Base"}}</label>
 				<div class="layui-input-block">
 					<select name="knowledgeBaseID" id="knowledgeBaseID" lay-verify="required" lay-reqtext='{{T "Please select a knowledge base"}}'>
@@ -42,22 +52,12 @@
 					</select>
 				</div>
 			</div>
-		</div>
-
-		<div class="layui-form-item">
-			<div class="layui-col-md4">
-				<label class="layui-form-label">{{T "Sort"}}</label>
-				<div class="layui-input-block">
-					<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off"
-						class="layui-input" value="{{.Data.SortNo}}">
-				</div>
-			</div>
 			<div class="layui-col-md4">
 				<label class="layui-form-label">{{T "Status"}}</label>
 				<div class="layui-input-block">
 					<select name="status" id="status">
-						<option value="0">{{T "Active"}}</option>
-						<option value="1">{{T "Disable"}}</option>
+						<option value="0">{{T "Disable"}}</option>
+						<option value="1">{{T "Active"}}</option>
 						<option value="2">{{T "Processing"}}</option>
 						<option value="3">{{T "Processing failed"}}</option>
 					</select>

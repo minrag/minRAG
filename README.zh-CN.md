@@ -194,7 +194,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | sortNo      | int         | 排序         |  正序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
-### 文章内容(表名:document)
+### 文档(表名:document)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | URL路径,用/隔开,例如/web/nginx-use-hsts |
@@ -210,7 +210,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | knowledgeBaseName| string      | 知识库,逗号(,)隔开| 是| 使用 jieba 分词器.      |
 | knowledgeBaseID  | string      | 知识库ID       | 否      | -                       |
 | templateFile| string      | 模板文件     | 否      | 模板                    |
-| document     | string      | 文章内容     | 否      |                         |
+| document     | string      | 文档     | 否      |                         |
 | markdown    | string      | Markdown内容 | 否      |                         |
 | thumbnail   | string      | 封面图       | 否      |                         |
 | signature   | string      | 私钥对内容的签名 | 否   |                         |
