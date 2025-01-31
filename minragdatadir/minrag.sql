@@ -92,3 +92,36 @@ CREATE TABLE IF NOT EXISTS site (
 		status            INT NOT NULL
 	 ) strict ;
 INSERT INTO site (status,sortNo,createUser,updateTime,createTime,footer,favicon,logo,themeWX,themeWAP,themePC,theme,description,keyword,domain,name,title,id)VALUES (1,1,NULL,NULL,NULL,'<div class="copyright"><span class="copyright-year">&copy; 2008 - 2025 <span class="author">jiagou.com 版权所有 <a href=''https://beian.miit.gov.cn'' target=''_blank''>豫ICP备xxxxx号</a>   <a href=''http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=xxxx''  target=''_blank''><img src=''/public/gongan.png''>豫公网安备xxxxx号</a></span></span></div>','public/favicon.png','public/logo.png','default','default','default','default','Web3内容平台,Hertz + Go template + FTS5全文检索,支持以太坊和百度超级链,兼容Hugo、WordPress生态,使用Wasm扩展插件,只需200M内存','minrag,web3,Hugo,WordPress,以太坊,百度超级链','https://jiagou.com','架构','jiagou','minrag_site');
+
+
+CREATE VIRTUAL TABLE IF NOT EXISTS fts_document_chunk USING fts5 (
+    id UNINDEXED,
+    documentID UNINDEXED,
+    knowledgeBaseID UNINDEXED,
+    markdown ,
+    sortNo UNINDEXED,
+    status UNINDEXED,
+    tokenize = 'simple 0',
+    content='document_chunk',
+    content_rowid='rowid'
+);
+
+CREATE TRIGGER trigger_document_chunk_insert AFTER INSERT ON document_chunk
+BEGIN
+    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
+    VALUES (new.rowid,new.id, new.documentID, new.knowledgeBaseID, new.markdown, new.sortNo, new.status);
+END;
+
+CREATE TRIGGER trigger_document_chunk_delete AFTER DELETE ON document_chunk
+BEGIN
+    INSERT INTO fts_document_chunk(fts_document_chunk, id, documentID, knowledgeBaseID, markdown, sortNo, status)
+    VALUES ('delete', old.id, old.documentID, old.knowledgeBaseID, old.markdown, old.sortNo, old.status);
+END;
+
+CREATE TRIGGER trigger_document_chunk_update AFTER UPDATE ON document_chunk
+BEGIN
+    INSERT INTO fts_document_chunk(fts_document_chunk, rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
+    VALUES ('delete',old.rowid, old.id, old.documentID, old.knowledgeBaseID, old.markdown, old.sortNo, old.status);
+    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
+    VALUES (new.rowid, new.id, new.documentID, new.knowledgeBaseID, new.markdown, new.sortNo, new.status);
+END;
