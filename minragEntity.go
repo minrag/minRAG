@@ -244,6 +244,48 @@ func (entity *DocumentChunk) GetPKColumnName() string {
 	return "id"
 }
 
+// Vec0DocumentChunk 向量化的数据表
+type Vec0DocumentChunk struct {
+
+	// 引入默认的struct,隔离IEntityStruct的方法改动
+	zorm.EntityStruct
+
+	// ID
+	Id string `column:"id" json:"id,omitempty"`
+
+	// DocumentID 文档ID
+	DocumentID string `column:"documentID" json:"documentID,omitempty"`
+
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+
+	// Markdown Markdown内容
+	Markdown string `json:"markdown,omitempty"`
+
+	// Embedding markdown向量化二进制
+	Embedding []byte `column:"embedding" json:"embedding,omitempty"`
+
+	// SortNo 排序
+	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+
+	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
+	Status int `column:"status" json:"status,omitempty"`
+}
+
+// GetTableName 获取表名称
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Vec0DocumentChunk) GetTableName() string {
+	return tableVec0DocumentChunkName
+}
+
+// GetPKColumnName 获取数据库表的主键字段名称.因为要兼容Map,只能是数据库的字段名称
+// 不支持联合主键,变通认为无主键,业务控制实现(艰难取舍)
+// 如果没有主键,也需要实现这个方法, return "" 即可
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Vec0DocumentChunk) GetPKColumnName() string {
+	return "id"
+}
+
 // Site 站点信息
 type Site struct {
 	// 引入默认的struct,隔离IEntityStruct的方法改动

@@ -40,12 +40,27 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		}
 
 		dcs := make([]zorm.IEntityStruct, 0)
+		vecdcs := make([]zorm.IEntityStruct, 0)
 		for i := 0; i < len(documentChunks); i++ {
 			dc := documentChunks[i]
 			dcs = append(dcs, &dc)
+			vecdc := &Vec0DocumentChunk{}
+			vecdc.DocumentID = dc.DocumentID
+			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
+			vecdc.SortNo = dc.SortNo
+			vecdc.Status = dc.Status
 
+			//需要使用bge-m3模型进行embedding
+			embedding := make([]float32, 1024)
+			vecdc.Embedding, _ = vecSerializeFloat32(embedding)
+
+			vecdcs = append(vecdcs, vecdc)
 		}
 		count, err = zorm.InsertSlice(ctx, dcs)
+		if err != nil {
+			return count, err
+		}
+		count, err = zorm.InsertSlice(ctx, vecdcs)
 		if err != nil {
 			return count, err
 		}
