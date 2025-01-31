@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS knowledgeBase (
 		status            INT NOT NULL
 	 ) strict ;
 
+INSERT INTO knowledgeBase (status,sortNo,createUser,updateTime,createTime,knowledgeBaseType,pid,name,id) VALUES (0,1,'','2025-01-31 10:24:00','2025-01-31 10:24:00',0,'','默认知识库','/default/');
+
 CREATE TABLE IF NOT EXISTS document (
 		id TEXT PRIMARY KEY     NOT NULL,
 		name         TEXT   NOT NULL,
