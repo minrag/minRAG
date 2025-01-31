@@ -1,0 +1,121 @@
+{{template "admin/header.html"}}
+<title>{{T "Install"}} - GPRESS</title>
+<script type="text/javascript" src="{{basePath}}admin/js/sha3.min.js"></script>
+<style>
+    .gpress-install-container {
+        padding: 0 20px;
+        width: 450px;
+        height: auto;
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        -webkit-box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        -o-box-sizing: border-box;
+        box-sizing: border-box;
+        background: #fff;
+        -webkit-border-radius: 5px;
+        -moz-border-radius: 5px;
+        border-radius: 5px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5)
+    }
+
+    .install_logo {
+        margin: -55px auto 20px;
+        width: 100px;
+        height: 100px;
+        background: #fff;
+        -webkit-border-radius: 50%;
+        -moz-border-radius: 50%;
+        border-radius: 50%;
+        border: 5px solid #fff;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .install_logo img {
+        width: 100%;
+    }
+    .gpress-install-other {
+        padding: 0;
+        width: 100%;
+        text-align: center;
+        margin-top: 15px;
+        margin-bottom: 15px;
+    }
+    .gpress-install-other a {
+        padding-top: 20px;
+        text-decoration: underline;
+    }
+</style>
+</head>
+
+<body>
+    <div class="gpress-install-container" id="div_use_account">
+        <div class="install_logo"><img src="{{basePath}}public/logo.png"></div>
+        <div><h2 class="gpress-install-other">{{T "Install"}}</h2></div>
+        <form class="layui-form" action="{{basePath}}admin/install" method="post">
+            <div class="layui-form-item">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-username"></i>
+                    </div>
+                    <input type="text" name="account" value="" lay-verify="required" placeholder="{{T "Please fill in the administrator account"}}" lay-reqtext="{{T "Please fill in the administrator account"}}" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-password"></i>
+                    </div>
+                    <input type="password" id="password" name="password" value="" lay-verify="required" placeholder="{{T "Please fill in the administrator password"}}" lay-reqtext="{{T "Please fill in the administrator password"}}" autocomplete="off" class="layui-input" lay-affix="eye">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-wrap">
+                    <div class="layui-input-prefix">
+                        <i class="layui-icon layui-icon-password"></i>
+                    </div>
+                    <input type="password" id="password2" value="" lay-verify="required|confirmPassword" placeholder="{{T "Please re-enter the administrator password"}}" lay-reqtext="{{T "Please re-enter the administrator password"}}" autocomplete="off" class="layui-input" lay-affix="eye">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <button class="layui-btn layui-btn-fluid  layui-bg-blue" lay-submit lay-filter="gpress-install">{{T "Install"}}</button>
+            </div>
+        </form>
+    </div>
+
+
+
+    <script>
+        layui.use(function () {
+            var form = layui.form;
+            var layer = layui.layer;
+            // 自定义验证规则
+            form.verify({
+                // Confirm password
+                confirmPassword: function (value, item) {
+                    var password = document.getElementById('password').value;
+                    var password2 = document.getElementById('password2').value;
+                    if (password != password2) {
+                        return '{{T "Passwords do not match"}}';
+                    }
+                }
+            });
+            // Submit event
+            form.on('submit(gpress-install)', function (data) {
+                var password = document.getElementById('password').value;
+                document.getElementById('password').value = sha3_512(password);
+                return true; // Submit form
+            });
+
+            form.on('submit(gpress-chain-install)', function (data) {
+                return true; // Submit form
+            });
+        });
+    </script>
+
+</body>
+
+</html>

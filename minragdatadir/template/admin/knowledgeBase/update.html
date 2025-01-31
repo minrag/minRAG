@@ -1,0 +1,117 @@
+{{template "admin/header.html"}}
+<style>
+	.layui-form-label {
+	  width: 120px;
+	}
+	.layui-input-block {
+	  margin-left: 150px;
+	}
+</style>
+<title>{{T "Update Knowledge Base"}} - MINRAG</title>
+{{template "admin/bodystart.html"}}
+
+{{ $knowledgeBase := selectOne "knowledgeBase" "* from knowledgeBase WHERE id=?" .Data.Pid }}
+
+<div class="layui-card layui-panel" style="height: 100%;">
+	<div class="layui-card-header">
+	  {{T "Update Knowledge Base"}}
+	</div>
+	<div class="layui-card-body">
+	  <form class="layui-form" id="minrag-form" action="{{basePath}}admin/{{.UrlPathParam}}/update" method="POST">
+		  
+		  <div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">ID</label>
+			<div class="layui-input-block">
+			  <input type="hidden" name="id" id="id" value="{{.Data.Id}}" />
+			  <input type="text" class="layui-input" disabled value="{{.Data.Id}}" />
+			</div>
+		  </div>
+		  <div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">{{T "Knowledge Name"}}</label>
+			<div class="layui-input-block">
+			  <input type="text" name="name" lay-verify="required" lay-reqtext='{{T "Please fill in the knowledge name"}}' autocomplete="off" class="layui-input" value="{{.Data.Name}}" />
+			</div>
+		</div>
+
+	
+		<div class="layui-form-item layui-col-md6">
+		  <label class="layui-form-label">{{T "Parent Knowledge"}}</label>
+		  <div class="layui-input-block">
+			<input  type="hidden"  name="pid"  value="{{$knowledgeBase.Id}}">
+			<input type="text"  autocomplete="off" class="layui-input" value="{{$knowledgeBase.Name}}" disabled>
+		  </div>
+		</div>
+
+		<div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">{{T "Sort"}}</label>
+			<div class="layui-input-block">
+			  <input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off" class="layui-input" value="{{.Data.SortNo}}" />
+			</div>
+		</div>
+
+		<div class="layui-form-item layui-col-md6">
+		  <label class="layui-form-label">{{T "Status"}}</label>
+		  <div class="layui-input-block">
+			  <select name="status" id="status">
+				  <option value="0">{{T "Active"}}</option>
+				  <option value="1">{{T "Disable"}}</option>
+			  </select>
+		  </div>
+		</div>		  
+
+		  <div class="layui-form-item">
+			  <div class="layui-input-block">
+				<button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-update">{{T "Submit Changes"}}</button>
+			  </div>
+		  </div>
+	  </form>
+	</div>
+  </div>
+{{template "admin/bodyend.html"}}
+
+<script>
+layui.use(function(){
+var form = layui.form;
+var layer = layui.layer;
+var $ =layui.jquery;
+
+//选中状态
+$("#status option[value='{{.Data.Status}}']").attr("selected", true);
+
+// 渲染全部表单
+form.render(); 
+
+// 提交事件
+form.on('submit(minrag-form-ajax-update)', function(data){
+  var field = data.field; // 获取表单字段值
+  field.sortNo=field.sortNo-0;
+  field.status=field.status-0;
+  field.timeout=field.timeout-0;
+  const form = document.getElementById('minrag-form');
+  $.ajax({
+	  url:form.action,
+	  type:form.method,
+	  contentType: "application/json;charset=utf-8",
+	  dataType:"json",
+	  data:JSON.stringify(field),
+	  error: function (result) {
+		layer.msg('{{T "Update error!"}}'+result.responseJSON.message);
+	  },
+	  success: function (result) {
+					if (result.statusCode == 1) {
+						layer.confirm('{{T "Update successful, continue editing?"}}', {
+							icon: 3,
+							title: '{{T "Confirm"}}',
+							btn: ['{{T "Return to List"}}', '{{T "Continue Editing"}}'] //按钮
+						}, function () {
+							window.location.href = '{{basePath}}admin/document/list';
+						});
+					} else {
+						layer.msg('{{T "Update failed!"}}');
+					}
+				}
+  });
+  return false; // 阻止默认 form 跳转
+});
+});
+</script>

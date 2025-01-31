@@ -1,0 +1,10 @@
+{
+ "serverPort":":738",
+ "timeout":7200,
+ "jwttokenKey":"jwttoken",
+ "jwtSecret":"",
+ "basePath":"/",
+ "proxy":"",
+ "maxRequestBodySize":20971520,
+ "locale":"zh-CN"
+}
