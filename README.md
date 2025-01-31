@@ -27,7 +27,7 @@ make && make install
 ```
 
 ## Staticization  
-The backend ```Refresh Site``` function will generate static HTML files to the ```statichtml``` directory, along with ```gzip_static``` files. You need to copy the ```css, js, image``` of the currently used theme and the ```minragdatadir/public``` directory to the ```statichtml``` directory, or use Nginx reverse proxy to specify the directory without copying files.  
+The backend ```Refresh``` function will generate static HTML files to the ```statichtml``` directory, along with ```gzip_static``` files. You need to copy the ```css, js, image``` of the currently used theme and the ```minragdatadir/public``` directory to the ```statichtml``` directory, or use Nginx reverse proxy to specify the directory without copying files.  
 Nginx configuration example:
 ```conf
 ### CSS files of the current theme (default)
