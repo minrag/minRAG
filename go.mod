@@ -7,6 +7,7 @@ require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mojocn/base64Captcha v1.3.8
+	github.com/openai/openai-go v0.1.0-alpha.50
 	golang.org/x/crypto v0.32.0
 )
 
@@ -24,7 +25,8 @@ require (
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/image v0.23.0 // indirect
