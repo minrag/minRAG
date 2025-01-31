@@ -1,0 +1,123 @@
+{{template "admin/header.html"}}
+<style>
+	.layui-form-label {
+	  width: 120px;
+	}
+	.layui-input-block {
+	  margin-left: 150px;
+	}
+</style>
+<title>{{T "Add Knowledge Base"}} - MINRAG</title>
+{{template "admin/bodystart.html"}}
+
+{{ $knowledgeBase := selectOne "knowledgeBase" "* from knowledgeBase WHERE id=?" .QueryStringMap.pid }}
+
+{{ $maxSortNo:=  selectOne "knowledgeBase" "max(sortNo) as sortNo from knowledgeBase" }} 
+
+<div class="layui-card layui-panel" style="height: 100%;">
+	<div class="layui-card-header">
+	  {{T "Add Knowledge Base"}}
+	</div>
+	<div class="layui-card-body">
+	  <form class="layui-form" id="minrag-form" action="{{basePath}}admin/{{.UrlPathParam}}/save" method="POST">
+		  <div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">{{T "Identifier"}}</label>
+			<div class="layui-input-block">
+				<input type="text" name="id" lay-verify="required|uri" placeholder='{{T "Cannot update after saved"}}' lay-reqtext='{{T "Please fill in the path identifier"}}' autocomplete="off" class="layui-input" value="{{generateStringID}}" />
+			</div>
+		  </div>
+		  
+		  <div class="layui-form-item layui-col-md6">
+			  <label class="layui-form-label">{{T "Knowledge Name"}}</label>
+			  <div class="layui-input-block">
+				<input type="text" name="name" lay-verify="required" lay-reqtext='{{T "Please fill in the knowledge name"}}' autocomplete="off" class="layui-input" value="">
+			  </div>
+		  </div>
+
+		  <div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">{{T "Parent Knowledge"}}</label>
+			<div class="layui-input-block">
+			  <input  type="hidden"  name="pid"  value="{{$knowledgeBase.Id}}">
+			  <input type="text"  autocomplete="off" class="layui-input" value="{{$knowledgeBase.Name}}" disabled>
+			</div>
+		  </div>
+
+		  <div class="layui-form-item layui-col-md6">
+			  <label class="layui-form-label">{{T "Sort"}}</label>
+			  <div class="layui-input-block">
+				<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off" class="layui-input" value="{{addInt $maxSortNo.SortNo 1}}">
+			  </div>
+		  </div>
+
+		  <div class="layui-form-item layui-col-md6">
+			<label class="layui-form-label">{{T "Status"}}</label>
+			<div class="layui-input-block">
+				<select name="status" id="status">
+					<option value="0">{{T "Active"}}</option>
+					<option value="1">{{T "Disable"}}</option>
+				</select>
+			</div>
+		  </div>		  
+
+		  <div class="layui-form-item">
+			  <div class="layui-input-block">
+				<button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-update">{{T "Submit"}}</button>
+			  </div>
+		  </div>
+	  </form>
+	</div>
+  </div>
+{{template "admin/bodyend.html"}}
+
+<script>
+layui.use(function(){
+var form = layui.form;
+var layer = layui.layer;
+var $ =layui.jquery;
+
+// 自定义验证规则
+form.verify({
+	// 验证uri
+    uri: function(value, elem) {
+		if (!/^[a-zA-Z0-9_-|-,-\-]+$/.test(value)) {
+				return '{{T "Identifier can contain letters, numbers, hyphens (-), underscores (_), vertical bars (|), and commas (,)"}}';
+		}
+    },
+})
+
+
+// 提交事件
+form.on('submit(minrag-form-ajax-update)', function(data){
+  var field = data.field; // 获取表单字段值
+  field.sortNo=field.sortNo-0;
+  field.status=field.status-0;
+  const form = document.getElementById('minrag-form');
+  $.ajax({
+	  url:form.action,
+	  type:form.method,
+	  contentType: "application/json;charset=utf-8",
+	  dataType:"json",
+	  data:JSON.stringify(field),
+	  error: function (result) {
+		layer.msg('{{T "Save error!"}}'+result.responseJSON.message);
+	  },
+	  success:function(result){
+		  if (result.statusCode == 1) {
+			layer.confirm('{{T "Save successful, continue adding?"}}', {
+			icon: 3,
+			title:'{{T "Confirm"}}',
+			btn: ['{{T "Return to List"}}','{{T "Continue Adding"}}' ] //按钮
+			}, function () {
+				window.location.href = '{{basePath}}admin/document/list';
+			},function () {
+				location.reload();
+			});
+		  }else{
+			  layer.msg('{{T "Save failed!"}}');
+		  }
+	  }
+  });
+  return false; // 阻止默认 form 跳转
+});
+});
+</script>

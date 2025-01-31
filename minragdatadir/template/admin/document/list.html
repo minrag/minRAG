@@ -1,0 +1,306 @@
+{{ $knowledgeBase := selectList "knowledgeBase" "" 1 1000 "* FROM knowledgeBase order by sortNo desc" }}
+{{ $convertJson := convertType  $knowledgeBase.Data "object" "json" }}
+{{template "admin/header.html"}}
+<title>{{T "Knowledge Base"}} - MINRAG</title>
+<link href="{{basePath}}admin/css/tree.css" rel="stylesheet">
+<style>
+	table {
+		width: 100%;
+		flex: 1;
+		overflow: auto;
+	}
+	table td {
+	width: fit-document;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	word-break: break-all;
+	vertical-align: middle !important;
+	max-width: 200px;
+}
+
+</style>
+{{template "admin/bodystart.html"}}
+
+<div class="layui-col-space10" style="height: 100%;">
+	<div class="layui-col-md3" style="height: 100%;">
+		<div class="layui-panel" style="height: 100%; padding: 5px;overflow: auto;">
+			<div class="layui-form-item" style="text-align: center;padding: 10px;">
+				<a href="{{basePath}}admin/knowledgeBase/save" class="layui-btn layui-bg-blue">+{{T "Add Knowledge Base"}}</a>
+			</div>
+
+			<div class="tree" id="tree">
+				<details open="">
+					<summary id="allDocument" class="tree-item"><a id="all_tree_a" href="{{basePath}}admin/document/list?id=&pageNo=1">{{T "All Document"}}</a>
+					</summary>
+				</details>
+			</div>
+		</div>
+	</div>
+	<div class="layui-col-md9">
+		<div style="height: 100%;">
+			    <input type="hidden" id="knowledgeBaseId"  value="">
+				<form id="listForm" action="{{basePath}}admin/{{.UrlPathParam}}/list" method="GET">
+					<input type="hidden" id="pageNo" name="pageNo" value="{{.Page.PageNo}}">
+					<input type="hidden" id="id" name="id" value="">
+					<div class="layui-input-group">
+						<input type="text" id="q" name="q" placeholder='{{T "Search"}}' class="layui-input">
+						<div class="layui-input-split layui-input-suffix" style="cursor: pointer;">
+							<i class="layui-icon layui-icon-search" onclick="submitListForm();"></i>
+						</div>
+						<div class="layui-col-md1">
+							&nbsp;&nbsp;&nbsp;&nbsp;
+						  </div>
+						<div class="layui-input-block">
+							<button type="button" id="button-upload-document" class="layui-btn"><i class="layui-icon layui-icon-upload"></i> {{T "Upload Document"}}</button>
+						</div>
+					</div>
+				</form>
+				<table class="layui-table table-document" id="table_list" lay-filter="parse-table-list">
+					<thead>
+						<tr>
+							<th width="40%">{{T "Document Name"}}</th>
+							<th width="30%">{{T "Knowledge Base"}}</th>
+							<th width="10%">{{T "Sort"}}</th>
+							<th width="10%">{{T "Status"}}</th>
+							<th width="10%">{{T "Actions"}}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!-- 循环所有的数据 -->
+						{{ range $i,$v := .Data }}
+						<tr>
+							<!-- 获取每一列的值 -->
+							<td title="{{ .Name }}"><a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}" style="cursor: pointer;"> {{ .Name }} </a></td>
+							<td title="{{ .KnowledgeBaseName }}"> {{ .KnowledgeBaseName }}</td>
+							<td> {{ .SortNo }}</td>
+							<td>
+								{{if eq .Status 0 }}
+								{{T "Active"}}
+								{{else if eq .Status 1 }}
+								{{T "Disable"}}
+								{{else if eq .Status 2 }}
+								{{T "Processing"}}
+								{{else if eq .Status 3 }}
+								{{T "Processing failed"}}
+								{{else}}
+								{{T "Unknown"}}
+								{{end}}
+							</td>
+							<td>
+								<button type="button" class="layui-btn layui-btn-primary layui-btn-xs" title='{{T "Edit"}}'>
+									<a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}">
+										<i class="layui-icon layui-icon-edit"></i>
+									</a>
+								</button>
+								<button type="button" class="layui-btn layui-btn-primary layui-btn-xs"
+									onclick="deleteFunc('{{$v.Id}}','{{basePath}}admin/{{$.UrlPathParam}}/delete');" title='{{T "Delete"}}'>
+									<i class="layui-icon layui-icon-delete"></i>
+								</button>
+							</td>
+						</tr>
+						{{end }}
+					</tbody>
+				</table>
+				<div id="div-list-page"></div>
+			</div>
+	</div>
+
+  </div>
+{{template "admin/bodyend.html"}}
+
+<script>
+	var layer;
+	var $;
+	layui.use(function () {
+		//var table = layui.table;
+		layer = layui.layer;
+		$ = layui.jquery;
+		var upload = layui.upload;
+		var laypage = layui.laypage;
+		var dropdown = layui.dropdown;
+		const knowledgeBaseData = JSON.parse("{{ $convertJson }}");
+		const treeData = buildTree(knowledgeBaseData);
+		// 将树形结构渲染到页面上
+		renderTree($('#tree'), treeData);
+
+		const query = window.location.search;
+		const params = new URLSearchParams(query)
+		var q = params.get("q")
+		if (q) {
+			$("#q").val(q)
+		}
+		var id = params.get("id")
+		if (id && id != "") {
+			$("#id").val(id)
+			$("#knowledgeBaseId").val(id);
+		}
+
+		//选中高亮
+		if (id && id != "") {//被选中
+			var codes = id.split("/");
+			var codeId="/";
+			for (i = 0; i < codes.length; i++) {
+				var code = codes[i];
+				//console.log(code)
+				if (code != "") {
+					codeId=codeId+code+"/"
+					document.getElementById("tree_a_" + codeId).style="color:#1e9fff";
+				}
+			}
+
+		} else {
+			document.getElementById("all_tree_a").style="color:#1e9fff";
+		}
+
+		// 知识库下拉 事件绑定
+		dropdown.render({
+			elem: '.tips-dropdown',
+			trigger: 'hover',
+			data: [{ id: "1", title: '{{T "Upload Document"}}' }, { id: "2", title: '{{T "Add Sub Knowledge"}}' }, { id: "3", title: '{{T "Edit Knowledge"}}' }, { id: "4", title: '{{T "Delete Knowledge"}}' }],
+			click: function (data, othis) {
+				let knowledgeBaseId = this.elem.attr("id");
+				if (data.id == "1") {
+					$("#knowledgeBaseId").val(knowledgeBaseId);
+					$("#button-upload-document").click();
+				} else if (data.id == "2") {
+					window.location.href = basePath + 'admin/knowledgeBase/save?pid=' + knowledgeBaseId;
+				} else if (data.id == "3") {
+					window.location.href = basePath + 'admin/knowledgeBase/update?id=' + knowledgeBaseId;
+				} else if (data.id == "4") {
+					deleteFunc(knowledgeBaseId, basePath + 'admin/knowledgeBase/delete');
+				}
+				//console.log(data.id); // 当前所点击的菜单项对应的数据
+				//console.log(othis); // 当前所点击的菜单项元素对象
+				//console.log(this.elem.attr("id")); // 当前组件绑定的目标元素对象，批量绑定中常用
+			}
+		});
+
+
+		// 普通用法
+		laypage.render({
+			elem: 'div-list-page',
+			count: "{{.Page.TotalCount}}",
+			limit: "{{.Page.PageSize}}",
+			curr: "{{.Page.PageNo}}",
+			theme: '#1890ff',
+			prev:'{{T "prev"}}',
+			next:'{{T "next"}}',
+			first:'{{T "first"}}',
+			last:'{{T "last"}}',
+			countText: ['{{T "Total"}} ',' {{T "records"}}'],
+			skipText: ['{{T "Go to"}}', '{{T "pages"}}', '{{T "Confirm"}}'],
+			layout: ['prev', 'page', 'next', 'count', 'skip'], // 功能布局
+			jump: function (obj) {
+				let pageNo = document.getElementById("pageNo").value - 0;
+				if (pageNo != obj.curr) {
+					document.getElementById("pageNo").value = obj.curr;
+					submitListForm();
+				}
+			}
+		});
+
+
+		// 上传文档
+		upload.render({
+			elem: '#button-upload-document',
+			url: '{{basePath}}admin/document/uploadDocument', // 此处配置你自己的上传接口即可
+			size: 100 * 1024, // 限制文件大小,单位 KB
+			accept: 'file',
+			data: { // 自定义提示文本
+				dirPath: function(){
+					return $('#knowledgeBaseId').val();
+				},
+			},
+			before: function(obj){ 
+				// 没有选择导航菜单返回false,阻止上传
+				if($('#id').val()==""){
+					layer.msg('{{T "Please first select the knowledge base from the left menu"}}');
+					return false;
+				}
+			},
+			done: function (res) {
+				if (res.statusCode == 1) {
+				  layer.msg('{{T "Upload successful"}}',function(){
+				    location.reload();
+				  });
+				}else{
+					layer.msg('{{T "Upload error!"}}');
+				}
+				
+			}
+		});
+
+
+
+	});
+
+	function deleteFunc(id, url) {
+		layer.confirm('{{T "Confirm deletion?"}}', {
+			icon: 3,
+			title: '{{T "Confirm"}}',
+			btn: ['{{T "Confirm"}}', '{{T "Cancel"}}'] //按钮
+		}, function () {
+			$.ajax({
+				type: 'post',
+				url: url,
+				data: { "id": id },
+				success: function (res) {
+					if (res.statusCode === 1) {
+						layer.msg('{{T "Delete successful"}}', function () {
+							location.reload();
+						});
+					}else{
+						var message='{{T "Delete failed!"}}';
+						if(!!res.message){
+							message=message+res.message
+						}
+						layer.msg(message);
+					}
+				}
+			});
+		});
+	}
+
+	function submitListForm() {
+
+		document.getElementById("listForm").submit();
+	}
+	// 渲染树形菜单结构
+	function renderTree(container, data) {
+		const details = container;
+		data.forEach(node => {
+			const detailsHtml = $(
+				`<details id="details_${node.id}" open="">
+					<summary class="tree-item">
+						<a id="tree_a_${node.id}" href="{{basePath}}admin/document/list?id=${node.id}&pageNo=1">${node.name}</a> 
+						<i class="layui-icon layui-icon-tips tips-dropdown" id="${node.id}" ></i>
+					</summary>
+				</details>`
+			);
+
+			if (node.children) {
+				renderTree(detailsHtml, node.children);
+			}
+			details.append(detailsHtml);
+		});
+		container.append(details);
+	}
+
+	// 平行数据组装树形结构数据
+	function buildTree(data) {
+		const roots = data.filter(item => !item.pid);// 找到没有父节点的项，即顶级节点
+		// 递归构建树
+		function buildHierarchy(parent) {
+			const children = data.filter(item => item.pid === parent.id);
+			if (children.length > 0) {
+				parent.children = children;
+				children.forEach(child => buildHierarchy(child));
+			}
+		}
+		// 为每个顶级节点构建树
+		roots.forEach(root => buildHierarchy(root));
+		return roots;
+	}
+
+</script>

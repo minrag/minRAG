@@ -1,15 +1,46 @@
-# Binaries for programs and plugins
+# idea ignore
+.idea/
+*.ipr
+*.iml
+*.iws
+upload/
+install_config.json
+search-data.json
+install.html
+install.html.bak
+statichtml
+testTable/
+dict/
+natsdata/
+*.db
+*.db.fail
+.vscode/
+
+*.swp
+
+# temp ignore
+*.hertz.gz
+*.gz
+*.log
+*.cache
+*.diff
 *.exe
 *.exe~
-*.dll
-*.so
-*.dylib
+*.patch
+*.tmp
+*debug.test
+debug.test
+__debug_bin
 
-# Test binary, built with `go test -c`
-*.test
+# system ignore
+.DS_Store
+Thumbs.db
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.out
+# project
+*.cert
+*.key
+.test
+iprepo.txt
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
+
+_output

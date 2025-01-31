@@ -1,0 +1,41 @@
+
+      </div>
+    </div>
+  </div>
+</body>
+
+<script>
+layui.use(function () {
+  var $ = layui.jquery;
+  var layer = layui.layer;
+
+  var uri = window.location.pathname;
+  uri=uri.substring(0, uri.lastIndexOf("/"))
+
+  //选中菜单状态
+  $("li[name='layui-nav-tree-left-ul-li']").each(function(i, li) {
+    var href = $("a",$(li)).attr("href");
+    href=href.substring(0, href.lastIndexOf("/"))
+    if (uri==href){
+        $(li).addClass("layui-this");
+        return false;
+    }
+  });
+
+  $('#nav-refresh').click(function() {
+    $.get('{{basePath}}admin/reload', function(result) {
+      layer.msg('{{T "Reload successful"}}!',function(){
+        location.reload();
+			});
+    });
+  });
+
+  $('#nav-quit').click(function() {
+     window.location.href = '{{basePath}}admin/login';
+  });
+	
+});
+</script>
+
+
+</html>

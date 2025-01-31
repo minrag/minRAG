@@ -1,0 +1,261 @@
+{{ $convertJson := convertType $.Data "object" "json"  }}
+{{template "admin/header.html"}}
+<title>{{T "Theme Template"}} - MINRAG</title>
+<link href="{{basePath}}admin/css/tree.css" rel="stylesheet">
+
+{{template "admin/bodystart.html"}}
+
+<div class="layui-col-space10" style="height: 100%;">
+	<div class="layui-col-md4" style="height: 100%;">
+		<div class="layui-panel" style="height: 100%; padding: 5px;overflow: auto;">
+			<input type="hidden" id="file"  value="" />
+		  <div class="layui-form-item" style="padding: 5px;text-align: center;">
+			<div class="layui-inline">
+				<button type="button" class="layui-btn" id="button-upload-theme" title='{{T "Only zip format is supported"}}'>
+					<i class="layui-icon"></i> {{T "Upload Theme"}}
+				</button>
+			</div>
+			<div class="layui-inline">
+				<button onclick="themeMarket()" type="button" class="layui-btn layui-bg-blue">
+					<i class="layui-icon"></i> {{T "Theme Market"}}
+				</button>
+			</div>
+			<div class="layui-inline">
+				<button onclick="updateDocument();" type="button" class="layui-btn layui-bg-blue">{{T "Save File"}}</button>
+			</div>  
+		  </div>
+			
+		<div class="tree" id="tree">
+		</div>
+
+	  </div>
+	</div>
+	<div class="layui-col-md8" style="height: 100%;position: relative;">
+		<div style="position: absolute;left: 5px;right: 5px;top: 5px;bottom: -5px;">
+			<textarea id="document" placeholder='{{T "Select the file to modify on the left, display the file document here, edit and modify, click the Save File button to save the changes."}}' style="height: 100%;  border-color: #16b777;box-shadow: 0 0 0 3px rgba(22,183,119,.08);" class="layui-textarea">{{.ExtMap.file}}</textarea>
+		</div>
+	</div>
+
+  </div>
+{{template "admin/bodyend.html"}}
+
+<script>
+	var layer;
+	var $;
+	var table;
+	layui.use(function () {
+		layer = layui.layer;
+		var upload = layui.upload;
+		$ = layui.jquery;
+		table=layui.table;
+
+		var dropdown = layui.dropdown;
+		const knowledgeBaseData = JSON.parse("{{ $convertJson }}");
+		const treeData = buildTree(knowledgeBaseData);
+		
+		// 将树形结构渲染到页面上
+		renderTree($('#tree'), treeData);
+
+		const query = window.location.search;
+		const params = new URLSearchParams(query)
+		var file = params.get("file")
+		if (file && file != "") {
+			$("#file").val(file)
+		}
+
+		//选中高亮
+		if (file && file != "") {//被选中
+			var paths = file.split("/");
+			var selectFile=""
+			for (i = 0; i < paths.length; i++) {
+				var code = paths[i];
+				if(i==0){
+					selectFile=code
+				}else{
+					selectFile=selectFile+"/"+code
+				}
+				document.getElementById("tree_a_" + selectFile).style="color:#1e9fff";
+				document.getElementById("details_" + selectFile).open=true;
+			}
+
+		}
+
+			// 上传文件
+			upload.render({
+			elem: '#button-upload-theme',
+			url: '{{basePath}}admin/{{.UrlPathParam}}/uploadTheme', // 此处配置你自己的上传接口即可
+			size: 10 * 1024, // 限制文件大小,单位 KB
+			accept: 'file',
+			exts: 'zip',
+			acceptMime: 'application/zip',
+			text: { // 自定义提示文本
+			"data-format-error": '{{T "Only zip format is supported"}}', // 数据格式错误的提示
+			"check-error": '{{T "Only zip format is supported"}}', // 文件格式校验失败的提示
+			},
+			done: function (res) {
+				if (res.statusCode == 1) {
+				  layer.msg('{{T "Upload successful"}}',function(){
+				    location.reload();
+				  });
+				}else{
+					layer.msg('{{T "Upload error!"}}');
+				}
+				
+			}
+		});
+	});
+
+	function submitListForm() {
+		document.getElementById("listForm").submit();
+	}
+	// 渲染树形菜单结构
+	function renderTree(container, data) {
+		const details = container;
+		data.forEach(node => {
+			const detailsHtml = $(
+				`<details id="details_${node.id}">
+					<summary class="tree-item">
+						<a id="tree_a_${node.id}" href="javascript:showFileDocument('${node.id}','${node.fileType}');">${node.name}</a> 
+					</summary>
+				</details>`
+			);
+
+			if (node.children) {
+				renderTree(detailsHtml, node.children);
+			}
+			details.append(detailsHtml);
+		});
+		container.append(details);
+	}
+
+	// 平行数据组装树形结构数据
+	function buildTree(data) {
+		const roots = data.filter(item => !item.pid);// 找到没有父节点的项，即顶级节点
+		// 递归构建树
+		function buildHierarchy(parent) {
+			const children = data.filter(item => item.pid === parent.id);
+			if (children.length > 0) {
+				parent.children = children;
+				children.forEach(child => buildHierarchy(child));
+			}
+		}
+		// 为每个顶级节点构建树
+		roots.forEach(root => buildHierarchy(root));
+		return roots;
+	}
+
+
+	function showFileDocument(nodeId,fileType){
+		if(fileType=="dir"){
+			var details=document.getElementById("details_"+nodeId);
+			if(!details.open){
+			  document.getElementById("details_"+nodeId).open="true";
+			}else{
+			  details.open=undefined;
+			}
+			return false;
+		}
+		window.location.href = basePath + 'admin/{{.UrlPathParam}}/list?file=' + nodeId;
+	}
+
+    function updateDocument(){
+      var file=$("#file").val();
+	  if(file==""){
+		layer.msg('{{T "Please select the file to modify"}}');
+		return false;
+	  }
+	  var document=$("#document").val();
+	  $.ajax({
+			url: basePath+"admin/themeTemplate/update",
+			type: "POST",
+			contentType: "application/json;charset=utf-8",
+			dataType: "json",
+			data: JSON.stringify({"filePath":file,"fileDocument":document}),
+			error: function () {
+				layer.msg('{{T "Update error, please try again!"}}');
+			},
+			success: function (result) {
+				if (result.statusCode == 1) {
+					layer.msg('{{T "Update successfully!"}}');
+				} else {
+					layer.msg('{{T "Update failed!"}}');
+				}
+			}
+		});
+    }
+
+
+var themeData;
+function themeMarket(){
+	if(!!themeData){
+	  layer.open({
+        type: 1,
+		title:'{{T "Theme Market"}}',
+		shadeClose: true, 
+        area: ['800px', 'auto'], // 宽高
+        document: $('#ID-themeMarket-layer-wrapper'), 
+      });
+	  return;
+	}
+		$.ajax({
+			url:'https://www.minrag.cn/json/themes.json',
+			type:"get",
+			async: false,
+			documentType:"application/json;charset=utf-8",
+			dataType:"json",
+			crossDomain: true, // 明确告诉jQuery请求是跨域的  
+			success:function(result){
+				themeData=result;
+			}
+		})
+    
+
+// 数据渲染
+var inst = table.render({
+    elem: '#ID-table-themeMarket',
+	//url: 'https://www.minrag.cn/themes.json', // 此处为静态模拟数据，实际使用时需换成真实接口
+    data: themeData,
+	cols: [[ //标题栏
+      {field: 'themeName', title: '{{T "Theme Name"}}', width: 150, templet: function(d){return '<a target="_blank" href="'+d.gitURL+'" > '+d.themeName+' </a>';}},
+	  {field: 'star', title: 'star', width: 100,sort: true},
+      {field: 'themeVersion', title: '{{T "Version"}}', width: 100},
+      {field: 'themeType', title: '{{T "Theme KnowledgeBase"}}', width: 100},
+      {field: 'minragVersion', title: '{{T "Compatible Version"}}', width: 100},
+      {field: 'screenshot', title: '{{T "Preview"}}', width: 100, templet: function(d){return '<img src="'+d.screenshot+'" onclick=showScreenshot("'+d.themeName+'","'+d.screenshot+'"); height="30px" />';}},
+	  {field: 'download', title: '{{T "Download"}}', width: 85, templet: function(d){return '<a target="_blank" href="'+d.download+'" > {{T "Download"}} </a>';}}
+    ]],
+    //skin: 'line', // 表格风格
+    //even: true,
+    page: false, // 是否显示分页
+    });
+
+	layer.open({
+        type: 1,
+		title:'{{T "Theme Market"}}',
+		shadeClose: true, 
+        area: ['800px', 'auto'], // 宽高
+        document: $('#ID-themeMarket-layer-wrapper'), 
+      });
+}
+
+function showScreenshot(title,src){
+   layer.photos({
+    photos: { // 图片层的数据源
+    "title": title, // 相册标题
+    "start": 0, // 初始显示的图片序号，默认 0
+    "data": [   // 相册包含的图片，数组格式
+      {
+        "src": src, // 原图地址
+      },
+      // …
+    ]
+  }
+  
+});
+}
+
+</script>
+
+<div id="ID-themeMarket-layer-wrapper" style="display: none;padding: 20px;">
+	<table class="layui-hide" id="ID-table-themeMarket"></table>
+</div>

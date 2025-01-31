@@ -1,0 +1,210 @@
+{{template "admin/header.html"}}
+<style>
+	.layui-form-label {
+	  width: 110px;
+	  padding: 9px 10px;
+	}
+	.layui-input-block {
+	  margin-left: 130px;
+	}
+</style>
+<title>{{T "Edit Document"}} - MINRAG</title>
+<link rel="stylesheet" type="text/css" href="{{basePath}}admin/js/cherry-markdown/cherry-markdown.min.css" />
+<script type="text/javascript" src="{{basePath}}admin/js/cherry-markdown/cherry-markdown.min.js"></script>
+{{template "admin/bodystart.html"}} 
+{{ $knowledgeBases := selectList "knowledgeBase" "" 1 1000 "* FROM knowledgeBase order by sortNo desc" }} 
+
+<div class="layui-panel" style="padding: 5px;height: 100%;">
+	<form class="layui-form" id="minrag-form" action="{{basePath}}admin/{{.UrlPathParam}}/update" method="POST" onsubmit="return false;" style="height:100%;display: flex;flex-direction: column;">
+		<div class="layui-form-item">
+			<div class="layui-col-md4">
+				<label class="layui-form-label">ID</label>
+				<div class="layui-input-block">
+					<input type="hidden" name="id" id="id" value="{{.Data.Id}}" />
+					<input type="text" class="layui-input" disabled value="{{.Data.Id}}" />
+				</div>
+			</div>
+			<div class="layui-col-md4">
+				<label class="layui-form-label">{{T "Document Name"}}</label>
+				<div class="layui-input-block">
+					<input type="text" name="name" lay-verify="required" lay-reqtext='{{T "Please fill in the document name"}}' autocomplete="off"
+						class="layui-input" value="{{.Data.Name}}">
+				</div>
+			</div>
+			<div class="layui-col-md4">
+				<label class="layui-form-label">{{T "Knowledge Base"}}</label>
+				<div class="layui-input-block">
+					<select name="knowledgeBaseID" id="knowledgeBaseID" lay-verify="required" lay-reqtext='{{T "Please select a knowledge base"}}'>
+						<option value="">{{T "Please select"}}</option>
+						{{ range $index,$obj := $knowledgeBases.Data }}
+						<option value="{{$obj.Id}}">{{$obj.Name}}</option>
+						{{end}}
+					</select>
+				</div>
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-col-md4">
+				<label class="layui-form-label">{{T "Sort"}}</label>
+				<div class="layui-input-block">
+					<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off"
+						class="layui-input" value="{{.Data.SortNo}}">
+				</div>
+			</div>
+			<div class="layui-col-md4">
+				<label class="layui-form-label">{{T "Status"}}</label>
+				<div class="layui-input-block">
+					<select name="status" id="status">
+						<option value="0">{{T "Active"}}</option>
+						<option value="1">{{T "Disable"}}</option>
+						<option value="2">{{T "Processing"}}</option>
+						<option value="3">{{T "Processing failed"}}</option>
+					</select>
+				</div>
+			</div>
+			<div class="layui-col-md4">
+				<div class="layui-input-block">
+					<input type="hidden" name="documentType" value="0" />
+					<button type="submit" class="layui-btn layui-bg-blue" lay-submit
+						lay-filter="minrag-form-ajax-update">{{T "Submit Changes"}}</button>
+				</div>
+		    </div>
+		</div>
+		<div id="markdown-container" style="height: 100%;"></div>
+
+	</form>
+</div>
+{{template "admin/bodyend.html"}}
+
+<script>
+	layui.use(function () {
+		var form = layui.form;
+		var layer = layui.layer;
+		var upload = layui.upload;
+		var $ = layui.jquery;
+   
+		//选中知识库
+		$("#knowledgeBaseID option[value='{{.Data.KnowledgeBaseID}}']").attr("selected", true);
+		
+		//选中状态
+		$("#status option[value='{{.Data.Status}}']").attr("selected", true);
+
+		// 渲染全部表单
+		form.render(); 
+
+		var funcFileUpload=function (file, callback) {
+				// 没有选择知识库返回false,阻止上传
+				if($('#knowledgeBaseID').val()==""){
+					layer.msg('{{T "Knowledge menu cannot be empty"}}');
+					return false;
+				}
+				var formdata = new FormData(); // FormData对象,来发送二进制文件.
+				formdata.append('file', file); // 将文件追加到 formdata对象中
+				formdata.append('dirPath',  $('#knowledgeBaseID').val()+"{{lastURI .Data.Id}}"); // 目录路径
+				$.ajax({
+					type: 'post',
+					url: '{{basePath}}admin/upload',
+					data: formdata,
+					processData: false,
+					documentType: false,
+					success(res) {
+						callback(basePath+res.data);
+					},
+					error(err) { },
+				});
+			};
+
+		var cherryLocale="zh_CN";
+		if (locale!='zh-CN'){
+			cherryLocale="en_US";
+		}
+		// cherry markdown 编辑器
+		var cherry = new Cherry({
+			locale: cherryLocale,
+			id: 'markdown-container',
+			value: '{{.Data.Markdown}}',
+			autoSave2Textarea: true,
+            defaultModel: 'edit&preview',
+			fileUpload: funcFileUpload,
+			toolbars: {
+				// 定义顶部工具栏
+				toolbar: [
+				'bold',
+				'italic',
+				{
+					strikethrough: ['strikethrough', 'underline', 'sub', 'sup', 'ruby', 'customMenuAName'],
+				},
+				'size',
+				'|',
+				'color',
+				'header',
+				'|',
+				'ol',
+				'ul',
+				'checklist',
+				'panel',
+				'justify',
+				'detail',
+				'|',
+				{
+					insert: ['image', 'audio', 'video', 'link', 'hr', 'br', 'code', 'formula', 'toc', 'table', 'pdf', 'word', 'ruby'],
+				},
+                'graph','togglePreview', 'export'
+				],
+				// 定义侧边栏,默认为空
+				// sidebar: ['theme', 'mobilePreview', 'copy'],
+				// 定义顶部右侧工具栏,默认为空
+				toolbarRight: ['fullScreen'],
+				//显示目录
+				toc: {
+				  updateLocationHash: false, // 要不要更新URL的hash
+				  defaultModel: 'pure', // pure: 精简模式/缩略模式，只有一排小点； full: 完整模式，会展示所有标题
+				},
+				
+				// 定义选中文字时弹出的“悬浮工具栏”,默认为 ['bold', 'italic', 'underline', 'strikethrough', 'sub', 'sup', 'quote', '|', 'size', 'color']
+				bubble: ['bold', 'italic', 'underline', 'strikethrough', 'sub', 'sup', 'ruby', '|', 'color', 'size'],
+				// 定义光标出现在行首位置时出现的"提示工具栏",默认为 ['h1', 'h2', 'h3', '|', 'checklist', 'quote', 'table', 'code']
+				float: [],
+				autoScrollByHashAfterInit: true,
+			},
+		});
+
+		// 提交事件
+		form.on('submit(minrag-form-ajax-update)', function (data) {
+			var field = data.field; // 获取表单字段值
+			field.sortNo = field.sortNo - 0;
+			field.status = field.status - 0;
+			field.knowledgeBaseName = $("#knowledgeBaseID").find("option:selected").text();
+			field.markdown = cherry.getMarkdown();
+			
+
+			//表单对象
+			const form = document.getElementById('minrag-form');
+			$.ajax({
+				url: form.action,
+				type: form.method,
+				contentType: "application/json;charset=utf-8",
+				dataType: "json",
+				data: JSON.stringify(field),
+				error: function (result) {
+					layer.msg('{{T "Update error!"}}'+result.responseJSON.message);
+				},
+				success: function (result) {
+					if (result.statusCode == 1) {
+						layer.confirm('{{T "Update successful, continue editing?"}}', {
+							icon: 3,
+							title: '{{T "Confirm"}}',
+							btn: ['{{T "Return to List"}}', '{{T "Continue Editing"}}'] //按钮
+						}, function () {
+							window.location.href = '{{basePath}}admin/{{.UrlPathParam}}/list';
+						});
+					} else {
+						layer.msg('{{T "Update failed!"}}');
+					}
+				}
+			});
+			return false; // 阻止默认 form 跳转
+		});
+	});
+</script>

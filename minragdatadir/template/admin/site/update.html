@@ -1,0 +1,212 @@
+{{template "admin/header.html"}}
+<style>
+	.layui-form-label {
+	  width: 130px;
+	}
+	.layui-input-block {
+	  margin-left: 160px;
+	}
+</style>
+<title>{{T "Update Site Information"}} - MINRAG</title>
+{{ $themeName := themeName }} 
+{{template "admin/bodystart.html"}}
+        <div class="layui-card layui-panel" style="height: 100%;">
+          <div class="layui-card-header">
+            {{T "Update Site Information"}}
+          </div>
+          <div class="layui-card-body">
+            <form class="layui-form" id="minrag-form" action="{{basePath}}admin/{{.UrlPathParam}}/update" method="POST">
+				<div class="layui-form-item layui-col-md6">
+				  <label class="layui-form-label">ID</label>
+				  <div class="layui-input-block">
+					<input type="hidden" name="id" id="id" value="{{.Data.Id}}" />
+				    <input type="hidden" name="sortNo" id="sortNo" value=1 />
+				    <input type="hidden" name="status" id="status" value=1 />
+					<input type="text" class="layui-input" disabled value="{{.Data.Id}}" />
+				  </div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Name"}}</label>
+					<div class="layui-input-block">
+					  <input type="text" name="name" lay-verify="required" autocomplete="off" lay-reqtext='{{T "Please fill in the name"}}' class="layui-input" value="{{.Data.Name}}">
+					</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Title"}}</label>
+					<div class="layui-input-block">
+					  <input type="text" name="title" lay-verify="required" autocomplete="off" lay-reqtext='{{T "Please fill in the title"}}' class="layui-input"  value="{{.Data.Title}}">
+					</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+				  <label class="layui-form-label">{{T "Domain"}}&nbsp;<i class="layui-icon layui-icon-tips" title='{{T "Used to generate the sitemap.xml"}}'></i></label>
+				  <div class="layui-input-block">
+					<input type="text" name="domain" autocomplete="off" class="layui-input" value="{{.Data.Domain}}">
+				  </div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "PC Theme"}} &nbsp;<i class="layui-icon layui-icon-tips" title='{{T "Used when accessed by PC browsers"}}'></i></label>
+					<div class="layui-input-block">
+						<select name="themePC" id="themePC" lay-verify="required" lay-reqtext='{{T "Please select a theme"}}'>
+							{{ range $index,$obj := $themeName }}
+							<option value='{{$obj}}'>{{$obj}}</option>
+							{{end}}
+						</select>
+					</div>
+				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Mobile Theme"}} &nbsp;<i class="layui-icon layui-icon-tips" title='{{T "Used when accessed by mobile browsers"}}'></i></label>
+					<div class="layui-input-block">
+						<select name="themeWAP" id="themeWAP" lay-verify="required" lay-reqtext='{{T "Please select a theme"}}'>
+							{{ range $index,$obj := $themeName }}
+							<option value='{{$obj}}'>{{$obj}}</option>
+							{{end}}
+						</select>
+					</div>
+				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "WeChat Theme"}} &nbsp;<i class="layui-icon layui-icon-tips" title='{{T "Used when accessed by WeChat"}}'></i></label>
+					<div class="layui-input-block">
+						<select name="themeWX" id="themeWX" lay-verify="required" lay-reqtext='{{T "Please select a theme"}}'>
+							{{ range $index,$obj := $themeName }}
+							<option value='{{$obj}}'>{{$obj}}</option>
+							{{end}}
+						</select>
+					</div>
+				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Default Theme"}} &nbsp;<i class="layui-icon layui-icon-tips" title='{{T "Default rendering theme, all themes are located in minragdatadir/template/theme directory"}}'></i></label>
+					<div class="layui-input-block">
+						<select name="theme" id="theme" lay-verify="required" lay-reqtext='{{T "Please select a theme"}}'>
+							{{ range $index,$obj := $themeName }}
+							<option value='{{$obj}}'>{{$obj}}</option>
+							{{end}}
+						</select>
+					</div>
+				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">Keyword</label>
+					<div class="layui-input-block">
+					  <input type="text" name="keyword" autocomplete="off" class="layui-input" value="{{.Data.Keyword}}">
+					</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">Description</label>
+					<div class="layui-input-block">
+					  <input type="text" name="description" autocomplete="off" class="layui-input" value="{{.Data.Description}}">
+					</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">Logo</label>
+					<div class="layui-input-block" style="display: flex;justify-document: space-between;align-items: center;">
+					  <input type="text" name="logo" id="logo" autocomplete="off" class="layui-input" value="{{.Data.Logo}}"> &nbsp;
+						<button type="button" class="layui-btn" id="button-upload-logo">
+							<i class="layui-icon layui-icon-upload"></i> {{T "Upload Image"}}
+						</button> &nbsp;
+						<img height="38px" src="{{basePath}}{{.Data.Logo}}" id="img_logo"/>
+				   </div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">Favicon</label>
+					<div class="layui-input-block" style="display: flex;justify-document: space-between;align-items: center;">
+					  <input type="text" name="favicon" id="favicon" autocomplete="off" class="layui-input" value="{{.Data.Favicon}}"> &nbsp;
+					  <button type="button" class="layui-btn" id="button-upload-favicon">
+						<i class="layui-icon layui-icon-upload"></i> {{T "Upload Image"}}
+					</button> &nbsp;
+					<img height="38px" src="{{basePath}}{{.Data.Favicon}}" id="img_favicon" />
+				</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Footer"}}</label>
+					<div class="layui-input-block">
+					  <textarea name="footer" placeholder='{{T "Footer"}}'  autocomplete="off" class="layui-textarea">{{.Data.Footer}}</textarea>
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<div class="layui-input-block">
+					  <button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-update">{{T "Submit Changes"}}</button>
+					</div>
+				</div>
+			</form>
+          </div>
+        </div>
+{{template "admin/bodyend.html"}}
+
+<script>
+	layui.use(function(){
+	  var form = layui.form;
+	  var layer = layui.layer;
+	  var $ = layui.jquery;
+      var upload = layui.upload;
+	  //选中知识库
+	  $("#theme option[value='{{.Data.Theme}}']").attr("selected", true);
+	  $("#themePC option[value='{{.Data.ThemePC}}']").attr("selected", true);
+	  $("#themeWAP option[value='{{.Data.ThemeWAP}}']").attr("selected", true);
+	  $("#themeWX option[value='{{.Data.ThemeWX}}']").attr("selected", true);
+
+
+	  // 上传logo
+	  upload.render({
+			elem: '#button-upload-logo',
+			url: '{{basePath}}admin/upload', // 此处配置你自己的上传接口即可
+			size: 20 * 1024, // 限制文件大小,单位 KB
+			data: {
+				dirPath: 'site-logo'
+			},
+			done: function (res) {
+				if (res.statusCode == 1) {
+					$("#img_logo").attr("src",  basePath+res.data);
+					$("#logo").val(res.data);
+				}
+				console.log(res);
+			}
+	});
+
+		// 上传favicon
+		upload.render({
+			elem: '#button-upload-favicon',
+			url: '{{basePath}}admin/upload', // 此处配置你自己的上传接口即可
+			size: 20 * 1024, // 限制文件大小,单位 KB
+			data: {
+				dirPath: 'site-logo'
+			},
+			done: function (res) {
+				if (res.statusCode == 1) {
+					$("#img_favicon").attr("src",   basePath+res.data);
+					$("#favicon").val(res.data);
+				}
+				console.log(res);
+			}
+		});
+
+	  // 渲染全部表单
+	  form.render(); 
+
+
+	  // 提交事件
+	  form.on('submit(minrag-form-ajax-update)', function(data){
+		var field = data.field; // 获取表单字段值
+		field.sortNo=field.sortNo-0;
+		field.status=field.status-0;
+		const form = document.getElementById('minrag-form');
+		$.ajax({
+			url:form.action,
+			type:form.method,
+			contentType: "application/json;charset=utf-8",
+			dataType:"json",
+			data:JSON.stringify(field),
+			error: function (result) {
+				layer.msg('{{T "Update error!"}}'+result.responseJSON.message);
+			},
+			success:function(result){
+				if (result.statusCode == 1) {
+					layer.msg('{{T "Site information updated successfully, please Refresh Site"}}');
+				}else{
+					layer.msg('{{T "Update failed!"}}');
+				}
+			}
+		});
+        return false; // 阻止默认 form 跳转
+
+	  });
+	});
+	</script>
