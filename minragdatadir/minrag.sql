@@ -125,3 +125,13 @@ BEGIN
     INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
     VALUES (new.rowid, new.id, new.documentID, new.knowledgeBaseID, new.markdown, new.sortNo, new.status);
 END;
+
+
+CREATE VIRTUAL TABLE IF NOT EXISTS vec0_document_chunk USING vec0(
+	id TEXT,
+    documentID TEXT,
+    knowledgeBaseID TEXT,
+    embedding float[1024],
+    sortNo INT,
+    status INT
+);
