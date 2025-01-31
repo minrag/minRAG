@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"time"
 
 	"gitee.com/chunanyong/zorm"
@@ -27,6 +28,7 @@ import (
 // updateDocumentChunk 根据Document更新DocumentChunk
 func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) {
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		zorm.Update(ctx, document)
 		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE knowledgeBaseID=?", document.KnowledgeBaseID)
 		count, err := zorm.UpdateFinder(ctx, finderDeleteChunk)
 		if err != nil {
@@ -70,4 +72,12 @@ func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChu
 	documentChunks = append(documentChunks, documentChunk)
 
 	return documentChunks, nil
+}
+
+// readDocumentFile 读取文件内容
+func readDocumentFile(ctx context.Context, document *Document) error {
+	// TODO 先处理markdown文件,以后扩展获取
+	markdownByte, err := os.ReadFile(datadir + document.FilePath)
+	document.Markdown = string(markdownByte)
+	return err
 }

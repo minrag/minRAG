@@ -273,6 +273,10 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 	document.SortNo = funcMaxSortNo(tableDocumentName)
 	document.Name = funcLastURI(filePath)
 	document.FileExt = filepath.Ext(document.Name)
+
+	// 读取上传文件的内容
+	readDocumentFile(ctx, &document)
+
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		finder := zorm.NewDeleteFinder(tableDocumentName).Append("WHERE filePath=?", document.FilePath)
 		count, err := zorm.UpdateFinder(ctx, finder)
@@ -621,6 +625,7 @@ func funcUpdateDocument(ctx context.Context, c *app.RequestContext) {
 		FuncLogError(ctx, err)
 		return
 	}
+
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
 
 }
