@@ -34,6 +34,11 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		if err != nil {
 			return count, err
 		}
+		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE knowledgeBaseID=?", document.KnowledgeBaseID)
+		count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
+		if err != nil {
+			return count, err
+		}
 		documentChunks, err := splitDocument4Chunk(ctx, document)
 		if err != nil {
 			return documentChunks, err
@@ -44,7 +49,7 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		for i := 0; i < len(documentChunks); i++ {
 			dc := documentChunks[i]
 			dcs = append(dcs, &dc)
-			vecdc := &Vec0DocumentChunk{}
+			vecdc := &VecDocumentChunk{}
 			vecdc.DocumentID = dc.DocumentID
 			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
 			vecdc.SortNo = dc.SortNo

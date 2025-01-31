@@ -127,7 +127,7 @@ BEGIN
 END;
 
 
-CREATE VIRTUAL TABLE IF NOT EXISTS vec0_document_chunk USING vec0(
+CREATE VIRTUAL TABLE IF NOT EXISTS vec_document_chunk USING vec0(
 	id TEXT,
     documentID TEXT,
     knowledgeBaseID TEXT,

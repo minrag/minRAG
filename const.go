@@ -44,7 +44,7 @@ const (
 	tableDocumentChunkName = "document_chunk"
 
 	// 向量化的数据表
-	tableVec0DocumentChunkName = "vec0_document_chunk"
+	tableVecDocumentChunkName = "vec_document_chunk"
 	//---------------------------//
 
 	// 模板的路径
