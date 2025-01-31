@@ -52,7 +52,7 @@
 							&nbsp;&nbsp;&nbsp;&nbsp;
 						  </div>
 						<div class="layui-input-block">
-							<button type="button" id="button-upload-document" class="layui-btn"><i class="layui-icon layui-icon-upload"></i> {{T "Upload Document"}}</button>
+							<button type="button" id="button-upload-document" class="layui-btn layui-bg-blue"><i class="layui-icon layui-icon-upload"></i> {{T "Upload Document"}}</button>
 						</div>
 					</div>
 				</form>
@@ -76,9 +76,9 @@
 							<td> {{ .SortNo }}</td>
 							<td>
 								{{if eq .Status 0 }}
-								{{T "Active"}}
-								{{else if eq .Status 1 }}
 								{{T "Disable"}}
+								{{else if eq .Status 1 }}
+								{{T "Active"}}
 								{{else if eq .Status 2 }}
 								{{T "Processing"}}
 								{{else if eq .Status 3 }}

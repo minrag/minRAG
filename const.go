@@ -25,10 +25,6 @@ const (
 	datadir = "minragdatadir/"
 	// 数据目录,如果不存在认为是第一次安装启动,会创建默认的数据
 	sqliteDBfile = datadir + "minrag.db"
-	// 表信息的名称
-	//tableInfoName = "tableInfo"
-	// 表字段的名称
-	//tableFieldName = "tableField"
 
 	// config 配置的表名称
 	tableConfigName = "config"
@@ -41,10 +37,11 @@ const (
 	// 知识库 knowledgeBase
 	tableKnowledgeBaseName = "knowledgeBase"
 
-	// 默认模型
-	// tableModuleDefaultName = "module_default"
-	// 文章内容
+	// 文档
 	tableDocumentName = "document"
+
+	// 文档分块
+	tableDocumentChunkName = "document_chunk"
 	//---------------------------//
 
 	// 模板的路径
