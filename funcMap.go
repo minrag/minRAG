@@ -212,9 +212,9 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 		// fst5 搜索相关性排序 ORDER BY rank; 后期再进行修改调整,先按照sortNo排序
 		if i < 0 { // 没有where
 			finder.Append(sql, values...)
-			finder.Append(" where rowid in (select rowid from fts_document where fts_document match jieba_query(?) ) ", q)
+			finder.Append(" where id in (select documentID from fts_document_chunk where fts_document_chunk match jieba_query(?) ) ", q)
 		} else {
-			finder.Append(sql[:i+7]+" rowid in (select rowid from fts_document where fts_document match jieba_query(?) ) and ", q)
+			finder.Append(sql[:i+7]+" id in (select documentID from fts_document_chunk where fts_document_chunk match jieba_query(?) ) and ", q)
 			finder.Append(sql[i+7:], values...)
 		}
 		finder.Append(orderBy)
