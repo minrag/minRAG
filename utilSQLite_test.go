@@ -45,7 +45,7 @@ func TestVecCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	items := map[int][]float32{
+	items := map[int][]float64{
 		1: {0.1, 0.1, 0.1, 0.1},
 		2: {0.2, 0.2, 0.2, 0.2},
 		3: {0.3, 0.3, 0.3, 0.3},
@@ -71,7 +71,7 @@ func TestVecCreate(t *testing.T) {
 
 func TestVecQuery(t *testing.T) {
 
-	q := []float32{0.3, 0.3, 0.3, 0.3}
+	q := []float64{0.3, 0.3, 0.3, 0.3}
 
 	query, err := vecSerializeFloat64(q)
 	if err != nil {
