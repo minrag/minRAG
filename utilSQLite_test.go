@@ -53,7 +53,7 @@ func TestVecCreate(t *testing.T) {
 		5: {0.5, 0.5, 0.5, 0.5},
 	}
 	for id, values := range items {
-		v, err := vecSerializeFloat32(values)
+		v, err := vecSerializeFloat64(values)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -73,7 +73,7 @@ func TestVecQuery(t *testing.T) {
 
 	q := []float32{0.3, 0.3, 0.3, 0.3}
 
-	query, err := vecSerializeFloat32(q)
+	query, err := vecSerializeFloat64(q)
 	if err != nil {
 		t.Fatal(err)
 	}

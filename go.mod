@@ -7,7 +7,7 @@ require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mojocn/base64Captcha v1.3.8
-	github.com/openai/openai-go v0.1.0-alpha.50
+	github.com/openai/openai-go v0.1.0-alpha.51
 	golang.org/x/crypto v0.32.0
 )
 

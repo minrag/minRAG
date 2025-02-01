@@ -19,10 +19,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/shared"
 )
 
 // IComponent 组件的接口
@@ -30,20 +30,16 @@ type IComponent interface {
 	Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error)
 }
 
-// BaseComponent 基础组件属性
-type BaseComponent struct {
-	APIKey     string
-	Model      string
-	APIBaseURL string
-	Header     map[string]interface{}
-	Timeout    int
-	MaxRetries int
-}
-
 type OpenAITextEmbedder struct {
-	BaseComponent
-	Organization string
-	Dimensions   int
+	APIKey         string            `json:"apikey,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	MaxRetries     int               `json:"maxRetries,omitempty"`
+	Organization   string            `json:"organization,omitempty"`
+	Dimensions     int               `json:"dimensions,omitempty"`
+	Client         openai.Client
 }
 
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
@@ -53,15 +49,19 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 		option.WithMaxRetries(component.MaxRetries),
 	)
 	headerOpention := make([]option.RequestOption, 0)
-	if len(component.Header) > 0 {
-		for k, v := range component.Header {
-			headerOpention = append(headerOpention, option.WithHeader(k, v.(string)))
+	if len(component.DefaultHeaders) > 0 {
+		for k, v := range component.DefaultHeaders {
+			headerOpention = append(headerOpention, option.WithHeader(k, v))
 		}
 	}
-	response, err := client.Embeddings.New(ctx, openai.EmbeddingNewParams{Model: openai.String(component.Model)}, headerOpention...)
+	query := input["query"].(string)
+	response, err := client.Embeddings.New(ctx, openai.EmbeddingNewParams{
+		Model:          openai.F(component.Model),
+		EncodingFormat: openai.F(openai.EmbeddingNewParamsEncodingFormatFloat),
+		Input:          openai.F[openai.EmbeddingNewParamsInputUnion](shared.UnionString(query))}, headerOpention...)
 	if err != nil {
 		return input, err
 	}
-	fmt.Println(response.JSON.RawJSON())
+	input["embedding"] = response.Data[0].Embedding
 	return input, err
 }

@@ -173,10 +173,14 @@ func execNativeSQL(ctx context.Context, nativeSQL string) (bool, error) {
 	return true, nil
 }
 
-// vecSerializeFloat32 Serializes a float32 list into a vector BLOB that sqlite-vec accepts
-func vecSerializeFloat32(vector []float32) ([]byte, error) {
+// vecSerializeFloat64 Serializes a float64 list into a vector BLOB that sqlite-vec accepts
+func vecSerializeFloat64(vector []float64) ([]byte, error) {
+	vector32 := make([]float32, len(vector))
+	for i, v := range vector {
+		vector32[i] = float32(v)
+	}
 	buf := new(bytes.Buffer)
-	err := binary.Write(buf, binary.LittleEndian, vector)
+	err := binary.Write(buf, binary.LittleEndian, vector32)
 	if err != nil {
 		return nil, err
 	}
