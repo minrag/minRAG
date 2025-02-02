@@ -50,13 +50,14 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		vecdcs := make([]zorm.IEntityStruct, 0)
 		for i := 0; i < len(documentChunks); i++ {
 			dc := documentChunks[i]
+			dc.Status = 1
 			dcs = append(dcs, &dc)
 			vecdc := &VecDocumentChunk{}
 			vecdc.Id = dc.Id
 			vecdc.DocumentID = dc.DocumentID
 			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
 			vecdc.SortNo = dc.SortNo
-			vecdc.Status = dc.Status
+			vecdc.Status = 1
 
 			embedder := componentMap["OpenAITextEmbedder"]
 			output, err := embedder.Run(ctx, map[string]interface{}{"query": dc.Markdown})
@@ -109,6 +110,8 @@ func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChu
 		documentChunk.Markdown = temp.Markdown
 		documentChunk.CreateTime = temp.CreateTime
 		documentChunk.UpdateTime = temp.UpdateTime
+		documentChunk.SortNo = temp.SortNo
+		documentChunk.Status = temp.Status
 
 		documentChunks = append(documentChunks, documentChunk)
 	}

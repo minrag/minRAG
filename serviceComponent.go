@@ -134,6 +134,7 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 		temp.DocumentID = document.Id
 		temp.CreateTime = now
 		temp.UpdateTime = now
+		temp.SortNo = i
 
 		documents = append(documents, temp)
 	}
