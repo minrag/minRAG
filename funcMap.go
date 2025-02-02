@@ -323,6 +323,14 @@ func funcSelectOne(urlPathParam string, sql string, values ...interface{}) (inte
 		} else {
 			selectOneData = Document{}
 		}
+	case tableComponentName:
+		data := make([]Component, 0)
+		zorm.Query(ctx, finder, &data, page)
+		if len(data) > 0 {
+			selectOneData = data[0]
+		} else {
+			selectOneData = Component{}
+		}
 	case "": // 对象为空查询map
 		selectOneData, _ = zorm.QueryRowMap(ctx, finder)
 	default:
