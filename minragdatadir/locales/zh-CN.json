@@ -176,8 +176,9 @@
   "Backend management":"后台管理",
   "The filePath and markdown cannot both be empty":"filePath和markdown 不能同时为空",
   "Component":"组件",
-  "Component Name":"组件名称",
   "Component Type":"组件类型",
   "Component Parameter":"组件参数",
-  "Add Component":"添加组件"
+  "Add Component":"添加组件",
+  "Update Component":"更新组件",
+  "Please select a component type":"请选择组件类型"
 }
