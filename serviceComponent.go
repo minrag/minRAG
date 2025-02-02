@@ -88,6 +88,7 @@ func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}
 	return input, nil
 }
 
+// DocumentSplitter 文档拆分
 type DocumentSplitter struct {
 	SplitBy      []string `json:"splitBy,omitempty"`
 	SplitLength  int      `json:"splitLength,omitempty"`
@@ -107,9 +108,6 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	if component.SplitLength == 0 {
 		component.SplitLength = 500
 	}
-	if component.SplitOverlap == 0 {
-		component.SplitOverlap = 30
-	}
 	// 递归分割
 	chunks := component.recursiveSplit(document.Markdown, 0)
 
@@ -117,24 +115,29 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 		return input, nil
 	}
 
-	// 最多合并3个短文本
+	// 合并3次短内容
 	for j := 0; j < 3; j++ {
 		chunks = component.mergeChunks(chunks)
 	}
 
-	// 处理文本重叠,感觉没有必要了,还会破坏文本的连续性
+	// @TODO 处理文本重叠,感觉没有必要了,还会破坏文本的连续性
+
+	//当前时间
 	now := time.Now().Format("2006-01-02 15:04:05")
 	documents := make([]Document, 0)
 	for i := 0; i < len(chunks); i++ {
 		chunk := chunks[i]
+
 		temp := *document
 		temp.Id = FuncGenerateStringID()
 		temp.Markdown = chunk
+		temp.DocumentID = document.Id
 		temp.CreateTime = now
 		temp.UpdateTime = now
-		temp.DocumentID = document.Id
+
 		documents = append(documents, temp)
 	}
+
 	input["documents"] = documents
 	return input, nil
 }

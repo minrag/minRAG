@@ -104,7 +104,7 @@ func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChu
 		temp := documents[i]
 		documentChunk := DocumentChunk{}
 		documentChunk.Id = temp.Id
-		documentChunk.DocumentID = temp.Id
+		documentChunk.DocumentID = temp.DocumentID
 		documentChunk.KnowledgeBaseID = temp.KnowledgeBaseID
 		documentChunk.Markdown = temp.Markdown
 		documentChunk.CreateTime = temp.CreateTime
