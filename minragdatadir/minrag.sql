@@ -74,7 +74,6 @@ CREATE TABLE IF NOT EXISTS document_chunk (
 
 CREATE TABLE IF NOT EXISTS component (
 		id TEXT PRIMARY KEY NOT NULL,
-		type              TEXT NOT NULL,
 		parameter         TEXT,
 		createTime        TEXT,
 		updateTime        TEXT,
@@ -82,7 +81,7 @@ CREATE TABLE IF NOT EXISTS component (
 		sortNo            INT NOT NULL,
 		status            INT NOT NULL
 	 ) strict ;
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,type,id) VALUES (1,1,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-m3","apiBaseURL":"https://ai.gitee.com/v1","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder','OpenAITextEmbedder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,id) VALUES (1,1,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-m3","apiBaseURL":"https://ai.gitee.com/v1","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder');
 
 
 CREATE TABLE IF NOT EXISTS site (

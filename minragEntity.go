@@ -304,9 +304,6 @@ type Component struct {
 	// ID
 	Id string `column:"id" json:"id,omitempty"`
 
-	// Type 组件类型,和componentTypeMap关联
-	Type string `column:"type" json:"type,omitempty"`
-
 	// Parameter 参数,json格式字符串
 	Parameter string `column:"parameter" json:"parameter,omitempty"`
 

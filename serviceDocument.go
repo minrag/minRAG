@@ -59,18 +59,13 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 			vecdc.SortNo = dc.SortNo
 			vecdc.Status = dc.Status
 
-			embedder := OpenAITextEmbedder{
-				APIKey:         "A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11",
-				Model:          "bge-m3",
-				APIBaseURL:     "https://ai.gitee.com/v1",
-				DefaultHeaders: map[string]string{"X-Failover-Enabled": "true", "X-Package": "1910"},
-			}
+			embedder := componentMap["OpenAITextEmbedder"]
 			output, err := embedder.Run(ctx, map[string]interface{}{"query": dc.Markdown})
 
 			if err != nil {
 				return output, err
 			}
-			//需要使用bge-m3模型进行embedding
+
 			embedding := output["embedding"].([]float64)
 			vecdc.Embedding, _ = vecSerializeFloat64(embedding)
 			vecdcs = append(vecdcs, vecdc)
