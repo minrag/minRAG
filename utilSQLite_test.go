@@ -25,75 +25,28 @@ import (
 	"gitee.com/chunanyong/zorm"
 )
 
-func TestVecCreate(t *testing.T) {
-	ctx := context.Background()
-	// 查询sqlite_vec版本
-	var vecVersion string
-	finder := zorm.NewFinder().Append("select vec_version()")
-	_, err := zorm.QueryRow(ctx, finder, &vecVersion)
-	if err != nil {
-		t.Error(err)
-	}
-	fmt.Println("vec_version:" + vecVersion)
-	_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		finder := zorm.NewFinder().Append("CREATE VIRTUAL TABLE vec_items USING vec0(embedding float[4])")
-		//return的error如果不为nil,事务就会回滚
-		zorm.UpdateFinder(ctx, finder)
-		return nil, nil
-	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
-	items := map[int][]float64{
-		1: {0.1, 0.1, 0.1, 0.1},
-		2: {0.2, 0.2, 0.2, 0.2},
-		3: {0.3, 0.3, 0.3, 0.3},
-		4: {0.4, 0.4, 0.4, 0.4},
-		5: {0.5, 0.5, 0.5, 0.5},
-	}
-	for id, values := range items {
-		v, err := vecSerializeFloat64(values)
-		if err != nil {
-			t.Fatal(err)
-		}
-		_, err = zorm.Transaction(context.Background(), func(ctx context.Context) (interface{}, error) {
-			finder := zorm.NewFinder().Append("INSERT INTO vec_items(rowid, embedding) VALUES (?, ?)", id, v)
-			return zorm.UpdateFinder(ctx, finder)
-		})
-
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-}
-
 func TestVecQuery(t *testing.T) {
-
-	q := []float64{0.3, 0.3, 0.3, 0.3}
-
-	query, err := vecSerializeFloat64(q)
+	ctx := context.Background()
+	embedder := OpenAITextEmbedder{
+		APIKey:         "A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11",
+		Model:          "bge-m3",
+		APIBaseURL:     "https://ai.gitee.com/v1",
+		DefaultHeaders: map[string]string{"X-Failover-Enabled": "true", "X-Package": "1910"},
+	}
+	output, err := embedder.Run(ctx, map[string]interface{}{"query": "我是来自中国的技术开发者,主要使用java,Go和Python开发语言"})
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	finder := zorm.NewFinder().Append(`
-	SELECT
-		rowid,
-		distance
-	FROM vec_items
-	WHERE embedding MATCH ?
-	ORDER BY distance
-	LIMIT 3
-`, query)
-
-	datas, err := zorm.QueryMap(context.Background(), finder, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for rowid, distance := range datas {
-		fmt.Printf("rowid=%v, distance=%v\n", rowid, distance)
+	//需要使用bge-m3模型进行embedding
+	embedding := output["embedding"].([]float64)
+	query, _ := vecSerializeFloat64(embedding)
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance,*").Append("WHERE embedding MATCH ? ORDER BY distance LIMIT 5", query)
+	datas := make([]Document, 0)
+	zorm.Query(ctx, finder, &datas, nil)
+	fmt.Println(len(datas))
+	for i := 0; i < len(datas); i++ {
+		data := datas[i]
+		fmt.Println(data.DocumentID, data.Distance)
 	}
 
 }
