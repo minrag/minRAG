@@ -117,6 +117,8 @@ func init() {
 	adminGroup.POST("/knowledgeBase/save", funcSaveKnowledgeBase)
 	//保存Document
 	adminGroup.POST("/document/save", funcSaveDocument)
+	//保存Component
+	adminGroup.POST("/component/save", funcSaveComponent)
 
 	//ajax POST删除数据
 	adminGroup.POST("/:urlPathParam/delete", funcDelete)
@@ -778,6 +780,30 @@ func funcSaveDocument(ctx context.Context, c *app.RequestContext) {
 	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
 	zorm.QueryRow(ctx, f, entity)
 
+	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Insert(ctx, entity)
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
+}
+
+func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
+	entity := &Component{}
+	err := c.Bind(entity)
+	if err != nil || entity.Id == "" || entity.Type == "" {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	entity.CreateTime = now
+	entity.UpdateTime = now
 	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		return zorm.Insert(ctx, entity)
 	})
