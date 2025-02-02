@@ -108,6 +108,8 @@ func init() {
 	adminGroup.POST("/knowledgeBase/update", funcUpdateKnowledgeBase)
 	// 修改Document
 	adminGroup.POST("/document/update", funcUpdateDocument)
+	// 修改Component
+	adminGroup.POST("/component/update", funcUpdateComponent)
 	// 修改ThemeTemplate
 	adminGroup.POST("/themeTemplate/update", funcUpdateThemeTemplate)
 
@@ -648,9 +650,27 @@ func funcUpdateDocument(ctx context.Context, c *app.RequestContext) {
 		FuncLogError(ctx, err)
 		return
 	}
-
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
+}
 
+// funcUpdateComponent 更新组件
+func funcUpdateComponent(ctx context.Context, c *app.RequestContext) {
+	entity := &Component{}
+	ok := funcUpdateInit(ctx, c, entity)
+	if !ok {
+		return
+	}
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Update(ctx, entity)
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, UrlPathParam: "component", Message: funcT("Failed to update data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, UrlPathParam: "component"})
 }
 
 // funcUpdateInit 初始化更新的对象参数,先从数据库查询,再更新数据
