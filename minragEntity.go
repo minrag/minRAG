@@ -295,6 +295,54 @@ func (entity *VecDocumentChunk) GetPKColumnName() string {
 	return "id"
 }
 
+// Component 组件表
+type Component struct {
+
+	// 引入默认的struct,隔离IEntityStruct的方法改动
+	zorm.EntityStruct
+
+	// ID
+	Id string `column:"id" json:"id,omitempty"`
+
+	// Name 组件名称
+	Name string `column:"name" json:"name,omitempty"`
+
+	// Type 组件类型,和componentTypeMap关联
+	Type string `column:"type" json:"type,omitempty"`
+
+	// Parameter 参数,json格式字符串
+	Parameter string `column:"parameter" json:"parameter,omitempty"`
+
+	// CreateTime 创建时间
+	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+
+	// UpdateTime 更新时间
+	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+
+	// CreateUser 创建人,初始化 system
+	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+
+	// SortNo 排序
+	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+
+	// Status 状态 禁用(0),可用(1)
+	Status int `column:"status" json:"status,omitempty"`
+}
+
+// GetTableName 获取表名称
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Component) GetTableName() string {
+	return tableComponentName
+}
+
+// GetPKColumnName 获取数据库表的主键字段名称.因为要兼容Map,只能是数据库的字段名称
+// 不支持联合主键,变通认为无主键,业务控制实现(艰难取舍)
+// 如果没有主键,也需要实现这个方法, return "" 即可
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Component) GetPKColumnName() string {
+	return "id"
+}
+
 // Site 站点信息
 type Site struct {
 	// 引入默认的struct,隔离IEntityStruct的方法改动

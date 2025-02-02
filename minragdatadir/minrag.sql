@@ -71,6 +71,20 @@ CREATE TABLE IF NOT EXISTS document_chunk (
 		status            INT NOT NULL
 	 ) strict ;
 
+
+CREATE TABLE IF NOT EXISTS component (
+		id TEXT PRIMARY KEY    NOT NULL,
+		name        TEXT NOT NULL,
+		type   TEXT NOT NULL,
+		parameter         TEXT,
+		createTime        TEXT,
+		updateTime        TEXT,
+		createUser        TEXT,
+		sortNo            INT NOT NULL,
+		status            INT NOT NULL
+	 ) strict ;
+
+
 CREATE TABLE IF NOT EXISTS site (
 		id TEXT PRIMARY KEY     NOT NULL,
 		title         TEXT  NOT NULL,
