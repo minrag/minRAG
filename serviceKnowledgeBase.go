@@ -55,7 +55,7 @@ func validateIDExists(ctx context.Context, id string) bool {
 // findKnowledgeBaseNameById 根据知识库ID查找知识库名称
 func findKnowledgeBaseNameById(ctx context.Context, knowledgeBaseId string) (string, error) {
 	if knowledgeBaseId == "" {
-		return "", errors.New(funcT("Knowledge menu cannot be empty"))
+		return "", errors.New(funcT("Knowledge base cannot be empty"))
 	}
 	finder := zorm.NewSelectFinder(tableKnowledgeBaseName, "name").Append("WHERE id=?", knowledgeBaseId)
 	knowledgeBaseName := ""

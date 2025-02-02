@@ -96,7 +96,7 @@
 		var funcFileUpload=function (file, callback) {
 				// 没有选择知识库返回false,阻止上传
 				if($('#knowledgeBaseID').val()==""){
-					layer.msg('{{T "Knowledge menu cannot be empty"}}');
+					layer.msg('{{T "Knowledge base cannot be empty"}}');
 					return false;
 				}
 				var formdata = new FormData(); // FormData对象,来发送二进制文件.
