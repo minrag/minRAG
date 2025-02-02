@@ -22,7 +22,6 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
-	"time"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/openai/openai-go"
@@ -122,8 +121,6 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 
 	// @TODO 处理文本重叠,感觉没有必要了,还会破坏文本的连续性
 
-	//当前时间
-	now := time.Now().Format("2006-01-02 15:04:05")
 	documents := make([]Document, 0)
 	for i := 0; i < len(chunks); i++ {
 		chunk := chunks[i]
@@ -132,8 +129,6 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 		temp.Id = FuncGenerateStringID()
 		temp.Markdown = chunk
 		temp.DocumentID = document.Id
-		temp.CreateTime = now
-		temp.UpdateTime = now
 		temp.SortNo = i
 
 		documents = append(documents, temp)
