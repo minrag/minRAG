@@ -20,7 +20,6 @@ package main
 import (
 	"context"
 	"os"
-	"time"
 
 	"gitee.com/chunanyong/zorm"
 )
@@ -88,17 +87,31 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 
 // splitDocument4Chunk 分割文档为DocumentChunk
 func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChunk, error) {
-	now := time.Now().Format("2006-01-02 15:04:05")
 	documentChunks := make([]DocumentChunk, 0)
-	documentChunk := DocumentChunk{}
-	documentChunk.Id = FuncGenerateStringID()
-	documentChunk.DocumentID = document.Id
-	documentChunk.KnowledgeBaseID = document.KnowledgeBaseID
-	documentChunk.Markdown = document.Markdown
-	documentChunk.CreateTime = now
-	documentChunk.UpdateTime = now
+	documentSplitter := componentMap["DocumentSplitter"]
+	input := make(map[string]interface{}, 0)
+	input["document"] = document
+	output, err := documentSplitter.Run(ctx, input)
+	if err != nil {
+		return documentChunks, err
+	}
+	ds, has := output["documents"]
+	if !has || ds == nil {
+		return documentChunks, err
+	}
+	documents := ds.([]Document)
+	for i := 0; i < len(documents); i++ {
+		temp := documents[i]
+		documentChunk := DocumentChunk{}
+		documentChunk.Id = temp.Id
+		documentChunk.DocumentID = temp.Id
+		documentChunk.KnowledgeBaseID = temp.KnowledgeBaseID
+		documentChunk.Markdown = temp.Markdown
+		documentChunk.CreateTime = temp.CreateTime
+		documentChunk.UpdateTime = temp.UpdateTime
 
-	documentChunks = append(documentChunks, documentChunk)
+		documentChunks = append(documentChunks, documentChunk)
+	}
 
 	return documentChunks, nil
 }

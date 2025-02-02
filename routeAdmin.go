@@ -239,6 +239,8 @@ func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 		c.Abort() // 终止后续调用
 		return
 	}
+	// 刷新组件Map
+	initComponentMap()
 	//重新生成静态文件
 	go genStaticFile()
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
