@@ -264,7 +264,7 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	document := Document{}
-	document.Id = FuncGenerateStringID()
+
 	document.FilePath = filePath
 	document.FileSize = fileSize
 	document.Status = 2
@@ -276,14 +276,16 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 
 	// 读取上传文件的内容
 	readDocumentFile(ctx, &document)
+	documentID, _ := findDocumentIdByFilePath(ctx, filePath)
 
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		finder := zorm.NewDeleteFinder(tableDocumentName).Append("WHERE filePath=?", document.FilePath)
-		count, err := zorm.UpdateFinder(ctx, finder)
-		if err != nil {
-			return count, err
+		if documentID == "" {
+			document.Id = FuncGenerateStringID()
+			return zorm.Insert(ctx, &document)
 		}
-		return zorm.Insert(ctx, &document)
+		// 有updateDocumentChunk更新
+		document.Id = documentID
+		return nil, nil
 	})
 	// 文档分块,分析处理
 	go updateDocumentChunk(context.Background(), &document)

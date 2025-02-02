@@ -19,7 +19,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"time"
 
@@ -28,14 +27,17 @@ import (
 
 // updateDocumentChunk 根据Document更新DocumentChunk
 func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) {
-	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		// 更新文档
 		zorm.Update(ctx, document)
-		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE knowledgeBaseID=?", document.KnowledgeBaseID)
+
+		// 删除关联的数据,重新插入
+		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", document.Id)
 		count, err := zorm.UpdateFinder(ctx, finderDeleteChunk)
 		if err != nil {
 			return count, err
 		}
-		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE knowledgeBaseID=?", document.KnowledgeBaseID)
+		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
 		count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
 		if err != nil {
 			return count, err
@@ -51,6 +53,7 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 			dc := documentChunks[i]
 			dcs = append(dcs, &dc)
 			vecdc := &VecDocumentChunk{}
+			vecdc.Id = dc.Id
 			vecdc.DocumentID = dc.DocumentID
 			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
 			vecdc.SortNo = dc.SortNo
@@ -69,9 +72,7 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 			}
 			//需要使用bge-m3模型进行embedding
 			embedding := output["embedding"].([]float64)
-			fmt.Printf("Dimensions: %d\n", len(embedding)) // 检查维度
 			vecdc.Embedding, _ = vecSerializeFloat64(embedding)
-			fmt.Printf("vecdc.Embedding: %d\n", len(vecdc.Embedding)) // 检查维度
 			vecdcs = append(vecdcs, vecdc)
 		}
 		count, err = zorm.InsertSlice(ctx, dcs)
@@ -86,7 +87,7 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		return zorm.UpdateFinder(ctx, finderUpdateDocument)
 	})
 
-	return false, nil
+	return false, err
 
 }
 
@@ -113,4 +114,12 @@ func readDocumentFile(ctx context.Context, document *Document) error {
 	markdownByte, err := os.ReadFile(datadir + document.FilePath)
 	document.Markdown = string(markdownByte)
 	return err
+}
+
+// findDocumentIdByFilePath 根据文档路径查询文档ID
+func findDocumentIdByFilePath(ctx context.Context, filePath string) (string, error) {
+	finder := zorm.NewSelectFinder(tableDocumentName, "id").Append("WHERE filePath=?", filePath)
+	id := ""
+	_, err := zorm.QueryRow(ctx, finder, &id)
+	return id, err
 }
