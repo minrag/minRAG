@@ -815,7 +815,7 @@ func funcSaveDocument(ctx context.Context, c *app.RequestContext) {
 func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
 	entity := &Component{}
 	err := c.Bind(entity)
-	if err != nil || entity.Id == "" || entity.Type == "" {
+	if err != nil || entity.Id == "" {
 		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
 		c.Abort() // 终止后续调用
 		FuncLogError(ctx, err)

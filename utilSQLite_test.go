@@ -27,12 +27,7 @@ import (
 
 func TestVecQuery(t *testing.T) {
 	ctx := context.Background()
-	embedder := OpenAITextEmbedder{
-		APIKey:         "A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11",
-		Model:          "bge-m3",
-		APIBaseURL:     "https://ai.gitee.com/v1",
-		DefaultHeaders: map[string]string{"X-Failover-Enabled": "true", "X-Package": "1910"},
-	}
+	embedder := componentMap["OpenAITextEmbedder"]
 	output, err := embedder.Run(ctx, map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."})
 	if err != nil {
 		t.Fatal(err)
