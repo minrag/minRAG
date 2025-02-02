@@ -50,11 +50,16 @@ func TestDocumentSplitter(t *testing.T) {
 	ctx := context.Background()
 	documentSplitter := componentMap["DocumentSplitter"]
 	input := make(map[string]interface{}, 0)
-	input["document"] = &Document{Markdown: "我是中国人,我爱中国."}
+	input["document"] = &Document{Markdown: "我是中国人,我爱中国。圣诞节,了大家安康金发傲娇考虑实际得分拉萨放假啊十六分是。1。2。3。"}
 	output, err := documentSplitter.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(output["documents"])
+	ds, _ := output["documents"]
+	documents := ds.([]Document)
+	for i := 0; i < len(documents); i++ {
+		document := documents[i]
+		fmt.Println(document.Markdown)
+	}
 
 }

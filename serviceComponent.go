@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/openai/openai-go"
@@ -50,6 +51,12 @@ type IComponent interface {
 }
 
 func init() {
+	initComponentMap()
+}
+
+// initComponentMap 初始化componentMap
+func initComponentMap() {
+	componentMap = make(map[string]IComponent, 0)
 	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1")
 	cs := make([]Component, 0)
 	ctx := context.Background()
@@ -70,7 +77,6 @@ func init() {
 			continue
 		}
 		componentMap[c.Id] = component
-
 	}
 }
 
@@ -104,18 +110,28 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	if component.SplitOverlap == 0 {
 		component.SplitOverlap = 30
 	}
-	// 第一阶段：递归分割
+	// 递归分割
 	chunks := component.recursiveSplit(document.Markdown, 0)
 
 	if len(chunks) < 1 {
 		return input, nil
 	}
+
+	// 最多合并3个短文本
+	for j := 0; j < 3; j++ {
+		chunks = component.mergeChunks(chunks)
+	}
+
+	// 处理文本重叠,感觉没有必要了,还会破坏文本的连续性
+	now := time.Now().Format("2006-01-02 15:04:05")
 	documents := make([]Document, 0)
 	for i := 0; i < len(chunks); i++ {
 		chunk := chunks[i]
 		temp := *document
 		temp.Id = FuncGenerateStringID()
 		temp.Markdown = chunk
+		temp.CreateTime = now
+		temp.UpdateTime = now
 		temp.DocumentID = document.Id
 		documents = append(documents, temp)
 	}
@@ -157,7 +173,30 @@ func (component *DocumentSplitter) recursiveSplit(text string, depth int) []stri
 			chunks = append(chunks, partContent)
 		}
 	}
+	return chunks
+}
 
+// mergeChunks 合并短内容
+func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
+	// 合并短内容
+	for i := 0; i < len(chunks); i++ {
+		chunk := chunks[i]
+		if len(chunk) >= component.SplitLength || i+1 >= len(chunks) {
+			continue
+		}
+		nextChunk := chunks[i+1]
+
+		// 汉字字符占位3个长度
+		if (len(chunk) + len(nextChunk)) > (component.SplitLength*18)/10 {
+			continue
+		}
+		chunks[i] = chunk + nextChunk
+		if i+2 >= len(chunks) { //倒数第二个元素,去掉最后一个
+			chunks = chunks[:len(chunks)-1]
+		} else { // 去掉 i+1 索引元素,合并到了 i 索引
+			chunks = append(chunks[:i+1], chunks[i+2:]...)
+		}
+	}
 	return chunks
 }
 
