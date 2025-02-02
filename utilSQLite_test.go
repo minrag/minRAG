@@ -33,7 +33,7 @@ func TestVecQuery(t *testing.T) {
 		APIBaseURL:     "https://ai.gitee.com/v1",
 		DefaultHeaders: map[string]string{"X-Failover-Enabled": "true", "X-Package": "1910"},
 	}
-	output, err := embedder.Run(ctx, map[string]interface{}{"query": "我是来自中国的技术开发者,主要使用java,Go和Python开发语言"})
+	output, err := embedder.Run(ctx, map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."})
 	if err != nil {
 		t.Fatal(err)
 	}
