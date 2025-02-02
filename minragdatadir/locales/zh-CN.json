@@ -142,7 +142,7 @@
   "Please first select the knowledge base from the left menu": "请先在左侧菜单选择知识库",
   "Please enter document...": "请输入内容...",
   "Edit Document": "修改内容",
-  "Knowledge menu cannot be empty": "知识库不能为空",
+  "Knowledge base cannot be empty": "知识库不能为空",
   "Incorrect verification code": "验证码错误",
   "Account or password cannot be empty": "账户或密码不能为空",
   "Account or password is incorrect": "账户或密码错误",
@@ -173,5 +173,11 @@
   "Open the back-end in the browser": "浏览器打开后台",
   "Original data hash does not match": "原始数据Hash不一致",
   "The public key in the signature does not match the address":"签名中的公钥和address不匹配",
-  "Backend management":"后台管理"
+  "Backend management":"后台管理",
+  "The filePath and markdown cannot both be empty":"filePath和markdown 不能同时为空",
+  "Component":"组件",
+  "Component Name":"组件名称",
+  "Component Type":"组件类型",
+  "Component Parameter":"组件参数",
+  "Add Component":"添加组件"
 }

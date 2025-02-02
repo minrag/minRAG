@@ -90,6 +90,8 @@ func init() {
 	adminGroup.GET("/themeTemplate/list", funcListThemeTemplate)
 	// 查询Document列表,根据KnowledgeBaseId like
 	adminGroup.GET("/document/list", funcDocumentList)
+	// 查询Component列表
+	adminGroup.GET("/component/list", funcComponentList)
 
 	// 通用查看
 	adminGroup.GET("/:urlPathParam/look", funcLook)
@@ -508,6 +510,23 @@ func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	responseData.ExtMap["file"] = string(fileDocument)
+	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
+}
+
+// funcComponentList 查询组件列表
+func funcComponentList(ctx context.Context, c *app.RequestContext) {
+	urlPathParam := "component"
+	listFile := "admin/" + urlPathParam + "/list.html"
+	list, err := findAllComponentList(ctx)
+	if err != nil {
+		c.Redirect(http.StatusOK, cRedirecURI("admin/error"))
+		c.Abort() // 终止后续调用
+		return
+	}
+	var responseData ResponseData
+	responseData.UrlPathParam = urlPathParam
+	responseData.Data = list
+	responseData.ERR = err
 	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
 }
 
