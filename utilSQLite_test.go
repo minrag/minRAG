@@ -45,3 +45,16 @@ func TestVecQuery(t *testing.T) {
 	}
 
 }
+
+func TestDocumentSplitter(t *testing.T) {
+	ctx := context.Background()
+	documentSplitter := componentMap["DocumentSplitter"]
+	input := make(map[string]interface{}, 0)
+	input["document"] = &Document{Markdown: "我是中国人,我爱中国."}
+	output, err := documentSplitter.Run(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(output["documents"])
+
+}

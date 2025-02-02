@@ -20,6 +20,8 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"strings"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/openai/openai-go"
@@ -35,6 +37,7 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
+	"DocumentSplitter":   &DocumentSplitter{},
 	"OpenAITextEmbedder": &OpenAITextEmbedder{},
 }
 
@@ -77,6 +80,85 @@ type Pipeline struct {
 
 func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	return input, nil
+}
+
+type DocumentSplitter struct {
+	SplitBy      []string `json:"splitBy,omitempty"`
+	SplitLength  int      `json:"splitLength,omitempty"`
+	SplitOverlap int      `json:"splitOverlap,omitempty"`
+}
+
+func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	if len(component.SplitBy) < 1 {
+		component.SplitBy = []string{"\f", "\n\n", "\n", "。", "!", ".", ";", "，", ",", " "}
+	}
+	if component.SplitLength == 0 {
+		component.SplitLength = 500
+	}
+	if component.SplitOverlap == 0 {
+		component.SplitOverlap = 30
+	}
+	// 第一阶段：递归分割
+	chunks := component.recursiveSplit(document.Markdown, 0)
+
+	if len(chunks) < 1 {
+		return input, nil
+	}
+	documents := make([]Document, 0)
+	for i := 0; i < len(chunks); i++ {
+		chunk := chunks[i]
+		temp := *document
+		temp.Id = FuncGenerateStringID()
+		temp.Markdown = chunk
+		temp.DocumentID = document.Id
+		documents = append(documents, temp)
+	}
+	input["documents"] = documents
+	return input, nil
+}
+
+// recursiveSplit 递归分割实现
+func (component *DocumentSplitter) recursiveSplit(text string, depth int) []string {
+	chunks := make([]string, 0)
+	// 终止条件：处理完所有分隔符
+	if depth >= len(component.SplitBy) {
+		if text != "" {
+			return append(chunks, text)
+		}
+		return chunks
+	}
+
+	currentSep := component.SplitBy[depth]
+	parts := strings.Split(text, currentSep)
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		partContent := part
+		if i < len(parts)-1 { //不是最后一个
+			partContent = partContent + currentSep
+		}
+
+		// 处理超长内容
+		if len(part) >= component.SplitLength {
+			partLeaf := component.recursiveSplit(partContent, depth+1)
+			if len(partLeaf) > 0 {
+				chunks = append(chunks, partLeaf...)
+			}
+			continue
+		} else {
+			chunks = append(chunks, partContent)
+		}
+	}
+
+	return chunks
 }
 
 // OpenAITextEmbedder 向量化字符串文本
