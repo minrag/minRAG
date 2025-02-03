@@ -96,26 +96,11 @@ func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChu
 	if err != nil {
 		return documentChunks, err
 	}
-	ds, has := output["documents"]
+	ds, has := output["documentChunks"]
 	if !has || ds == nil {
 		return documentChunks, err
 	}
-	documents := ds.([]Document)
-	for i := 0; i < len(documents); i++ {
-		temp := documents[i]
-		documentChunk := DocumentChunk{}
-		documentChunk.Id = temp.Id
-		documentChunk.DocumentID = temp.DocumentID
-		documentChunk.KnowledgeBaseID = temp.KnowledgeBaseID
-		documentChunk.Markdown = temp.Markdown
-		documentChunk.CreateTime = temp.CreateTime
-		documentChunk.UpdateTime = temp.UpdateTime
-		documentChunk.SortNo = temp.SortNo
-		documentChunk.Status = temp.Status
-
-		documentChunks = append(documentChunks, documentChunk)
-	}
-
+	documentChunks = ds.([]DocumentChunk)
 	return documentChunks, nil
 }
 
@@ -133,4 +118,20 @@ func findDocumentIdByFilePath(ctx context.Context, filePath string) (string, err
 	id := ""
 	_, err := zorm.QueryRow(ctx, finder, &id)
 	return id, err
+}
+
+// findDocumentChunkMarkDown 查询DocumentChunk的markdown
+func findDocumentChunkMarkDown(ctx context.Context, documentChunks []DocumentChunk) ([]DocumentChunk, error) {
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		finder := zorm.NewSelectFinder(tableDocumentChunkName, "markdown").Append("WHERE id=?", documentChunk.Id)
+		markdown := ""
+		_, err := zorm.QueryRow(ctx, finder, &markdown)
+		if err != nil {
+			return documentChunks, err
+		}
+		documentChunk.Markdown = markdown
+	}
+
+	return documentChunks, nil
 }
