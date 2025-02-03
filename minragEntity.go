@@ -234,8 +234,8 @@ type DocumentChunk struct {
 	Embedding []float64 `json:"embedding,omitempty"`
 	// RowID 默认的rowid字段
 	RowID int `json:"rowID,omitempty"`
-	// Distance 向量表的distance匹配分数
-	Distance float32 `json:"distance,omitempty"`
+	// Score 向量表的score匹配分数
+	Score float32 `json:"score,omitempty"`
 }
 
 // GetTableName 获取表名称
@@ -281,8 +281,8 @@ type VecDocumentChunk struct {
 
 	// RowID 默认的rowid字段
 	RowID int `json:"rowID,omitempty"`
-	// Distance 向量表的distance匹配分数
-	Distance float32 `json:"distance,omitempty"`
+	// Score 向量表的score匹配分数
+	Score float32 `json:"score,omitempty"`
 }
 
 // GetTableName 获取表名称

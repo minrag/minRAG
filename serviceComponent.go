@@ -256,15 +256,15 @@ type VecEmbeddingRetriever struct {
 	Embedding []float64 `json:"embedding,omitempty"`
 	// TopK 检索多少条
 	TopK int `json:"topK,omitempty"`
-	// Distance 向量表的distance匹配分数
-	Distance float32 `json:"distance,omitempty"`
+	// Score 向量表的score匹配分数
+	Score float32 `json:"score,omitempty"`
 }
 
 func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	documentID := ""
 	knowledgeBaseID := ""
 	topK := 0
-	var distance float32 = 0.0
+	var score float32 = 0.0
 	var embedding []float64 = nil
 	eId, has := input["embedding"]
 	if has {
@@ -302,12 +302,12 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	if topK == 0 {
 		topK = 5
 	}
-	disId, has := input["distance"]
+	disId, has := input["score"]
 	if has {
-		distance = disId.(float32)
+		score = disId.(float32)
 	}
-	if distance <= 0 {
-		distance = component.Distance
+	if score <= 0 {
+		score = component.Score
 	}
 
 	query, err := vecSerializeFloat64(embedding)
@@ -315,17 +315,17 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		input[errorKey] = err
 		return input, err
 	}
-	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance,*").Append("WHERE embedding MATCH ?", query)
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ?", query)
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
 	if knowledgeBaseID != "" {
 		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 	}
-	if distance > 0.0 {
-		finder.Append(" and distance >= ?", distance)
+	if score > 0.0 {
+		finder.Append(" and score >= ?", score)
 	}
-	finder.Append("ORDER BY distance LIMIT " + strconv.Itoa(topK))
+	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
 	err = zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
@@ -353,8 +353,8 @@ type FtsKeywordRetriever struct {
 	Query string `json:"query,omitempty"`
 	// TopK 检索多少条
 	TopK int `json:"topK,omitempty"`
-	// Distance BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-	Distance float32 `json:"distance,omitempty"`
+	// Score BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+	Score float32 `json:"score,omitempty"`
 }
 
 func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
@@ -362,7 +362,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	knowledgeBaseID := ""
 	topK := 0
 	query := ""
-	var distance float32 = 0.0
+	var score float32 = 0.0
 	qId, has := input["query"]
 	if has {
 		query = qId.(string)
@@ -399,24 +399,24 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if topK == 0 {
 		topK = 5
 	}
-	disId, has := input["distance"]
+	disId, has := input["score"]
 	if has {
-		distance = disId.(float32)
+		score = disId.(float32)
 	}
-	if distance <= 0 {
-		distance = component.Distance
+	if score <= 0 {
+		score = component.Score
 	}
-	finder := zorm.NewFinder().Append("SELECT rowid,rank as distance,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
+	finder := zorm.NewFinder().Append("SELECT rowid,rank as score,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
 	if knowledgeBaseID != "" {
 		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 	}
-	if distance > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-		finder.Append(" and distance <= ?", 0-distance)
+	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+		finder.Append(" and score <= ?", 0-score)
 	}
-	finder.Append("ORDER BY distance LIMIT " + strconv.Itoa(topK))
+	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
 	err := zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
@@ -429,6 +429,26 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 		documentChunks = append(oldDocumentChunks, documentChunks...)
 	}
 	input["documentChunks"] = documentChunks
+	return input, nil
+}
+
+// DocumentChunksRanker 对DocumentChunks进行重新排序
+type DocumentChunkRanker struct {
+	APIKey         string            `json:"apikey,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	// Query 需要查询的关键字
+	Query string `json:"query,omitempty"`
+	// TopK 检索多少条
+	TopK int `json:"topK,omitempty"`
+	// Dimensions 分数
+	Dimensions int `json:"dimensions,omitempty"`
+}
+
+func (component *DocumentChunkRanker) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+
 	return input, nil
 }
 

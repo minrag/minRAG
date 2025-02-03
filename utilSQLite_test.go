@@ -35,13 +35,13 @@ func TestVecQuery(t *testing.T) {
 	//需要使用bge-m3模型进行embedding
 	embedding := output["embedding"].([]float64)
 	query, _ := vecSerializeFloat64(embedding)
-	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance,*").Append("WHERE embedding MATCH ? ORDER BY distance LIMIT 5", query)
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ? ORDER BY score LIMIT 5", query)
 	datas := make([]DocumentChunk, 0)
 	zorm.Query(ctx, finder, &datas, nil)
 	fmt.Println(len(datas))
 	for i := 0; i < len(datas); i++ {
 		data := datas[i]
-		fmt.Println(data.DocumentID, data.Distance)
+		fmt.Println(data.DocumentID, data.Score)
 	}
 
 }

@@ -84,8 +84,8 @@ CREATE TABLE IF NOT EXISTS component (
 	 ) strict ;
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,1,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"splitBy":["\f", "\n\n", "\n", "。", "!", ".", ";", "，", ",", " "],"splitLength":500,"splitOverlap":0}','DocumentSplitter','DocumentSplitter');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,2,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-m3","apiBaseURL":"https://ai.gitee.com/v1","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder','OpenAITextEmbedder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"distance":0.1}','VecEmbeddingRetriever','VecEmbeddingRetriever');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,4,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"distance":0.1}','FtsKeywordRetriever','FtsKeywordRetriever');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"score":0.1}','VecEmbeddingRetriever','VecEmbeddingRetriever');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,4,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"score":0.1}','FtsKeywordRetriever','FtsKeywordRetriever');
 
 
 CREATE TABLE IF NOT EXISTS site (
