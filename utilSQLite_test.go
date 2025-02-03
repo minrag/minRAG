@@ -119,4 +119,11 @@ func TestPromptBuilder(t *testing.T) {
 	}
 	fmt.Println(output["prompt"])
 
+	openAIChatMessage := componentMap["OpenAIChatMessage"]
+	output, err = openAIChatMessage.Run(ctx, output)
+
+	openAIChatCompletion := componentMap["OpenAIChatCompletion"]
+	fmt.Println(openAIChatCompletion)
+	output, err = openAIChatCompletion.Run(ctx, output)
+
 }
