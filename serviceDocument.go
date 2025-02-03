@@ -60,13 +60,14 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 			vecdc.Status = 1
 
 			embedder := componentMap["OpenAITextEmbedder"]
-			output, err := embedder.Run(ctx, map[string]interface{}{"query": dc.Markdown})
+			input := map[string]interface{}{"query": dc.Markdown}
+			err := embedder.Run(ctx, input)
 
 			if err != nil {
-				return output, err
+				return nil, err
 			}
 
-			embedding := output["embedding"].([]float64)
+			embedding := input["embedding"].([]float64)
 			vecdc.Embedding, _ = vecSerializeFloat64(embedding)
 			vecdcs = append(vecdcs, vecdc)
 		}
@@ -92,11 +93,11 @@ func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChu
 	documentSplitter := componentMap["DocumentSplitter"]
 	input := make(map[string]interface{}, 0)
 	input["document"] = document
-	output, err := documentSplitter.Run(ctx, input)
+	err := documentSplitter.Run(ctx, input)
 	if err != nil {
 		return documentChunks, err
 	}
-	ds, has := output["documentChunks"]
+	ds, has := input["documentChunks"]
 	if !has || ds == nil {
 		return documentChunks, err
 	}

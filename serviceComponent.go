@@ -44,14 +44,14 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"OpenAIChatCompletion":  &OpenAIChatCompletion{},
-	"OpenAIChatMessage":     &OpenAIChatMessageMemory{},
-	"PromptBuilder":         &PromptBuilder{},
-	"DocumentChunksRanker":  &DocumentChunksRanker{},
-	"DocumentSplitter":      &DocumentSplitter{},
-	"OpenAITextEmbedder":    &OpenAITextEmbedder{},
-	"VecEmbeddingRetriever": &VecEmbeddingRetriever{},
-	"FtsKeywordRetriever":   &FtsKeywordRetriever{},
+	"OpenAIChatCompletion":    &OpenAIChatCompletion{},
+	"OpenAIChatMessageMemory": &OpenAIChatMessageMemory{},
+	"PromptBuilder":           &PromptBuilder{},
+	"DocumentChunksRanker":    &DocumentChunksRanker{},
+	"DocumentSplitter":        &DocumentSplitter{},
+	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
+	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
+	"FtsKeywordRetriever":     &FtsKeywordRetriever{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -59,7 +59,7 @@ var componentMap = make(map[string]IComponent, 0)
 
 // IComponent 组件的接口
 type IComponent interface {
-	Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error)
+	Run(ctx context.Context, input map[string]interface{}) error
 }
 
 func init() {
@@ -96,8 +96,8 @@ func initComponentMap() {
 type Pipeline struct {
 }
 
-func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	return input, nil
+func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
+	return nil
 }
 
 // DocumentSplitter 文档拆分
@@ -107,12 +107,12 @@ type DocumentSplitter struct {
 	SplitOverlap int      `json:"splitOverlap,omitempty"`
 }
 
-func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) error {
 	document, has := input["document"].(*Document)
 	if document == nil || (!has) {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	if len(component.SplitBy) < 1 {
 		component.SplitBy = []string{"\f", "\n\n", "\n", "。", "!", ".", ";", "，", ",", " "}
@@ -124,7 +124,7 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	chunks := component.recursiveSplit(document.Markdown, 0)
 
 	if len(chunks) < 1 {
-		return input, nil
+		return nil
 	}
 
 	// 合并3次短内容
@@ -151,7 +151,7 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	}
 
 	input["documentChunks"] = documentChunks
-	return input, nil
+	return nil
 }
 
 // recursiveSplit 递归分割实现
@@ -226,7 +226,7 @@ type OpenAITextEmbedder struct {
 	Client         *openai.Client    `json:"-"`
 }
 
-func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Client == nil {
 		component.Client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
@@ -248,10 +248,10 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 		Input:          openai.F[openai.EmbeddingNewParamsInputUnion](shared.UnionString(query))}, headerOpention...)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	input["embedding"] = response.Data[0].Embedding
-	return input, nil
+	return nil
 }
 
 // VecEmbeddingRetriever 使用SQLite-Vec向量检索相似数据
@@ -268,7 +268,7 @@ type VecEmbeddingRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
-func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topK := 0
@@ -284,7 +284,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	if embedding == nil {
 		err := errors.New(funcT("The embedding of VecEmbeddingRetriever cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	dId, has := input["documentID"]
 	if has {
@@ -321,7 +321,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	query, err := vecSerializeFloat64(embedding)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ?", query)
 	if documentID != "" {
@@ -338,7 +338,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	err = zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	//更新markdown内容
 	findDocumentChunkMarkDown(ctx, documentChunks)
@@ -348,7 +348,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		documentChunks = append(oldDocumentChunks, documentChunks...)
 	}
 	input["documentChunks"] = documentChunks
-	return input, nil
+	return nil
 }
 
 // FtsKeywordRetriever 使用Fts5全文检索相似数据
@@ -365,7 +365,7 @@ type FtsKeywordRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
-func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topK := 0
@@ -381,7 +381,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if query == "" {
 		err := errors.New(funcT("The query of FtsKeywordRetriever cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	dId, has := input["documentID"]
 	if has {
@@ -429,7 +429,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	err := zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	oldDcs, has := input["documentChunks"]
 	if has && oldDcs != nil {
@@ -437,7 +437,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 		documentChunks = append(oldDocumentChunks, documentChunks...)
 	}
 	input["documentChunks"] = documentChunks
-	return input, nil
+	return nil
 }
 
 // DocumentChunksRanker 对DocumentChunks进行重新排序
@@ -456,7 +456,7 @@ type DocumentChunksRanker struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
@@ -469,7 +469,7 @@ func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string
 	if !has || dcs == nil {
 		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	documentChunks := dcs.([]DocumentChunk)
 	documents := make([]string, 0)
@@ -486,14 +486,14 @@ func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string
 	payloadBytes, err := json.Marshal(bodyMap)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	// 创建HTTP请求
 	req, err := http.NewRequest("POST", component.APIBaseURL, bytes.NewBuffer(payloadBytes))
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	// 设置请求头
@@ -507,33 +507,33 @@ func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string
 	resp, err := component.client.Do(req)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	defer resp.Body.Close()
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		err := errors.New("DocumentChunksRanker http post error")
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	// 读取响应体内容
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	// 将 JSON 数据解析为 map[string]interface{}
 	var result map[string]interface{}
 	if err := json.Unmarshal(body, &result); err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	fmt.Println(result["results"])
 
-	return input, nil
+	return nil
 }
 
 // PromptBuilder 使用模板构建Prompt提示词
@@ -542,14 +542,14 @@ type PromptBuilder struct {
 	t              *template.Template `json:"-"`
 }
 
-func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.t == nil {
 		var err error
 		tmpl := template.New("minrag-promptBuilder")
 		component.t, err = tmpl.Parse(component.PromptTemplate)
 		if err != nil {
 			input[errorKey] = err
-			return input, err
+			return err
 		}
 	}
 
@@ -558,13 +558,13 @@ func (component *PromptBuilder) Run(ctx context.Context, input map[string]interf
 	// 执行模板并将结果写入到 bytes.Buffer
 	if err := component.t.Execute(&buf, input); err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 
 	// 获取编译后的内容
 	input["prompt"] = buf.String()
 
-	return input, nil
+	return nil
 }
 
 // OpenAIChatMessageMemory 上下文记忆聊天记录
@@ -573,12 +573,12 @@ type OpenAIChatMessageMemory struct {
 	MemoryLength int `json:"memoryLength,omitempty"`
 }
 
-func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) error {
 	prompt, has := input["prompt"]
 	if !has {
 		err := errors.New(funcT("input['prompt'] cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	messages := make([]openai.ChatCompletionMessageParamUnion, 0)
 	ms, has := input["messages"]
@@ -588,7 +588,7 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 	promptMessage := openai.UserMessage(prompt.(string))
 	messages = append(messages, promptMessage)
 	input["messages"] = messages
-	return input, nil
+	return nil
 }
 
 // OpenAIChatCompletion OpenAI的LLM大语言模型
@@ -604,7 +604,7 @@ type OpenAIChatCompletion struct {
 	Client         *openai.Client    `json:"-"`
 }
 
-func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Client == nil {
 		component.Client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
@@ -624,7 +624,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 	if !has {
 		err := errors.New(funcT("input['messages'] cannot be empty"))
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	messages = ms.([]openai.ChatCompletionMessageParamUnion)
 	cc, err := component.Client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
@@ -633,11 +633,11 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 	})
 	if err != nil {
 		input[errorKey] = err
-		return input, err
+		return err
 	}
 	fmt.Println(cc.Choices[0])
 
-	return input, nil
+	return nil
 }
 
 // findAllComponentList 查询所有的组件
