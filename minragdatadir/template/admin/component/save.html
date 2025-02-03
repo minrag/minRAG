@@ -84,7 +84,7 @@ form.on('submit(minrag-form-ajax-update)', function(data){
 			title:'{{T "Confirm"}}',
 			btn: ['{{T "Return to List"}}','{{T "Continue Adding"}}' ] //按钮
 			}, function () {
-				window.location.href = '{{basePath}}admin/{.UrlPathParam}}/list';
+				window.location.href = '{{basePath}}admin/{{.UrlPathParam}}/list';
 			},function () {
 				location.reload();
 			});
