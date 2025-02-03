@@ -44,6 +44,8 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
+	"OpenAIChatCompletion":  &OpenAIChatCompletion{},
+	"OpenAIChatMessage":     &OpenAIChatMessage{},
 	"PromptBuilder":         &PromptBuilder{},
 	"DocumentChunksRanker":  &DocumentChunksRanker{},
 	"DocumentSplitter":      &DocumentSplitter{},
@@ -221,8 +223,6 @@ type OpenAITextEmbedder struct {
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
-	Organization   string            `json:"organization,omitempty"`
-	Dimensions     int               `json:"dimensions,omitempty"`
 	Client         *openai.Client    `json:"-"`
 }
 
@@ -563,6 +563,79 @@ func (component *PromptBuilder) Run(ctx context.Context, input map[string]interf
 
 	// 获取编译后的内容
 	input["prompt"] = buf.String()
+
+	return input, nil
+}
+
+// OpenAIChatMessage 封装聊天记录
+type OpenAIChatMessage struct {
+	// 上下文记忆长度
+	MemoryLength int `json:"memoryLength,omitempty"`
+}
+
+func (component *OpenAIChatMessage) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	prompt, has := input["prompt"]
+	if !has {
+		err := errors.New(funcT("input['prompt'] cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0)
+	ms, has := input["messages"]
+	if has {
+		messages = ms.([]openai.ChatCompletionMessageParamUnion)
+	}
+	promptMessage := openai.UserMessage(prompt.(string))
+	messages = append(messages, promptMessage)
+	input["messages"] = messages
+	return input, nil
+}
+
+// OpenAIChatCompletion OpenAI的LLM大语言模型
+type OpenAIChatCompletion struct {
+	APIKey         string            `json:"apikey,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	MaxRetries     int               `json:"maxRetries,omitempty"`
+	Temperature    float32           `json:"temperature,omitempty"`
+	Stream         bool              `json:"stream,omitempty"`
+	Client         *openai.Client    `json:"-"`
+}
+
+func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	if component.Client == nil {
+		component.Client = openai.NewClient(
+			option.WithAPIKey(component.APIKey),
+			option.WithBaseURL(component.APIBaseURL),
+			option.WithMaxRetries(component.MaxRetries),
+		)
+	}
+	headerOpention := make([]option.RequestOption, 0)
+	if len(component.DefaultHeaders) > 0 {
+		for k, v := range component.DefaultHeaders {
+			headerOpention = append(headerOpention, option.WithHeader(k, v))
+		}
+	}
+
+	var messages []openai.ChatCompletionMessageParamUnion
+	ms, has := input["messages"]
+	if !has {
+		err := errors.New(funcT("input['messages'] cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	messages = ms.([]openai.ChatCompletionMessageParamUnion)
+	cc, err := component.Client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+		Model:    openai.F(component.Model),
+		Messages: openai.F(messages),
+	})
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+	fmt.Println(cc.Choices[0])
 
 	return input, nil
 }
