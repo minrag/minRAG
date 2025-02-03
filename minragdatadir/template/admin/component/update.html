@@ -8,6 +8,7 @@
 	}
 </style>
 <title>{{T "Update Component"}} - MINRAG</title>
+{{ $componentType := componentType }} 
 {{template "admin/bodystart.html"}}
         <div class="layui-card layui-panel" style="height: 100%;">
           <div class="layui-card-header">
@@ -22,7 +23,16 @@
 					<input type="text" disabled class="layui-input" value="{{ .Data.Id }}" />
 				  </div>
 				</div>
-				
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Component Type"}}</label>
+					<div class="layui-input-block">
+						<select name="componentType" id="componentType" lay-verify="required" lay-reqtext='{{T "Please select a component type"}}'>
+							{{ range $index,$obj := $componentType }}
+							<option value='{{$obj}}'>{{$obj}}</option>
+							{{end}}
+						</select>
+					</div>
+				</div>
 
 				<div class="layui-form-item layui-col-md6">
 					<label class="layui-form-label">{{T "Sort"}}</label>
@@ -64,6 +74,7 @@ var form = layui.form;
 var layer = layui.layer;
 var $ =layui.jquery;
 
+$("#componentType option[value='{{.Data.ComponentType}}']").attr("selected", true);
 $("#status option[value='{{.Data.Status}}']").attr("selected", true);
 // 渲染全部表单
 form.render(); 
