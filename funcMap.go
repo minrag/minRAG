@@ -25,6 +25,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -69,6 +70,7 @@ var funcMap = template.FuncMap{
 	"T":                 funcT,
 	"locale":            funcLocale,
 	"maxSortNo":         funcMaxSortNo,
+	"componentType":     funcComponentType,
 }
 
 // funcBasePath 基础路径,前端所有的资源请求必须带上 {{basePath}}
@@ -489,4 +491,15 @@ func funcMaxSortNo(tableName string) int {
 	maxSortNo := 0
 	zorm.QueryRow(context.Background(), finder, &maxSortNo)
 	return maxSortNo + 1
+}
+
+// funcComponentType 获取组件类型
+func funcComponentType() []string {
+	cts := make([]string, 0)
+	for k, _ := range componentTypeMap {
+		cts = append(cts, k)
+	}
+	sort.Strings(cts)
+	return cts
+
 }

@@ -21,7 +21,8 @@
         <thead>
             <tr>
                 <th width="20%">ID</th>
-                <th width="50%">{{T "Component Parameter"}}</th>
+                <th width="20%">{{T "Component Type"}}</th>
+                <th width="30%">{{T "Component Parameter"}}</th>
                 <th width="10%">{{T "Sort"}}</th>
                 <th width="10%">{{T "Status"}}</th>
                 <th width="10%">{{T "Actions"}}</th>
@@ -33,6 +34,7 @@
             <tr>
                 <!-- 获取每一列的值 -->
                 <td title="{{ .Id }}"><a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}" style="cursor: pointer;"> {{ .Id }} </a></td>
+                <td title="{{ .ComponentType }}"> {{ .ComponentType }}</td>
                 <td title="{{ .Parameter }}"> {{ .Parameter }}</td>
                 <td> {{ .SortNo }}</td>
                 <td>
