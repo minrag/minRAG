@@ -45,7 +45,7 @@ const (
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
 	"OpenAIChatCompletion":  &OpenAIChatCompletion{},
-	"OpenAIChatMessage":     &OpenAIChatMessage{},
+	"OpenAIChatMessage":     &OpenAIChatMessageMemory{},
 	"PromptBuilder":         &PromptBuilder{},
 	"DocumentChunksRanker":  &DocumentChunksRanker{},
 	"DocumentSplitter":      &DocumentSplitter{},
@@ -567,13 +567,13 @@ func (component *PromptBuilder) Run(ctx context.Context, input map[string]interf
 	return input, nil
 }
 
-// OpenAIChatMessage 封装聊天记录
-type OpenAIChatMessage struct {
+// OpenAIChatMessageMemory 上下文记忆聊天记录
+type OpenAIChatMessageMemory struct {
 	// 上下文记忆长度
 	MemoryLength int `json:"memoryLength,omitempty"`
 }
 
-func (component *OpenAIChatMessage) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
 	prompt, has := input["prompt"]
 	if !has {
 		err := errors.New(funcT("input['prompt'] cannot be empty"))
