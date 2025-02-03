@@ -25,6 +25,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -43,15 +44,15 @@ const (
 )
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
-var componentTypeMap = map[string]IComponent{
-	"OpenAIChatCompletion":    &OpenAIChatCompletion{},
-	"OpenAIChatMessageMemory": &OpenAIChatMessageMemory{},
-	"PromptBuilder":           &PromptBuilder{},
-	"DocumentChunksRanker":    &DocumentChunksRanker{},
-	"DocumentSplitter":        &DocumentSplitter{},
-	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
-	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
-	"FtsKeywordRetriever":     &FtsKeywordRetriever{},
+var componentTypeMap = map[string]interface{}{
+	"OpenAIChatCompletion":    OpenAIChatCompletion{},
+	"OpenAIChatMessageMemory": OpenAIChatMessageMemory{},
+	"PromptBuilder":           PromptBuilder{},
+	"DocumentChunksRanker":    DocumentChunksRanker{},
+	"DocumentSplitter":        DocumentSplitter{},
+	"OpenAITextEmbedder":      OpenAITextEmbedder{},
+	"VecEmbeddingRetriever":   VecEmbeddingRetriever{},
+	"FtsKeywordRetriever":     FtsKeywordRetriever{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -79,16 +80,21 @@ func initComponentMap() {
 		if componentType == nil || (!has) {
 			continue
 		}
+		// 使用反射动态创建一个结构体的指针实例
+		cType := reflect.TypeOf(componentType)
+		cPtr := reflect.New(cType)
+		// 将反射对象转换为接口类型
+		component := cPtr.Interface().(IComponent)
 		if c.Parameter == "" {
-			componentMap[c.Id] = componentType
+			componentMap[c.Id] = component
 			continue
 		}
-		err := json.Unmarshal([]byte(c.Parameter), componentType)
+		err := json.Unmarshal([]byte(c.Parameter), component)
 		if err != nil {
 			FuncLogError(ctx, err)
 			continue
 		}
-		componentMap[c.Id] = componentType
+		componentMap[c.Id] = component
 	}
 }
 
