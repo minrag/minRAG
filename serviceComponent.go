@@ -48,7 +48,7 @@ var componentTypeMap = map[string]interface{}{
 	"OpenAIChatCompletion":    OpenAIChatCompletion{},
 	"OpenAIChatMessageMemory": OpenAIChatMessageMemory{},
 	"PromptBuilder":           PromptBuilder{},
-	"DocumentChunksRanker":    DocumentChunksRanker{},
+	"DocumentChunksReranker":  DocumentChunksReranker{},
 	"DocumentSplitter":        DocumentSplitter{},
 	"OpenAITextEmbedder":      OpenAITextEmbedder{},
 	"VecEmbeddingRetriever":   VecEmbeddingRetriever{},
@@ -446,8 +446,8 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	return nil
 }
 
-// DocumentChunksRanker 对DocumentChunks进行重新排序
-type DocumentChunksRanker struct {
+// DocumentChunksReranker 对DocumentChunks进行重新排序
+type DocumentChunksReranker struct {
 	APIKey         string            `json:"apikey,omitempty"`
 	Model          string            `json:"model,omitempty"`
 	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
@@ -462,7 +462,7 @@ type DocumentChunksRanker struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
@@ -518,7 +518,7 @@ func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string
 	defer resp.Body.Close()
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
-		err := errors.New("DocumentChunksRanker http post error")
+		err := errors.New("DocumentChunksReranker http post error")
 		input[errorKey] = err
 		return err
 	}
