@@ -28,12 +28,13 @@ import (
 func TestVecQuery(t *testing.T) {
 	ctx := context.Background()
 	embedder := componentMap["OpenAITextEmbedder"]
-	output, err := embedder.Run(ctx, map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."})
+	input := map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."}
+	err := embedder.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
 	//需要使用bge-m3模型进行embedding
-	embedding := output["embedding"].([]float64)
+	embedding := input["embedding"].([]float64)
 	query, _ := vecSerializeFloat64(embedding)
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ? ORDER BY score LIMIT 5", query)
 	datas := make([]DocumentChunk, 0)
@@ -51,11 +52,11 @@ func TestDocumentSplitter(t *testing.T) {
 	documentSplitter := componentMap["DocumentSplitter"]
 	input := make(map[string]interface{}, 0)
 	input["document"] = &Document{Markdown: "我是中国人,我爱中国。圣诞节,了大家安康金发傲娇考虑实际得分拉萨放假啊十六分是。1。2。3。"}
-	output, err := documentSplitter.Run(ctx, input)
+	err := documentSplitter.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := output["documentChunks"]
+	ds, _ := input["documentChunks"]
 	documentChunks := ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -69,11 +70,11 @@ func TestFtsKeywordRetriever(t *testing.T) {
 	ftsKeywordRetriever := componentMap["FtsKeywordRetriever"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "马斯克"
-	output, err := ftsKeywordRetriever.Run(ctx, input)
+	err := ftsKeywordRetriever.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := output["documentChunks"]
+	ds, _ := input["documentChunks"]
 	documentChunks := ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -91,11 +92,11 @@ func TestDocumentChunksRanker(t *testing.T) {
 	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
 	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
 	input["documentChunks"] = documentChunks
-	output, err := documentChunksRanker.Run(ctx, input)
+	err := documentChunksRanker.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := output["documentChunks"]
+	ds, _ := input["documentChunks"]
 	documentChunks = ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -113,17 +114,17 @@ func TestPromptBuilder(t *testing.T) {
 	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
 	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
 	input["documentChunks"] = documentChunks
-	output, err := promptBuilder.Run(ctx, input)
+	err := promptBuilder.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(output["prompt"])
+	fmt.Println(input["prompt"])
 
 	openAIChatMessageMemory := componentMap["OpenAIChatMessageMemory"]
-	output, err = openAIChatMessageMemory.Run(ctx, output)
+	err = openAIChatMessageMemory.Run(ctx, input)
 
 	openAIChatCompletion := componentMap["OpenAIChatCompletion"]
 	fmt.Println(openAIChatCompletion)
-	output, err = openAIChatCompletion.Run(ctx, output)
+	err = openAIChatCompletion.Run(ctx, input)
 
 }
