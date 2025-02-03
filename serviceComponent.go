@@ -18,11 +18,17 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
+	"text/template"
+	"time"
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/openai/openai-go"
@@ -38,6 +44,8 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
+	"PromptBuilder":         &PromptBuilder{},
+	"DocumentChunksRanker":  &DocumentChunksRanker{},
 	"DocumentSplitter":      &DocumentSplitter{},
 	"OpenAITextEmbedder":    &OpenAITextEmbedder{},
 	"VecEmbeddingRetriever": &VecEmbeddingRetriever{},
@@ -65,20 +73,20 @@ func initComponentMap() {
 	zorm.Query(ctx, finder, &cs, nil)
 	for i := 0; i < len(cs); i++ {
 		c := cs[i]
-		component, has := componentTypeMap[c.Id]
-		if component == nil || (!has) {
+		componentType, has := componentTypeMap[c.ComponentType]
+		if componentType == nil || (!has) {
 			continue
 		}
 		if c.Parameter == "" {
-			componentMap[c.Id] = component
+			componentMap[c.Id] = componentType
 			continue
 		}
-		err := json.Unmarshal([]byte(c.Parameter), component)
+		err := json.Unmarshal([]byte(c.Parameter), componentType)
 		if err != nil {
 			FuncLogError(ctx, err)
 			continue
 		}
-		componentMap[c.Id] = component
+		componentMap[c.Id] = componentType
 	}
 }
 
@@ -433,7 +441,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 }
 
 // DocumentChunksRanker 对DocumentChunks进行重新排序
-type DocumentChunkRanker struct {
+type DocumentChunksRanker struct {
 	APIKey         string            `json:"apikey,omitempty"`
 	Model          string            `json:"model,omitempty"`
 	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
@@ -443,11 +451,118 @@ type DocumentChunkRanker struct {
 	Query string `json:"query,omitempty"`
 	// TopK 检索多少条
 	TopK int `json:"topK,omitempty"`
-	// Dimensions 分数
-	Dimensions int `json:"dimensions,omitempty"`
+	// Score ranker的score匹配分数
+	Score  float32      `json:"score,omitempty"`
+	client *http.Client `json:"-"`
 }
 
-func (component *DocumentChunkRanker) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+func (component *DocumentChunksRanker) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	if component.Timeout == 0 {
+		component.Timeout = 60
+	}
+	if component.client == nil {
+		component.client = &http.Client{
+			Timeout: time.Second * time.Duration(component.Timeout),
+		}
+	}
+	dcs, has := input["documentChunks"]
+	if !has || dcs == nil {
+		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	documentChunks := dcs.([]DocumentChunk)
+	documents := make([]string, 0)
+	for i := 0; i < len(documentChunks); i++ {
+		documents = append(documents, documentChunks[i].Markdown)
+	}
+	bodyMap := map[string]interface{}{
+		"model":     component.Model,
+		"query":     component.Query,
+		"top_n":     component.TopK,
+		"documents": documents,
+	}
+	// 序列化请求体
+	payloadBytes, err := json.Marshal(bodyMap)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+
+	// 创建HTTP请求
+	req, err := http.NewRequest("POST", component.APIBaseURL, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+
+	// 设置请求头
+	req.Header.Set("Authorization", "Bearer "+component.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+	if len(component.DefaultHeaders) > 0 {
+		for k, v := range component.DefaultHeaders {
+			req.Header.Set(k, v)
+		}
+	}
+	resp, err := component.client.Do(req)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+	defer resp.Body.Close()
+	// 检查状态码
+	if resp.StatusCode != http.StatusOK {
+		err := errors.New("DocumentChunksRanker http post error")
+		input[errorKey] = err
+		return input, err
+	}
+
+	// 读取响应体内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+
+	// 将 JSON 数据解析为 map[string]interface{}
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+
+	fmt.Println(result["results"])
+
+	return input, nil
+}
+
+// PromptBuilder 使用模板构建Prompt提示词
+type PromptBuilder struct {
+	PromptTemplate string             `json:"promptTemplate,omitempty"`
+	t              *template.Template `json:"-"`
+}
+
+func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	if component.t == nil {
+		var err error
+		tmpl := template.New("minrag-promptBuilder")
+		component.t, err = tmpl.Parse(component.PromptTemplate)
+		if err != nil {
+			input[errorKey] = err
+			return input, err
+		}
+	}
+
+	// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
+	var buf bytes.Buffer
+	// 执行模板并将结果写入到 bytes.Buffer
+	if err := component.t.Execute(&buf, input); err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+
+	// 获取编译后的内容
+	input["prompt"] = buf.String()
 
 	return input, nil
 }

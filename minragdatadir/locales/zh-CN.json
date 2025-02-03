@@ -183,5 +183,6 @@
   "Please select a component type":"请选择组件类型",
   "The document of DocumentSplitter cannot be empty":"DocumentSplitter的document不能为空",
   "The embedding of VecEmbeddingRetriever cannot be empty":"VecEmbeddingRetriever的embedding不能为空",
-  "The query of FtsKeywordRetriever cannot be empty":"FtsKeywordRetriever的query不能为空"
+  "The query of FtsKeywordRetriever cannot be empty":"FtsKeywordRetriever的query不能为空",
+  "input['documentChunks'] cannot be empty":"input['documentChunks']不能为空"
 }

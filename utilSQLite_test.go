@@ -80,3 +80,43 @@ func TestFtsKeywordRetriever(t *testing.T) {
 		fmt.Println(documentChunk)
 	}
 }
+
+func TestDocumentChunksRanker(t *testing.T) {
+	ctx := context.Background()
+	documentChunksRanker := componentMap["DocumentChunksRanker"]
+	input := make(map[string]interface{}, 0)
+	input["query"] = "你在哪里?"
+	documentChunks := make([]DocumentChunk, 3)
+	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
+	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
+	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
+	input["documentChunks"] = documentChunks
+	output, err := documentChunksRanker.Run(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ds, _ := output["documentChunks"]
+	documentChunks = ds.([]DocumentChunk)
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		fmt.Println(documentChunk)
+	}
+}
+
+func TestPromptBuilder(t *testing.T) {
+	ctx := context.Background()
+	promptBuilder := componentMap["PromptBuilder"]
+	input := make(map[string]interface{}, 0)
+	input["query"] = "你在哪里?"
+	documentChunks := make([]DocumentChunk, 3)
+	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
+	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
+	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
+	input["documentChunks"] = documentChunks
+	output, err := promptBuilder.Run(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(output["prompt"])
+
+}
