@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 
 	"gitee.com/chunanyong/zorm"
@@ -37,8 +38,10 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"DocumentSplitter":   &DocumentSplitter{},
-	"OpenAITextEmbedder": &OpenAITextEmbedder{},
+	"DocumentSplitter":      &DocumentSplitter{},
+	"OpenAITextEmbedder":    &OpenAITextEmbedder{},
+	"VecEmbeddingRetriever": &VecEmbeddingRetriever{},
+	"FtsKeywordRetriever":   &FtsKeywordRetriever{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -121,20 +124,23 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 
 	// @TODO 处理文本重叠,感觉没有必要了,还会破坏文本的连续性
 
-	documents := make([]Document, 0)
+	documentChunks := make([]DocumentChunk, 0)
 	for i := 0; i < len(chunks); i++ {
 		chunk := chunks[i]
+		documentChunk := DocumentChunk{}
+		documentChunk.Id = FuncGenerateStringID()
+		documentChunk.DocumentID = document.Id
+		documentChunk.KnowledgeBaseID = document.KnowledgeBaseID
+		documentChunk.Markdown = chunk
+		documentChunk.CreateTime = document.CreateTime
+		documentChunk.UpdateTime = document.UpdateTime
+		documentChunk.SortNo = i
+		documentChunk.Status = document.Status
 
-		temp := *document
-		temp.Id = FuncGenerateStringID()
-		temp.Markdown = chunk
-		temp.DocumentID = document.Id
-		temp.SortNo = i
-
-		documents = append(documents, temp)
+		documentChunks = append(documentChunks, documentChunk)
 	}
 
-	input["documents"] = documents
+	input["documentChunks"] = documentChunks
 	return input, nil
 }
 
@@ -209,15 +215,18 @@ type OpenAITextEmbedder struct {
 	MaxRetries     int               `json:"maxRetries,omitempty"`
 	Organization   string            `json:"organization,omitempty"`
 	Dimensions     int               `json:"dimensions,omitempty"`
-	Client         openai.Client
+	Client         *openai.Client    `json:"-"`
 }
 
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
-	client := openai.NewClient(
-		option.WithAPIKey(component.APIKey),
-		option.WithBaseURL(component.APIBaseURL),
-		option.WithMaxRetries(component.MaxRetries),
-	)
+	if component.Client == nil {
+		component.Client = openai.NewClient(
+			option.WithAPIKey(component.APIKey),
+			option.WithBaseURL(component.APIBaseURL),
+			option.WithMaxRetries(component.MaxRetries),
+		)
+	}
+
 	headerOpention := make([]option.RequestOption, 0)
 	if len(component.DefaultHeaders) > 0 {
 		for k, v := range component.DefaultHeaders {
@@ -225,15 +234,202 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 		}
 	}
 	query := input["query"].(string)
-	response, err := client.Embeddings.New(ctx, openai.EmbeddingNewParams{
+	response, err := component.Client.Embeddings.New(ctx, openai.EmbeddingNewParams{
 		Model:          openai.F(component.Model),
 		EncodingFormat: openai.F(openai.EmbeddingNewParamsEncodingFormatFloat),
 		Input:          openai.F[openai.EmbeddingNewParamsInputUnion](shared.UnionString(query))}, headerOpention...)
 	if err != nil {
+		input[errorKey] = err
 		return input, err
 	}
 	input["embedding"] = response.Data[0].Embedding
-	return input, err
+	return input, nil
+}
+
+// VecEmbeddingRetriever 使用SQLite-Vec向量检索相似数据
+type VecEmbeddingRetriever struct {
+	// DocumentID 文档ID
+	DocumentID string `json:"documentID,omitempty"`
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `json:"knowledgeBaseID,omitempty"`
+	// Embedding 需要查询的向量化数组
+	Embedding []float64 `json:"embedding,omitempty"`
+	// TopK 检索多少条
+	TopK int `json:"topK,omitempty"`
+	// Distance 向量表的distance匹配分数
+	Distance float32 `json:"distance,omitempty"`
+}
+
+func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	documentID := ""
+	knowledgeBaseID := ""
+	topK := 0
+	var distance float32 = 0.0
+	var embedding []float64 = nil
+	eId, has := input["embedding"]
+	if has {
+		embedding = eId.([]float64)
+	}
+	if embedding == nil {
+		embedding = component.Embedding
+	}
+	if embedding == nil {
+		err := errors.New(funcT("The embedding of VecEmbeddingRetriever cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	dId, has := input["documentID"]
+	if has {
+		documentID = dId.(string)
+	}
+	if documentID == "" {
+		documentID = component.DocumentID
+	}
+	kId, has := input["knowledgeBaseID"]
+	if has {
+		knowledgeBaseID = kId.(string)
+	}
+	if knowledgeBaseID == "" {
+		knowledgeBaseID = component.KnowledgeBaseID
+	}
+	tId, has := input["topK"]
+	if has {
+		topK = tId.(int)
+	}
+	if topK == 0 {
+		topK = component.TopK
+	}
+	if topK == 0 {
+		topK = 5
+	}
+	disId, has := input["distance"]
+	if has {
+		distance = disId.(float32)
+	}
+	if distance <= 0 {
+		distance = component.Distance
+	}
+
+	query, err := vecSerializeFloat64(embedding)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance,*").Append("WHERE embedding MATCH ?", query)
+	if documentID != "" {
+		finder.Append(" and documentID=?", documentID)
+	}
+	if knowledgeBaseID != "" {
+		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+	if distance > 0.0 {
+		finder.Append(" and distance >= ?", distance)
+	}
+	finder.Append("ORDER BY distance LIMIT " + strconv.Itoa(topK))
+	documentChunks := make([]DocumentChunk, 0)
+	err = zorm.Query(ctx, finder, &documentChunks, nil)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+	//更新markdown内容
+	findDocumentChunkMarkDown(ctx, documentChunks)
+	oldDcs, has := input["documentChunks"]
+	if has && oldDcs != nil {
+		oldDocumentChunks := oldDcs.([]DocumentChunk)
+		documentChunks = append(oldDocumentChunks, documentChunks...)
+	}
+	input["documentChunks"] = documentChunks
+	return input, nil
+}
+
+// FtsKeywordRetriever 使用Fts5全文检索相似数据
+type FtsKeywordRetriever struct {
+	// DocumentID 文档ID
+	DocumentID string `json:"documentID,omitempty"`
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `json:"knowledgeBaseID,omitempty"`
+	// Query 需要查询的关键字
+	Query string `json:"query,omitempty"`
+	// TopK 检索多少条
+	TopK int `json:"topK,omitempty"`
+	// Distance BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+	Distance float32 `json:"distance,omitempty"`
+}
+
+func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) (map[string]interface{}, error) {
+	documentID := ""
+	knowledgeBaseID := ""
+	topK := 0
+	query := ""
+	var distance float32 = 0.0
+	qId, has := input["query"]
+	if has {
+		query = qId.(string)
+	}
+	if query == "" {
+		query = component.Query
+	}
+	if query == "" {
+		err := errors.New(funcT("The query of FtsKeywordRetriever cannot be empty"))
+		input[errorKey] = err
+		return input, err
+	}
+	dId, has := input["documentID"]
+	if has {
+		documentID = dId.(string)
+	}
+	if documentID == "" {
+		documentID = component.DocumentID
+	}
+	kId, has := input["knowledgeBaseID"]
+	if has {
+		knowledgeBaseID = kId.(string)
+	}
+	if knowledgeBaseID == "" {
+		knowledgeBaseID = component.KnowledgeBaseID
+	}
+	tId, has := input["topK"]
+	if has {
+		topK = tId.(int)
+	}
+	if topK == 0 {
+		topK = component.TopK
+	}
+	if topK == 0 {
+		topK = 5
+	}
+	disId, has := input["distance"]
+	if has {
+		distance = disId.(float32)
+	}
+	if distance <= 0 {
+		distance = component.Distance
+	}
+	finder := zorm.NewFinder().Append("SELECT rowid,rank as distance,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
+	if documentID != "" {
+		finder.Append(" and documentID=?", documentID)
+	}
+	if knowledgeBaseID != "" {
+		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+	if distance > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+		finder.Append(" and distance <= ?", 0-distance)
+	}
+	finder.Append("ORDER BY distance LIMIT " + strconv.Itoa(topK))
+	documentChunks := make([]DocumentChunk, 0)
+	err := zorm.Query(ctx, finder, &documentChunks, nil)
+	if err != nil {
+		input[errorKey] = err
+		return input, err
+	}
+	oldDcs, has := input["documentChunks"]
+	if has && oldDcs != nil {
+		oldDocumentChunks := oldDcs.([]DocumentChunk)
+		documentChunks = append(oldDocumentChunks, documentChunks...)
+	}
+	input["documentChunks"] = documentChunks
+	return input, nil
 }
 
 // findAllComponentList 查询所有的组件

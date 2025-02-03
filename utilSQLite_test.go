@@ -36,7 +36,7 @@ func TestVecQuery(t *testing.T) {
 	embedding := output["embedding"].([]float64)
 	query, _ := vecSerializeFloat64(embedding)
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance,*").Append("WHERE embedding MATCH ? ORDER BY distance LIMIT 5", query)
-	datas := make([]Document, 0)
+	datas := make([]DocumentChunk, 0)
 	zorm.Query(ctx, finder, &datas, nil)
 	fmt.Println(len(datas))
 	for i := 0; i < len(datas); i++ {
@@ -55,11 +55,28 @@ func TestDocumentSplitter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := output["documents"]
-	documents := ds.([]Document)
-	for i := 0; i < len(documents); i++ {
-		document := documents[i]
-		fmt.Println(document.Markdown)
+	ds, _ := output["documentChunks"]
+	documentChunks := ds.([]DocumentChunk)
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		fmt.Println(documentChunk.Markdown)
 	}
 
+}
+
+func TestFtsKeywordRetriever(t *testing.T) {
+	ctx := context.Background()
+	ftsKeywordRetriever := componentMap["FtsKeywordRetriever"]
+	input := make(map[string]interface{}, 0)
+	input["query"] = "马斯克"
+	output, err := ftsKeywordRetriever.Run(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ds, _ := output["documentChunks"]
+	documentChunks := ds.([]DocumentChunk)
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		fmt.Println(documentChunk)
+	}
 }

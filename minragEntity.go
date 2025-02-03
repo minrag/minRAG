@@ -180,15 +180,6 @@ type Document struct {
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
-	//----------数据库字段结束-----------//
-	// DocumentID 文档的ID,用于document_chunk相关表的查询
-	DocumentID string `json:"documentID,omitempty"`
-	// Embedding markdown向量化二进制
-	Embedding []byte `json:"embedding,omitempty"`
-	// RowID 默认的rowid字段
-	RowID int `json:"rowID,omitempty"`
-	// Distance 向量表的distance匹配分数
-	Distance float32 `json:"distance,omitempty"`
 }
 
 // GetTableName 获取表名称
@@ -237,6 +228,14 @@ type DocumentChunk struct {
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
+
+	//----------数据库字段结束-----------//
+	// Embedding markdown向量化二进制
+	Embedding []float64 `json:"embedding,omitempty"`
+	// RowID 默认的rowid字段
+	RowID int `json:"rowID,omitempty"`
+	// Distance 向量表的distance匹配分数
+	Distance float32 `json:"distance,omitempty"`
 }
 
 // GetTableName 获取表名称
@@ -279,6 +278,11 @@ type VecDocumentChunk struct {
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
+
+	// RowID 默认的rowid字段
+	RowID int `json:"rowID,omitempty"`
+	// Distance 向量表的distance匹配分数
+	Distance float32 `json:"distance,omitempty"`
 }
 
 // GetTableName 获取表名称

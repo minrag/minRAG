@@ -179,5 +179,7 @@
   "Component Parameter":"组件参数",
   "Add Component":"添加组件",
   "Update Component":"更新组件",
-  "The document of DocumentSplitter cannot be empty":"DocumentSplitter的document不能为空"
+  "The document of DocumentSplitter cannot be empty":"DocumentSplitter的document不能为空",
+  "The embedding of VecEmbeddingRetriever cannot be empty":"VecEmbeddingRetriever的embedding不能为空",
+  "The query of FtsKeywordRetriever cannot be empty":"FtsKeywordRetriever的query不能为空"
 }
