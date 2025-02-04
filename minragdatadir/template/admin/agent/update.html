@@ -53,7 +53,6 @@
 					<label class="layui-form-label">{{T "Knowledge Base"}}</label>
 					<div class="layui-input-block">
 						<select name="knowledgeBaseID" id="knowledgeBaseID" lay-verify="required" lay-reqtext='{{T "Please select a knowledge base"}}'>
-							<option value=''>{{T "Please select"}}</option>
 							{{ range $index,$obj := $knowledgeBases }}
 							<option value='{{$obj.Id}}'>{{$obj.Name}}</option>
 							{{end}}
@@ -65,7 +64,6 @@
 					<label class="layui-form-label">{{T "Pipeline"}}</label>
 					<div class="layui-input-block">
 						<select name="pipelineID" id="pipelineID" lay-verify="required" lay-reqtext='{{T "Please select a pipeline"}}'>
-							<option value=''>{{T "Please select"}}</option>
 							{{ range $index,$obj := $pipelineIDs }}
 							<option value='{{$obj}}'>{{$obj}}</option>
 							{{end}}

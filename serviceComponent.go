@@ -45,6 +45,7 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
+	"Pipeline":                &Pipeline{},
 	"OpenAIChatCompletion":    &OpenAIChatCompletion{},
 	"OpenAIChatMessageMemory": &OpenAIChatMessageMemory{},
 	"PromptBuilder":           &PromptBuilder{},
