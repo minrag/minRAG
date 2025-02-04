@@ -603,16 +603,16 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 
 // OpenAIChatCompletion OpenAI的LLM大语言模型
 type OpenAIChatCompletion struct {
-	APIKey              string            `json:"apikey,omitempty"`
-	Model               string            `json:"model,omitempty"`
-	APIBaseURL          string            `json:"apiBaseURL,omitempty"`
-	DefaultHeaders      map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout             int               `json:"timeout,omitempty"`
-	MaxRetries          int               `json:"maxRetries,omitempty"`
-	Temperature         float32           `json:"temperature,omitempty"`
-	Stream              bool              `json:"stream,omitempty"`
-	MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
-	client              *openai.Client    `json:"-"`
+	APIKey         string            `json:"apikey,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	MaxRetries     int               `json:"maxRetries,omitempty"`
+	Temperature    float32           `json:"temperature,omitempty"`
+	Stream         bool              `json:"stream,omitempty"`
+	//MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
+	client *openai.Client `json:"-"`
 }
 
 func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
@@ -644,9 +644,8 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 	}
 	messages = ms.([]openai.ChatCompletionMessageParamUnion)
 	chatCompletionNewParams := openai.ChatCompletionNewParams{
-		Model:               openai.F(component.Model),
-		MaxCompletionTokens: openai.F(component.MaxCompletionTokens),
-		Messages:            openai.F(messages),
+		Model:    openai.F(component.Model),
+		Messages: openai.F(messages),
 	}
 	if !component.Stream {
 		chatCompletion, err := component.client.Chat.Completions.New(ctx, chatCompletionNewParams)
@@ -656,7 +655,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		}
 		chatCompletionMessage := chatCompletion.Choices[0].Message
 		input["chatCompletionMessage"] = chatCompletionMessage
-		//fmt.Println(chatCompletionMessage)
+		fmt.Println(chatCompletionMessage)
 		return nil
 	}
 	stream := component.client.Chat.Completions.NewStreaming(ctx, chatCompletionNewParams)
