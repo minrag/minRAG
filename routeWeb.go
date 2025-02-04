@@ -19,8 +19,6 @@ package main
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -39,17 +37,9 @@ func init() {
 
 	// 默认首页
 	h.GET("/", funcIndex)
-	h.GET("/page/:pageNo", funcIndex)
-	h.GET("/page/:pageNo/", funcIndex)
 
-	// 查看标签
-	h.GET("/tag/:urlPathParam", funcListTags)
-	h.GET("/tag/:urlPathParam/", funcListTags)
-	h.GET("/tag/:urlPathParam/page/:pageNo", funcListTags)
-	h.GET("/tag/:urlPathParam/page/:pageNo/", funcListTags)
-
-	//初始化知识库路由
-	initKnowledgeBaseRoute()
+	// 查看agent
+	h.GET("/agent/:agentID", funcAgentPre)
 
 }
 
@@ -64,94 +54,23 @@ func funcError(ctx context.Context, c *app.RequestContext) {
 	cHtml(c, http.StatusOK, "error.html", nil)
 }
 
-// funcListKnowledge知识库 知识库数据列表
-func funcListKnowledgeBase(ctx context.Context, c *app.RequestContext) {
-	data := warpRequestMap(c)
-	urlPathParam := c.Param("urlPathParam")
-	if urlPathParam == "" { //知识库路径访问,例如:/web
-		urlPathParam = c.GetString("urlPathParam")
-	}
-	data["UrlPathParam"] = urlPathParam
-	templateFile, err := findThemeTemplate(ctx, tableKnowledgeBaseName, urlPathParam)
-	if err != nil || templateFile == "" {
-		templateFile = "knowledgeBase.html"
-	}
-	cHtml(c, http.StatusOK, templateFile, data)
-}
+// funcAgentPre 智能体
+func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 
-// funcListTags 标签列表
-func funcListTags(ctx context.Context, c *app.RequestContext) {
-	data := warpRequestMap(c)
-	urlPathParam := c.Param("urlPathParam")
+	input := make(map[string]interface{}, 0)
+	input["query"] = "你在哪里?"
+	documentChunks := make([]DocumentChunk, 3)
+	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
+	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
+	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
+	input["documentChunks"] = documentChunks
 
-	data["UrlPathParam"] = urlPathParam
-	cHtml(c, http.StatusOK, "tag.html", data)
-}
-
-// funcOneDocument 查询一篇文章
-func funcOneDocument(ctx context.Context, c *app.RequestContext) {
-	data := warpRequestMap(c)
-	urlPathParam := c.Param("urlPathParam")
-	if urlPathParam == "" { //知识库路径访问,例如:/web/nginx-use-hsts
-		urlPathParam = c.GetString("urlPathParam")
-	}
-	data["UrlPathParam"] = urlPathParam
-
-	templateFile, err := findThemeTemplate(ctx, tableDocumentName, urlPathParam)
-	if err != nil || templateFile == "" {
-		templateFile = "document.html"
-	}
-	cHtml(c, http.StatusOK, templateFile, data)
-}
-
-// initKnowledgeBaseRout知识库化知识库的映射路径
-func initKnowledgeBaseRoute() {
-	categories, _ := findAllKnowledgeBase(context.Background())
-	for i := 0; i < len(categories); i++ {
-		knowledgeBase := categories[i]
-		knowledgeBaseID := knowledgeBase.Id
-		addKnowledgeBaseRoute(knowledgeBaseID)
-	}
-}
-
-// addKnowledgeBaseRou知识库加知识库的路由
-func addKnowledgeBaseRoute(knowledgeBaseID string) {
-
-	// 处理重复注册路由的panic,不对外抛出
-	defer func() {
-		if r := recover(); r != nil {
-			panicMessage := fmt.Sprintf("%s", r)
-			FuncLogPanic(nil, errors.New(panicMessage))
-		}
-	}()
-
-	//知识库的访问映射
-	h.GET(funcTrimSuffixSlash(knowledgeBaseID), addListKnowledgeBaseRoute(knowledgeBaseID))
-	h.GET(knowledgeBaseID, addListKnowledgeBaseRoute(knowledgeBaseID))
-	//知识库分页数据的访问映射
-	h.GET(knowledgeBaseID+"page/:pageNo", addListKnowledgeBaseRoute(knowledgeBaseID))
-	h.GET(knowledgeBaseID+"page/:pageNo/", addListKnowledgeBaseRoute(knowledgeBaseID))
-	//知识库下文章的访问映射
-	h.GET(knowledgeBaseID+":documentURI", addOneDocumentRoute(knowledgeBaseID))
-	h.GET(knowledgeBaseID+":documentURI/", addOneDocumentRoute(knowledgeBaseID))
-}
-
-// addListKnowledgeBaseRou知识库加知识库的GET请求路由,用于自定义设置知识库的路由
-func addListKnowledgeBaseRoute(knowledgeBaseID string) app.HandlerFunc {
-	return func(ctx context.Context, c *app.RequestContext) {
-		c.Set("urlPathParam", knowledgeBaseID)
-		funcListKnowledgeBase(ctx, c)
-	}
-}
-
-// addOneDocumentRoute 增加内容的GET请求路由
-func addOneDocumentRoute(knowledgeBaseID string) app.HandlerFunc {
-	return func(ctx context.Context, c *app.RequestContext) {
-		documentURI := c.Param("documentURI")
-		key := knowledgeBaseID + documentURI
-		c.Set("urlPathParam", key)
-		funcOneDocument(ctx, c)
-	}
+	agentID := c.Param("agentID")
+	agent, _ := findAgentByID(ctx, agentID)
+	pipeline := componentMap[agent.PipelineID]
+	pipeline.Run(ctx, input)
+	chatCompletionMessage := input["chatCompletionMessage"]
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: chatCompletionMessage})
 }
 
 // warpRequestMap 包装请求参数为map

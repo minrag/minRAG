@@ -809,11 +809,6 @@ func funcSaveKnowledgeBase(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	//增加路由映射
-	addKnowledgeBaseRoute(entity.Id)
-	// 增加自定义路由映射
-	//routeKnowledgeBaseMap[funcTrimSuffixSlash(entity.Id)] = entity.Id
-
 	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
 }
 
