@@ -234,10 +234,14 @@ type OpenAITextEmbedder struct {
 
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Client == nil {
+		if component.Timeout == 0 {
+			component.Timeout = 60
+		}
 		component.Client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
 			option.WithBaseURL(component.APIBaseURL),
 			option.WithMaxRetries(component.MaxRetries),
+			option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
 		)
 	}
 
@@ -612,10 +616,14 @@ type OpenAIChatCompletion struct {
 
 func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
 	if component.Client == nil {
+		if component.Timeout == 0 {
+			component.Timeout = 60
+		}
 		component.Client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
 			option.WithBaseURL(component.APIBaseURL),
 			option.WithMaxRetries(component.MaxRetries),
+			option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
 		)
 	}
 	headerOpention := make([]option.RequestOption, 0)
@@ -633,7 +641,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		return err
 	}
 	messages = ms.([]openai.ChatCompletionMessageParamUnion)
-	cc, err := component.Client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
+	chatCompletion, err := component.Client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
 		Model:    openai.F(component.Model),
 		Messages: openai.F(messages),
 	})
@@ -641,8 +649,9 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		input[errorKey] = err
 		return err
 	}
-	fmt.Println(cc.Choices[0])
-
+	chatCompletionMessage := chatCompletion.Choices[0].Message
+	input["chatCompletionMessage"] = chatCompletionMessage
+	//fmt.Println(chatCompletionMessage)
 	return nil
 }
 
