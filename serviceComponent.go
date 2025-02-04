@@ -229,15 +229,15 @@ type OpenAITextEmbedder struct {
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
-	Client         *openai.Client    `json:"-"`
+	client         *openai.Client    `json:"-"`
 }
 
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.Client == nil {
+	if component.client == nil {
 		if component.Timeout == 0 {
 			component.Timeout = 60
 		}
-		component.Client = openai.NewClient(
+		component.client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
 			option.WithBaseURL(component.APIBaseURL),
 			option.WithMaxRetries(component.MaxRetries),
@@ -252,7 +252,7 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 		}
 	}
 	query := input["query"].(string)
-	response, err := component.Client.Embeddings.New(ctx, openai.EmbeddingNewParams{
+	response, err := component.client.Embeddings.New(ctx, openai.EmbeddingNewParams{
 		Model:          openai.F(component.Model),
 		EncodingFormat: openai.F(openai.EmbeddingNewParamsEncodingFormatFloat),
 		Input:          openai.F[openai.EmbeddingNewParamsInputUnion](shared.UnionString(query))}, headerOpention...)
@@ -603,23 +603,24 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 
 // OpenAIChatCompletion OpenAI的LLM大语言模型
 type OpenAIChatCompletion struct {
-	APIKey         string            `json:"apikey,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	MaxRetries     int               `json:"maxRetries,omitempty"`
-	Temperature    float32           `json:"temperature,omitempty"`
-	Stream         bool              `json:"stream,omitempty"`
-	Client         *openai.Client    `json:"-"`
+	APIKey              string            `json:"apikey,omitempty"`
+	Model               string            `json:"model,omitempty"`
+	APIBaseURL          string            `json:"apiBaseURL,omitempty"`
+	DefaultHeaders      map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout             int               `json:"timeout,omitempty"`
+	MaxRetries          int               `json:"maxRetries,omitempty"`
+	Temperature         float32           `json:"temperature,omitempty"`
+	Stream              bool              `json:"stream,omitempty"`
+	MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
+	client              *openai.Client    `json:"-"`
 }
 
 func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.Client == nil {
+	if component.client == nil {
 		if component.Timeout == 0 {
 			component.Timeout = 60
 		}
-		component.Client = openai.NewClient(
+		component.client = openai.NewClient(
 			option.WithAPIKey(component.APIKey),
 			option.WithBaseURL(component.APIBaseURL),
 			option.WithMaxRetries(component.MaxRetries),
@@ -635,24 +636,42 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 
 	var messages []openai.ChatCompletionMessageParamUnion
 	ms, has := input["messages"]
+
 	if !has {
 		err := errors.New(funcT("input['messages'] cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
 	messages = ms.([]openai.ChatCompletionMessageParamUnion)
-	chatCompletion, err := component.Client.Chat.Completions.New(ctx, openai.ChatCompletionNewParams{
-		Model:    openai.F(component.Model),
-		Messages: openai.F(messages),
-	})
-	if err != nil {
+	chatCompletionNewParams := openai.ChatCompletionNewParams{
+		Model:               openai.F(component.Model),
+		MaxCompletionTokens: openai.F(component.MaxCompletionTokens),
+		Messages:            openai.F(messages),
+	}
+	if !component.Stream {
+		chatCompletion, err := component.client.Chat.Completions.New(ctx, chatCompletionNewParams)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		chatCompletionMessage := chatCompletion.Choices[0].Message
+		input["chatCompletionMessage"] = chatCompletionMessage
+		//fmt.Println(chatCompletionMessage)
+		return nil
+	}
+	stream := component.client.Chat.Completions.NewStreaming(ctx, chatCompletionNewParams)
+	for stream.Next() {
+		evt := stream.Current()
+		if len(evt.Choices) > 0 {
+			print(evt.Choices[0].Delta.Content)
+		}
+	}
+	if err := stream.Err(); err != nil {
 		input[errorKey] = err
 		return err
 	}
-	chatCompletionMessage := chatCompletion.Choices[0].Message
-	input["chatCompletionMessage"] = chatCompletionMessage
-	//fmt.Println(chatCompletionMessage)
 	return nil
+
 }
 
 // findAllComponentList 查询所有的组件
