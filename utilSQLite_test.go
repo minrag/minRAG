@@ -128,3 +128,21 @@ func TestPromptBuilder(t *testing.T) {
 	chatCompletionMessage := input["chatCompletionMessage"]
 	fmt.Println(chatCompletionMessage)
 }
+
+func TestPipline(t *testing.T) {
+	ctx := context.Background()
+	defaultPipline := componentMap["defaultPipline"]
+	input := make(map[string]interface{}, 0)
+	input["query"] = "你在哪里?"
+	documentChunks := make([]DocumentChunk, 3)
+	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
+	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
+	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
+	input["documentChunks"] = documentChunks
+	err := defaultPipline.Run(ctx, input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	chatCompletionMessage := input["chatCompletionMessage"]
+	fmt.Println(chatCompletionMessage)
+}

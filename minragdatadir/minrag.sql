@@ -90,7 +90,7 @@ INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,6,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"promptTemplate":"根据提供的文档,请回答问题.\n 文档: \n {{ range $i,$v := .documentChunks }} {{ $v.Markdown }} \n {{end }} \n问题: {{ .query }} \n回答:"}','PromptBuilder','PromptBuilder');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,7,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"memoryLength":20}','OpenAIChatMessageMemory','OpenAIChatMessageMemory');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,8,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"DeepSeek-R1-Distill-Qwen-32B","apiBaseURL":"https://ai.gitee.com/v1","stream":true,"defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIChatCompletion','OpenAIChatCompletion');
-
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"start":"PromptBuilder","process":{"PromptBuilder":"OpenAIChatMessageMemory","OpenAIChatMessageMemory":"OpenAIChatCompletion"}}','Pipeline','defaultPipeline');
 
 
 CREATE TABLE IF NOT EXISTS site (
