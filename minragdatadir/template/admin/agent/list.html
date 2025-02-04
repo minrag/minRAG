@@ -1,0 +1,78 @@
+{{template "admin/header.html"}}
+  <title>{{T "Agent"}} - MINRAG</title>
+{{template "admin/bodystart.html"}}
+
+    <form id="listForm" action="{{basePath}}admin/{{.UrlPathParam}}/list" method="GET">
+
+        <div class="layui-input-group">
+            <input type="text" id="q" name="q" placeholder='{{T "Search"}}' class="layui-input">
+            <div class="layui-input-split layui-input-suffix" style="cursor: pointer;">
+                <i class="layui-icon layui-icon-search" onclick=""></i>
+            </div>
+            <div class="layui-col-md1">
+                &nbsp;&nbsp;&nbsp;&nbsp;
+            </div>
+            <div class="layui-input-block">
+                <a href="{{basePath}}admin/{{.UrlPathParam}}/save" class="layui-btn layui-bg-blue">+{{T "Add Agent"}}</a>
+            </div>
+        </div>
+    </form>
+    <table class="layui-table table-agent" id="table_list" lay-filter="parse-table-list">
+        <thead>
+            <tr>
+                <th width="15%">ID</th>
+                <th width="20%">{{T "Name"}}</th>
+                <th width="15%">{{T "Knowledge Base"}}</th>
+                <th width="15%">{{T "Pipeline"}}</th>
+                <th width="10%">{{T "Sort"}}</th>
+                <th width="10%">{{T "Status"}}</th>
+                <th width="15%">{{T "Actions"}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 循环所有的数据 -->
+            {{ range $i,$v := .Data }}
+            <tr>
+                <!-- 获取每一列的值 -->
+                <td title="{{ .Id }}"><a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}" style="cursor: pointer;"> {{ .Id }} </a></td>
+                <td title="{{ .Name }}"> {{ .Name }}</td>
+                <td title="{{ .KnowledgeBaseID }}"> {{ .KnowledgeBaseID }}</td>
+                <td title="{{ .PipelineID }}"> {{ .PipelineID }}</td>
+                <td> {{ .SortNo }}</td>
+                <td>
+                    {{if eq .Status 0 }}
+                    {{T "Disable"}}
+                    {{else if eq .Status 1 }}
+                    {{T "Active"}}
+                    {{else}}
+                    {{T "Unknown"}}
+                    {{end}}
+                </td>
+                <td>
+                    <button type="button" class="layui-btn layui-btn-primary layui-btn-xs" title='{{T "Edit"}}'>
+                        <a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}">
+                            <i class="layui-icon layui-icon-edit"></i>
+                        </a>
+                    </button>
+                    <button type="button" class="layui-btn layui-btn-primary layui-btn-xs"
+                        onclick="deleteFunc('{{$v.Id}}','{{basePath}}admin/{{$.UrlPathParam}}/delete');" title='{{T "Delete"}}'>
+                        <i class="layui-icon layui-icon-delete"></i>
+                    </button>
+                </td>
+            </tr>
+            {{end }}
+        </tbody>
+    </table>
+    
+
+{{template "admin/bodyend.html"}}
+
+
+<script>
+	layui.use(function () {
+		//var table = layui.table;
+		var layer = layui.layer;
+        var $ = layui.jquery;
+		
+    })
+</script>

@@ -71,6 +71,8 @@ var funcMap = template.FuncMap{
 	"locale":            funcLocale,
 	"maxSortNo":         funcMaxSortNo,
 	"componentType":     funcComponentType,
+	"knowledgeBases":    funcKnowledgeBases,
+	"pipelineIDs":       funcPipelineIDs,
 }
 
 // funcBasePath 基础路径,前端所有的资源请求必须带上 {{basePath}}
@@ -331,6 +333,14 @@ func funcSelectOne(urlPathParam string, sql string, values ...interface{}) (inte
 		} else {
 			selectOneData = Component{}
 		}
+	case tableAgentName:
+		data := make([]Agent, 0)
+		zorm.Query(ctx, finder, &data, page)
+		if len(data) > 0 {
+			selectOneData = data[0]
+		} else {
+			selectOneData = Agent{}
+		}
 	case "": // 对象为空查询map
 		selectOneData, _ = zorm.QueryRowMap(ctx, finder)
 	default:
@@ -501,5 +511,20 @@ func funcComponentType() []string {
 	}
 	sort.Strings(cts)
 	return cts
+}
 
+// funcKnowledgeBases 查询可用的知识库
+func funcKnowledgeBases() []KnowledgeBase {
+	data := make([]KnowledgeBase, 0)
+	finder := zorm.NewSelectFinder(tableKnowledgeBaseName).Append("WHERE status=1 order by sortNo desc")
+	zorm.Query(context.Background(), finder, &data, nil)
+	return data
+}
+
+// funcPipelineIDs 可用的流水线ID
+func funcPipelineIDs() []string {
+	pipelineIDs := make([]string, 0)
+	finder := zorm.NewSelectFinder(tableComponentName, "id").Append("WHERE componentType=? and status=1 order by sortNo desc", "Pipeline")
+	zorm.Query(context.Background(), finder, &pipelineIDs, nil)
+	return pipelineIDs
 }

@@ -92,6 +92,8 @@ func init() {
 	adminGroup.GET("/document/list", funcDocumentList)
 	// 查询Component列表
 	adminGroup.GET("/component/list", funcComponentList)
+	// 查询Agent列表
+	adminGroup.GET("/agent/list", funcAgentList)
 
 	// 通用查看
 	adminGroup.GET("/:urlPathParam/look", funcLook)
@@ -110,6 +112,8 @@ func init() {
 	adminGroup.POST("/document/update", funcUpdateDocument)
 	// 修改Component
 	adminGroup.POST("/component/update", funcUpdateComponent)
+	// 修改Agent
+	adminGroup.POST("/agent/update", funcUpdateAgent)
 	// 修改ThemeTemplate
 	adminGroup.POST("/themeTemplate/update", funcUpdateThemeTemplate)
 
@@ -121,6 +125,8 @@ func init() {
 	adminGroup.POST("/document/save", funcSaveDocument)
 	//保存Component
 	adminGroup.POST("/component/save", funcSaveComponent)
+	//保存Agent
+	adminGroup.POST("/agent/save", funcSaveAgent)
 
 	//ajax POST删除数据
 	adminGroup.POST("/:urlPathParam/delete", funcDelete)
@@ -535,6 +541,23 @@ func funcComponentList(ctx context.Context, c *app.RequestContext) {
 	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
 }
 
+// funcAgentList 查询智能体列表
+func funcAgentList(ctx context.Context, c *app.RequestContext) {
+	urlPathParam := "agent"
+	listFile := "admin/" + urlPathParam + "/list.html"
+	list, err := findAllAgentList(ctx)
+	if err != nil {
+		c.Redirect(http.StatusOK, cRedirecURI("admin/error"))
+		c.Abort() // 终止后续调用
+		return
+	}
+	var responseData ResponseData
+	responseData.UrlPathParam = urlPathParam
+	responseData.Data = list
+	responseData.ERR = err
+	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
+}
+
 // funcUpdateThemeTemplate 更新主题模板
 func funcUpdateThemeTemplate(ctx context.Context, c *app.RequestContext) {
 	themeTemplate := ThemeTemplate{}
@@ -674,6 +697,26 @@ func funcUpdateComponent(ctx context.Context, c *app.RequestContext) {
 	// 刷新组件Map
 	initComponentMap()
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, UrlPathParam: "component"})
+}
+
+// funcUpdateAgent 更新智能体
+func funcUpdateAgent(ctx context.Context, c *app.RequestContext) {
+	entity := &Agent{}
+	ok := funcUpdateInit(ctx, c, entity)
+	if !ok {
+		return
+	}
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Update(ctx, entity)
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, UrlPathParam: "component", Message: funcT("Failed to update data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, UrlPathParam: "agent"})
 }
 
 // funcUpdateInit 初始化更新的对象参数,先从数据库查询,再更新数据
@@ -838,6 +881,30 @@ func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
 	}
 	// 刷新组件Map
 	initComponentMap()
+	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
+}
+
+func funcSaveAgent(ctx context.Context, c *app.RequestContext) {
+	entity := &Agent{}
+	err := c.Bind(entity)
+	if err != nil || entity.Id == "" {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	entity.CreateTime = now
+	entity.UpdateTime = now
+	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Insert(ctx, entity)
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
 	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
 }
 

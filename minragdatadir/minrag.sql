@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS knowledgeBase (
 		status            INT NOT NULL
 	 ) strict ;
 
-INSERT INTO knowledgeBase (status,sortNo,createUser,updateTime,createTime,knowledgeBaseType,pid,name,id) VALUES (0,1,'','2025-01-31 10:24:00','2025-01-31 10:24:00',0,'','默认知识库','/default/');
+INSERT INTO knowledgeBase (status,sortNo,createUser,updateTime,createTime,knowledgeBaseType,pid,name,id) VALUES (1,1,'','2025-01-31 10:24:00','2025-01-31 10:24:00',0,'','默认知识库','/default/');
 
 CREATE TABLE IF NOT EXISTS document (
 		id TEXT PRIMARY KEY     NOT NULL,
@@ -91,6 +91,26 @@ INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,7,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"memoryLength":20}','OpenAIChatMessageMemory','OpenAIChatMessageMemory');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,8,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"DeepSeek-R1-Distill-Qwen-32B","apiBaseURL":"https://ai.gitee.com/v1","stream":true,"defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIChatCompletion','OpenAIChatCompletion');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"start":"PromptBuilder","process":{"PromptBuilder":"OpenAIChatMessageMemory","OpenAIChatMessageMemory":"OpenAIChatCompletion"}}','Pipeline','defaultPipeline');
+
+
+CREATE TABLE IF NOT EXISTS agent (
+		id TEXT PRIMARY KEY NOT NULL,
+		name              TEXT NOT NULL,
+		knowledgeBaseID   TEXT NOT NULL,
+		pipelineID        TEXT NOT NULL,
+		defaultReply      TEXT NOT NULL,
+		agentType         INT  NOT NULL,
+		agentPrompt       TEXT NOT NULL,
+		avatar            TEXT,
+		welcome           TEXT,
+		tools             TEXT,
+		memoryLength      INT,
+		createTime        TEXT,
+		updateTime        TEXT,
+		createUser        TEXT,
+		sortNo            INT NOT NULL,
+		status            INT NOT NULL
+	 ) strict ;
 
 
 CREATE TABLE IF NOT EXISTS site (

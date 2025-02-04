@@ -48,6 +48,9 @@ const (
 
 	// 组件表
 	tableComponentName = "component"
+
+	// 智能体
+	tableAgentName = "agent"
 	//---------------------------//
 
 	// 模板的路径

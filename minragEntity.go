@@ -344,6 +344,75 @@ func (entity *Component) GetPKColumnName() string {
 	return "id"
 }
 
+// Agent 智能体
+type Agent struct {
+
+	// 引入默认的struct,隔离IEntityStruct的方法改动
+	zorm.EntityStruct
+
+	// ID
+	Id string `column:"id" json:"id,omitempty"`
+
+	// Name 智能体名称
+	Name string `column:"name" json:"name,omitempty"`
+
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+
+	// PipelineID 流水线ID
+	PipelineID string `column:"pipelineID" json:"pipelineID,omitempty"`
+
+	// DefaultReply 默认回复
+	DefaultReply string `column:"defaultReply" json:"defaultReply,omitempty"`
+
+	// AgentType 智能体类型
+	AgentType int `column:"agentType" json:"agentType,omitempty"`
+
+	// AgentPrompt 智能体的提示词
+	AgentPrompt string `column:"agentPrompt" json:"agentPrompt,omitempty"`
+
+	// Avatar 头像
+	Avatar string `column:"avatar" json:"avatar,omitempty"`
+
+	// Welcome 欢迎语
+	Welcome string `column:"welcome" json:"welcome,omitempty"`
+
+	// Tools tools调用的函数名称
+	Tools string `column:"tools" json:"tools,omitempty"`
+
+	// MemoryLength 上下文记忆的长度
+	MemoryLength int `column:"memoryLength" json:"memoryLength,omitempty"`
+
+	// CreateTime 创建时间
+	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+
+	// UpdateTime 更新时间
+	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+
+	// CreateUser 创建人,初始化 system
+	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+
+	// SortNo 排序
+	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+
+	// Status 状态 禁用(0),可用(1)
+	Status int `column:"status" json:"status,omitempty"`
+}
+
+// GetTableName 获取表名称
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Agent) GetTableName() string {
+	return tableAgentName
+}
+
+// GetPKColumnName 获取数据库表的主键字段名称.因为要兼容Map,只能是数据库的字段名称
+// 不支持联合主键,变通认为无主键,业务控制实现(艰难取舍)
+// 如果没有主键,也需要实现这个方法, return "" 即可
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *Agent) GetPKColumnName() string {
+	return "id"
+}
+
 // Site 站点信息
 type Site struct {
 	// 引入默认的struct,隔离IEntityStruct的方法改动
