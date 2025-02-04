@@ -38,9 +38,9 @@ import (
 )
 
 const (
-	errorKey      string = "__error__"
-	nextComponent string = "__next__"
-	endValue      string = "__end__"
+	errorKey         string = "__error__"
+	nextComponentKey string = "__next__"
+	endKey           string = "__end__"
 )
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
@@ -100,9 +100,42 @@ func initComponentMap() {
 
 // Pipeline 流水线也是组件
 type Pipeline struct {
+	Start   string            `json:"start,omitempty"`
+	Process map[string]string `json:"process,omitempty"`
 }
 
 func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
+	return component.runProcess(ctx, input, component.Start)
+}
+
+func (component *Pipeline) runProcess(ctx context.Context, input map[string]interface{}, componentName string) error {
+	pipelineComponent, has := componentMap[componentName]
+	if !has {
+		return errors.New(fmt.Sprintf(funcT("The %s component of the pipeline does not exist"), componentName))
+	}
+	err := pipelineComponent.Run(ctx, input)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	errObj, has := input[errorKey]
+	if has {
+		return errObj.(error)
+	}
+	_, has = input[endKey]
+	if has {
+		return nil
+	}
+	nextComponentName := component.Process[componentName]
+	nextComponentObj, has := input[nextComponentKey]
+	if has && nextComponentObj.(string) != "" {
+		nextComponentName = nextComponentObj.(string)
+	}
+
+	if nextComponentName != "" {
+		return component.runProcess(ctx, input, nextComponentName)
+	}
+
 	return nil
 }
 

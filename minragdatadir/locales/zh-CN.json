@@ -186,5 +186,6 @@
   "The query of FtsKeywordRetriever cannot be empty":"FtsKeywordRetriever的query不能为空",
   "input['documentChunks'] cannot be empty":"input['documentChunks']不能为空",
   "input['prompt'] cannot be empty":"input['prompt']不能为空",
-  "input['messages'] cannot be empty":"input['messages']不能为空"
+  "input['messages'] cannot be empty":"input['messages']不能为空",
+  "The %s component of the pipeline does not exist":"Pipeline流水线的组件%s不存在"
 }
