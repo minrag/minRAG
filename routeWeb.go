@@ -59,6 +59,7 @@ func funcError(ctx context.Context, c *app.RequestContext) {
 func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 
 	input := make(map[string]interface{}, 0)
+	input["c"] = c
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
 	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}

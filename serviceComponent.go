@@ -33,6 +33,7 @@ import (
 	"time"
 
 	"gitee.com/chunanyong/zorm"
+	"github.com/cloudwego/hertz/pkg/app"
 )
 
 const (
@@ -728,6 +729,12 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 	}
 	defer resp.Body.Close()
 
+	var c *app.RequestContext
+	cObj, has := input["c"]
+	if has {
+		c = cObj.(*app.RequestContext)
+	}
+
 	choice := Choice{FinishReason: "stop"}
 	var message strings.Builder
 	// 使用 bufio.NewReader 逐行读取响应体
@@ -776,6 +783,10 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 			choice.FinishReason = choiceDelta.FinishReason
 		}
 		// TODO 需要输出到前端页面
+		if c != nil {
+			c.WriteString(choiceDelta.Delta.Content)
+			c.Flush()
+		}
 		message.WriteString(choiceDelta.Delta.Content)
 	}
 	choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
