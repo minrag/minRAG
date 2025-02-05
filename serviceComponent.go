@@ -18,11 +18,13 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -634,13 +636,13 @@ type Choice struct {
 	FinishReason string      `json:"finish_reason,omitempty"`
 	Index        int         `json:"index,omitempty"`
 	Message      ChatMessage `json:"message,omitempty"`
+	Delta        ChatMessage `json:"delta,omitempty"`
 }
 
 type ChatMessage struct {
-	Role       string     `json:"role,omitempty"`
-	Content    string     `json:"content,omitempty"`
-	ToolCallId string     `json:"tool_call_id,omitempty"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+	Role      string     `json:"role,omitempty"`
+	Content   string     `json:"content,omitempty"`
+	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }
 type ToolCall struct {
 	Id         string       `json:"id,omitempty"`
@@ -695,13 +697,14 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		bodyMap["temperature"] = component.Temperature
 	}
 	bodyMap["stream"] = component.Stream
+	url := component.BaseURL + "/chat/completions"
 	if !component.Stream {
-		choiceStr, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL+"/chat/completions", component.DefaultHeaders, bodyMap, "choices")
+		choiceObj, err := httpPostJsonSlice0(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap, "choices")
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		choiceByte, err := json.Marshal(choiceStr)
+		choiceByte, err := json.Marshal(choiceObj)
 		if err != nil {
 			input[errorKey] = err
 			return err
@@ -715,7 +718,68 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		input["choice"] = choice
 		return nil
 	}
+	component.DefaultHeaders["Accept"] = "text/event-stream"
+	component.DefaultHeaders["Cache-Control"] = "no-cache"
+	component.DefaultHeaders["Connection"] = "keep-alive"
+	resp, err := httpPostResponse(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	defer resp.Body.Close()
 
+	choice := Choice{FinishReason: "stop"}
+	var message strings.Builder
+	// 使用 bufio.NewReader 逐行读取响应体
+	reader := bufio.NewReader(resp.Body)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			input[errorKey] = err
+			return err
+		}
+
+		// 去掉行首的换行符
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		if !strings.HasPrefix(line, "data: ") {
+			err := errors.New("stream data format is error")
+			input[errorKey] = err
+			return err
+		}
+		data := strings.TrimPrefix(line, "data: ")
+		if data == "[DONE]" {
+			break
+		}
+		choiceObj, err := bodyJsonKeyValue([]byte(data), "choices")
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		choiceByte, err := json.Marshal(choiceObj)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		choiceDelta := Choice{}
+		err = json.Unmarshal(choiceByte, &choiceDelta)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		if choiceDelta.FinishReason != "" {
+			choice.FinishReason = choiceDelta.FinishReason
+		}
+		// TODO 需要输出到前端页面
+		message.WriteString(choiceDelta.Delta.Content)
+	}
+	choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
+	input["choice"] = choice
 	return nil
 
 }
