@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -70,6 +71,13 @@ func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 	pipeline := componentMap[agent.PipelineID]
 	pipeline.Run(ctx, input)
 	chatCompletionMessage := input["chatCompletionMessage"]
+	err := input[errorKey]
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: chatCompletionMessage, ERR: err.(error)})
+		return
+	}
+
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: chatCompletionMessage})
 }
 
