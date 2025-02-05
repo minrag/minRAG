@@ -39,7 +39,7 @@ func TestVecQuery(t *testing.T) {
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ? ORDER BY score LIMIT 5", query)
 	datas := make([]DocumentChunk, 0)
 	zorm.Query(ctx, finder, &datas, nil)
-	fmt.Println(len(datas))
+
 	for i := 0; i < len(datas); i++ {
 		data := datas[i]
 		fmt.Println(data.DocumentID, data.Score)
@@ -125,13 +125,13 @@ func TestPromptBuilder(t *testing.T) {
 
 	openAIChatCompletion := componentMap["OpenAIChatCompletion"]
 	err = openAIChatCompletion.Run(ctx, input)
-	chatCompletionMessage := input["chatCompletionMessage"]
-	fmt.Println(chatCompletionMessage)
+	choice := input["choice"]
+	fmt.Println(choice)
 }
 
 func TestPipline(t *testing.T) {
 	ctx := context.Background()
-	defaultPipline := componentMap["defaultPipline"]
+	defaultPipline := componentMap["default"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
@@ -143,6 +143,6 @@ func TestPipline(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	chatCompletionMessage := input["chatCompletionMessage"]
-	fmt.Println(chatCompletionMessage)
+	choice := input["choice"]
+	fmt.Println(choice)
 }
