@@ -23,15 +23,28 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"time"
 )
 
 // httpPostJsonSlice0 使用Post发送Json请求,并把返回值中,指定key的值变成数组,然后取值第一个返回
 func httpPostJsonSlice0(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}, resultKey string) (interface{}, error) {
+	resp, err := httpPostResponse(client, authorization, url, header, bodyMap)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应体内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return bodyJsonKeyValue(body, resultKey)
+}
+
+// httpPostResponse post请求的response
+func httpPostResponse(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) (*http.Response, error) {
 	if client == nil {
-		client = &http.Client{
-			Timeout: time.Second * time.Duration(60),
-		}
+		return nil, errors.New("httpClient is nil")
 	}
 	// 序列化请求体
 	payloadBytes, err := json.Marshal(bodyMap)
@@ -55,29 +68,28 @@ func httpPostJsonSlice0(client *http.Client, authorization string, url string, h
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
-	defer resp.Body.Close()
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, errors.New("http post error")
 	}
+	return resp, err
+}
 
-	// 读取响应体内容
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+// bodyJsonKeyValue 从body中json对象中,获取指定的key
+func bodyJsonKeyValue(body []byte, key string) (interface{}, error) {
 
 	// 将 JSON 数据解析为 map[string]interface{}
 	var resultMap map[string]interface{}
 	if err := json.Unmarshal(body, &resultMap); err != nil {
 		return nil, err
 	}
-	if resultKey == "" {
+	if key == "" {
 		return resultMap, nil
 	}
-	resultSlice := resultMap[resultKey]
+	resultSlice := resultMap[key]
 	if resultSlice == nil {
 		return resultSlice, nil
 	}
