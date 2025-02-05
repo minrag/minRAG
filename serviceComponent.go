@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -32,9 +31,6 @@ import (
 	"time"
 
 	"gitee.com/chunanyong/zorm"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
-	"github.com/openai/openai-go/shared"
 )
 
 const (
@@ -277,42 +273,54 @@ func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
 type OpenAITextEmbedder struct {
 	APIKey         string            `json:"apikey,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	BaseURL        string            `json:"baseURL,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
-	client         *openai.Client    `json:"-"`
+	client         *http.Client      `json:"-"`
 }
 
 func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
-	component.client = openai.NewClient(
-		option.WithAPIKey(component.APIKey),
-		option.WithBaseURL(component.APIBaseURL),
-		option.WithMaxRetries(component.MaxRetries),
-		option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
-	)
+
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+
 	return nil
 }
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	headerOpention := make([]option.RequestOption, 0)
-	if len(component.DefaultHeaders) > 0 {
-		for k, v := range component.DefaultHeaders {
-			headerOpention = append(headerOpention, option.WithHeader(k, v))
-		}
+	queryObj, has := input["query"]
+	if !has {
+		return errors.New(funcT("input['query'] cannot be empty"))
 	}
-	query := input["query"].(string)
-	response, err := component.client.Embeddings.New(ctx, openai.EmbeddingNewParams{
-		Model:          openai.F(component.Model),
-		EncodingFormat: openai.F(openai.EmbeddingNewParamsEncodingFormatFloat),
-		Input:          openai.F[openai.EmbeddingNewParamsInputUnion](shared.UnionString(query))}, headerOpention...)
-	if err != nil {
+	bodyMap := make(map[string]interface{}, 0)
+	bodyMap["input"] = queryObj.(string)
+	bodyMap["model"] = component.Model
+	bodyMap["encoding_format"] = "float"
+	//bodyMap["dimensions"] = 1
+	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap, "data")
+
+	if err != nil || result == nil {
 		input[errorKey] = err
 		return err
 	}
-	input["embedding"] = response.Data[0].Embedding
+	resultMap, ok := result.(map[string]interface{})
+	if !ok || resultMap == nil {
+		return errors.New("result is not map")
+	}
+	embeddingObj, ok := resultMap["embedding"]
+	if !ok || embeddingObj == nil {
+		return errors.New("embedding is empty")
+	}
+	embedding := make([]float64, 0)
+	embeddingSlice := embeddingObj.([]interface{})
+	for i := 0; i < len(embeddingSlice); i++ {
+		embedding = append(embedding, embeddingSlice[i].(float64))
+	}
+	input["embedding"] = embedding
 	return nil
 }
 
@@ -512,7 +520,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 type DocumentChunksReranker struct {
 	APIKey         string            `json:"apikey,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	BaseURL        string            `json:"baseURL,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	// Query 需要查询的关键字
@@ -554,56 +562,13 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 		"top_n":     component.TopK,
 		"documents": documents,
 	}
-	// 序列化请求体
-	payloadBytes, err := json.Marshal(bodyMap)
+
+	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL, nil, bodyMap, "results")
 	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-
-	// 创建HTTP请求
-	req, err := http.NewRequest("POST", component.APIBaseURL, bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-
-	// 设置请求头
-	req.Header.Set("Authorization", "Bearer "+component.APIKey)
-	req.Header.Set("Content-Type", "application/json")
-	if len(component.DefaultHeaders) > 0 {
-		for k, v := range component.DefaultHeaders {
-			req.Header.Set(k, v)
-		}
-	}
-	resp, err := component.client.Do(req)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-	defer resp.Body.Close()
-	// 检查状态码
-	if resp.StatusCode != http.StatusOK {
-		err := errors.New("DocumentChunksReranker http post error")
-		input[errorKey] = err
-		return err
-	}
-
-	// 读取响应体内容
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-
-	// 将 JSON 数据解析为 map[string]interface{}
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
-		input[errorKey] = err
-		return err
-	}
-
-	fmt.Println(result["results"])
+	fmt.Println(result)
 
 	return nil
 }
@@ -654,52 +619,67 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 		input[errorKey] = err
 		return err
 	}
-	messages := make([]openai.ChatCompletionMessageParamUnion, 0)
+	messages := make([]ChatMessage, 0)
 	ms, has := input["messages"]
 	if has {
-		messages = ms.([]openai.ChatCompletionMessageParamUnion)
+		messages = ms.([]ChatMessage)
 	}
-	promptMessage := openai.UserMessage(prompt.(string))
+	promptMessage := ChatMessage{Role: "user", Content: prompt.(string)}
 	messages = append(messages, promptMessage)
 	input["messages"] = messages
 	return nil
+}
+
+type Choice struct {
+	FinishReason string      `json:"finish_reason,omitempty"`
+	Index        int         `json:"index,omitempty"`
+	Message      ChatMessage `json:"message,omitempty"`
+}
+
+type ChatMessage struct {
+	Role       string     `json:"role,omitempty"`
+	Content    string     `json:"content,omitempty"`
+	ToolCallId string     `json:"tool_call_id,omitempty"`
+	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+}
+type ToolCall struct {
+	Id         string       `json:"id,omitempty"`
+	Type       string       `json:"type,omitempty"`
+	ToolCallId string       `json:"tool_call_id,omitempty"`
+	Function   ChatFunction `json:"function,omitempty"`
+}
+type ChatFunction struct {
+	Name      string `json:"name,omitempty"`
+	Arguments string `json:"arguments,omitempty"`
 }
 
 // OpenAIChatCompletion OpenAI的LLM大语言模型
 type OpenAIChatCompletion struct {
 	APIKey         string            `json:"apikey,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	APIBaseURL     string            `json:"apiBaseURL,omitempty"`
+	BaseURL        string            `json:"baseURL,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
 	Temperature    float32           `json:"temperature,omitempty"`
 	Stream         bool              `json:"stream,omitempty"`
 	//MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
-	client *openai.Client `json:"-"`
+	client *http.Client `json:"-"`
 }
 
 func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
-	component.client = openai.NewClient(
-		option.WithAPIKey(component.APIKey),
-		option.WithBaseURL(component.APIBaseURL),
-		option.WithMaxRetries(component.MaxRetries),
-		option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
-	)
+
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+
 	return nil
 }
 func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
-	headerOpention := make([]option.RequestOption, 0)
-	if len(component.DefaultHeaders) > 0 {
-		for k, v := range component.DefaultHeaders {
-			headerOpention = append(headerOpention, option.WithHeader(k, v))
-		}
-	}
-
-	var messages []openai.ChatCompletionMessageParamUnion
+	var messages []ChatMessage
 	ms, has := input["messages"]
 
 	if !has {
@@ -707,33 +687,35 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		input[errorKey] = err
 		return err
 	}
-	messages = ms.([]openai.ChatCompletionMessageParamUnion)
-	chatCompletionNewParams := openai.ChatCompletionNewParams{
-		Model:    openai.F(component.Model),
-		Messages: openai.F(messages),
+	messages = ms.([]ChatMessage)
+	bodyMap := make(map[string]interface{})
+	bodyMap["messages"] = messages
+	bodyMap["model"] = component.Model
+	if component.Temperature != 0 {
+		bodyMap["temperature"] = component.Temperature
 	}
+	bodyMap["stream"] = component.Stream
 	if !component.Stream {
-		chatCompletion, err := component.client.Chat.Completions.New(ctx, chatCompletionNewParams, headerOpention...)
+		choiceStr, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL+"/chat/completions", component.DefaultHeaders, bodyMap, "choices")
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		chatCompletionMessage := chatCompletion.Choices[0].Message
-		input["chatCompletionMessage"] = chatCompletionMessage
-		fmt.Println(chatCompletionMessage)
+		choiceByte, err := json.Marshal(choiceStr)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		choice := Choice{}
+		err = json.Unmarshal(choiceByte, &choice)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		input["choice"] = choice
 		return nil
 	}
-	stream := component.client.Chat.Completions.NewStreaming(ctx, chatCompletionNewParams)
-	for stream.Next() {
-		evt := stream.Current()
-		if len(evt.Choices) > 0 {
-			print(evt.Choices[0].Delta.Content)
-		}
-	}
-	if err := stream.Err(); err != nil {
-		input[errorKey] = err
-		return err
-	}
+
 	return nil
 
 }

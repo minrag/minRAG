@@ -70,15 +70,15 @@ func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 	agent, _ := findAgentByID(ctx, agentID)
 	pipeline := componentMap[agent.PipelineID]
 	pipeline.Run(ctx, input)
-	chatCompletionMessage := input["chatCompletionMessage"]
+	choice := input["choice"]
 	err := input[errorKey]
 	if err != nil {
 		fmt.Println(err)
-		c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: chatCompletionMessage, ERR: err.(error)})
+		c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice, ERR: err.(error)})
 		return
 	}
 
-	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: chatCompletionMessage})
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice})
 }
 
 // warpRequestMap 包装请求参数为map
