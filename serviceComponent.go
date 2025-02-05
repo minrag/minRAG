@@ -61,6 +61,9 @@ var componentMap = make(map[string]IComponent, 0)
 
 // IComponent 组件的接口
 type IComponent interface {
+	// Initialization 初始化方法
+	Initialization(ctx context.Context, input map[string]interface{}) error
+	// Run 执行方法
 	Run(ctx context.Context, input map[string]interface{}) error
 }
 
@@ -87,10 +90,20 @@ func initComponentMap() {
 		// 将反射对象转换为接口类型
 		component := cPtr.Interface().(IComponent)
 		if c.Parameter == "" {
+			err := component.Initialization(ctx, nil)
+			if err != nil {
+				FuncLogError(ctx, err)
+				continue
+			}
 			componentMap[c.Id] = component
 			continue
 		}
 		err := json.Unmarshal([]byte(c.Parameter), component)
+		if err != nil {
+			FuncLogError(ctx, err)
+			continue
+		}
+		err = component.Initialization(ctx, nil)
 		if err != nil {
 			FuncLogError(ctx, err)
 			continue
@@ -105,10 +118,12 @@ type Pipeline struct {
 	Process map[string]string `json:"process,omitempty"`
 }
 
+func (component *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
 func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
 	return component.runProcess(ctx, input, component.Start)
 }
-
 func (component *Pipeline) runProcess(ctx context.Context, input map[string]interface{}, componentName string) error {
 	pipelineComponent, has := componentMap[componentName]
 	if !has {
@@ -147,6 +162,9 @@ type DocumentSplitter struct {
 	SplitOverlap int      `json:"splitOverlap,omitempty"`
 }
 
+func (component *DocumentSplitter) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
 func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) error {
 	document, has := input["document"].(*Document)
 	if document == nil || (!has) {
@@ -266,19 +284,19 @@ type OpenAITextEmbedder struct {
 	client         *openai.Client    `json:"-"`
 }
 
-func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.client == nil {
-		if component.Timeout == 0 {
-			component.Timeout = 60
-		}
-		component.client = openai.NewClient(
-			option.WithAPIKey(component.APIKey),
-			option.WithBaseURL(component.APIBaseURL),
-			option.WithMaxRetries(component.MaxRetries),
-			option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
-		)
+func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Timeout == 0 {
+		component.Timeout = 60
 	}
-
+	component.client = openai.NewClient(
+		option.WithAPIKey(component.APIKey),
+		option.WithBaseURL(component.APIBaseURL),
+		option.WithMaxRetries(component.MaxRetries),
+		option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
+	)
+	return nil
+}
+func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
 	headerOpention := make([]option.RequestOption, 0)
 	if len(component.DefaultHeaders) > 0 {
 		for k, v := range component.DefaultHeaders {
@@ -312,6 +330,9 @@ type VecEmbeddingRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
+func (component *VecEmbeddingRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
 func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
@@ -409,6 +430,9 @@ type FtsKeywordRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
+func (component *FtsKeywordRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
 func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
@@ -500,15 +524,19 @@ type DocumentChunksReranker struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunksReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
-	if component.client == nil {
-		component.client = &http.Client{
-			Timeout: time.Second * time.Duration(component.Timeout),
-		}
+
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
 	}
+
+	return nil
+}
+func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
+
 	dcs, has := input["documentChunks"]
 	if !has || dcs == nil {
 		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
@@ -586,17 +614,16 @@ type PromptBuilder struct {
 	t              *template.Template `json:"-"`
 }
 
-func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.t == nil {
-		var err error
-		tmpl := template.New("minrag-promptBuilder")
-		component.t, err = tmpl.Parse(component.PromptTemplate)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
+func (component *PromptBuilder) Initialization(ctx context.Context, input map[string]interface{}) error {
+	var err error
+	tmpl := template.New("minrag-promptBuilder")
+	component.t, err = tmpl.Parse(component.PromptTemplate)
+	if err != nil {
+		return err
 	}
-
+	return nil
+}
+func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
 	// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
 	var buf bytes.Buffer
 	// 执行模板并将结果写入到 bytes.Buffer
@@ -617,6 +644,9 @@ type OpenAIChatMessageMemory struct {
 	MemoryLength int `json:"memoryLength,omitempty"`
 }
 
+func (component *OpenAIChatMessageMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
 func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) error {
 	prompt, has := input["prompt"]
 	if !has {
@@ -649,18 +679,19 @@ type OpenAIChatCompletion struct {
 	client *openai.Client `json:"-"`
 }
 
-func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.client == nil {
-		if component.Timeout == 0 {
-			component.Timeout = 60
-		}
-		component.client = openai.NewClient(
-			option.WithAPIKey(component.APIKey),
-			option.WithBaseURL(component.APIBaseURL),
-			option.WithMaxRetries(component.MaxRetries),
-			option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
-		)
+func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Timeout == 0 {
+		component.Timeout = 60
 	}
+	component.client = openai.NewClient(
+		option.WithAPIKey(component.APIKey),
+		option.WithBaseURL(component.APIBaseURL),
+		option.WithMaxRetries(component.MaxRetries),
+		option.WithRequestTimeout(time.Second*time.Duration(component.Timeout)),
+	)
+	return nil
+}
+func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
 	headerOpention := make([]option.RequestOption, 0)
 	if len(component.DefaultHeaders) > 0 {
 		for k, v := range component.DefaultHeaders {
@@ -682,7 +713,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		Messages: openai.F(messages),
 	}
 	if !component.Stream {
-		chatCompletion, err := component.client.Chat.Completions.New(ctx, chatCompletionNewParams)
+		chatCompletion, err := component.client.Chat.Completions.New(ctx, chatCompletionNewParams, headerOpention...)
 		if err != nil {
 			input[errorKey] = err
 			return err
