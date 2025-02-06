@@ -1,1 +1,86 @@
-agent
+<!-- 查询 agent -->
+{{ $agentSQL := "* FROM agent WHERE id=? and status=1 order by status desc, sortNo desc" }}
+
+{{ if eq .userType 1}}
+  {{ $agentSQL ="* FROM agent WHERE id=? order by sortNo desc" }}
+{{end}}
+
+{{ $agent := selectOne "agent" $agentSQL .agentID }}
+<!DOCTYPE html>
+<html lang="{{locale}}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" document="IE=edge">
+    <meta name="viewport" document="width=device-width, initial-scale=1">
+    <title>{{$agent.Name}} - MINRAG</title>
+</head>
+
+<body>
+        <h2>MINRAG SSE</h2>
+        <input type="text" name="query" id="query" /> <button onclick="send()">发送</button> </br>
+        <div id="messages"></div>
+      
+        
+</body>
+<script>
+    var roomID=new Date().getTime()+"_{{.agentID}}"
+    async function fetchSse(url) {
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'text/event-stream',
+                    'Cache-Control':'no-cache',
+                    'Connection':'keep-alive',
+                },
+                body:JSON.stringify({
+                    "agentID":"{{.agentID}}",
+                    "roomID":roomID,
+                    "query":document.getElementById("query").value,
+                }),
+            });
+    
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+    
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let buffer = '';
+    
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) {
+                    console.log('Stream complete');
+                    break;
+                }
+    
+                const chunk = decoder.decode(value, { stream: true });
+                const lines=chunk.split("\n\n");
+                for (const line of lines) {
+                    if (!line.startsWith('data: ')) {
+                        continue;
+                    }
+                    const data = line.substring(6);
+                    if(data=="[DONE]"){
+                        continue;
+                    }
+                    document.getElementById("messages").innerHTML=document.getElementById("messages").innerHTML+data
+            }
+                
+    
+    
+            }
+        } catch (error) {
+            console.error('Fetch stream failed:', error);
+        }
+    }
+    
+    function send(){
+        document.getElementById("messages").innerHTML=document.getElementById("messages").innerHTML+"</br>"
+        // 调用函数
+        fetchSse('{{basePath}}agent/sse');
+    }
+    
+</script>
+</html>
