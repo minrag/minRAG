@@ -1,8 +1,9 @@
 <img src="minragdatadir/public/minrag-logo.png" height="150px" />  
   
 ## 介绍  
-minrag追求极致的简单和强大,不超过1万行代码,实现dify的核心功能.    
-Fork [gpress v1.0.8](https://gitee.com/gpress/gpress)代码修改,无需安装,双击启动即可使用.  
+minrag追求极致的简单和强大,不超过1万行代码,无需安装,双击启动,实现dify的核心功能.    
+Fork [gpress v1.0.8](https://gitee.com/gpress/gpress)代码修改,无需安装,双击启动即可使用.    
+使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了DocumentSplitter、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMessageMemory、OpenAIChatCompletion、Pipeline等组件,支持流水线设置和扩展.  
 
 
 ## 开发环境  
@@ -40,79 +41,6 @@ make loadable
 ## dist/vec0.dll
 ```
 
-
-## 静态化
-后台 ```刷新站点``` 功能会生成静态html文件到 ```statichtml``` 目录,同时生成```gzip_static```文件.需要把正在使用的主题的 ```css,js,image```和```minragdatadir/public```目录复制到 ```statichtml```目录下,或者用Nginx反向代理指定目录,不复制文件.    
-nginx 配置示例如下:
-```conf
-### 当前在用主题(default)的css文件
-location ~ ^/css/ {
-    #gzip_static on;
-    root /data/minrag/minragdatadir/template/theme/default;  
-}
-### 当前在用主题(default)的js文件
-location ~ ^/js/ {
-    #gzip_static on;
-    root /data/minrag/minragdatadir/template/theme/default;  
-}
-### 当前在用主题(default)的image文件
-location ~ ^/image/ {
-    root /data/minrag/minragdatadir/template/theme/default;  
-}
-### search-data.json FlexSearch搜索的JSON数据
-location ~ ^/public/search-data.json {
-    #gzip_static on;
-    root /data/minrag/minragdatadir;  
-}
-### public 公共文件
-location ~ ^/public/ {
-    root /data/minrag/minragdatadir;  
-}
-    
-### admin 后台管理,请求动态服务
-location ~ ^/admin/ {
-    proxy_redirect     off;
-    proxy_set_header   Host      $host;
-    proxy_set_header   X-Real-IP $remote_addr;
-    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header   X-Forwarded-Proto $scheme;
-    proxy_pass  http://127.0.0.1:738;  
-}
-###  静态html目录
-location / {
-    proxy_redirect     off;
-    proxy_set_header   Host      $host;
-    proxy_set_header   X-Real-IP $remote_addr;
-    proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-    proxy_set_header   X-Forwarded-Proto $scheme; 
-    ## 存在q查询参数,使用动态服务.也支持FlexSearch解析public/search-data.json
-    if ($arg_q) { 
-       proxy_pass  http://127.0.0.1:738;  
-       break;
-    }
-
-    ### 开启gzip静态压缩
-    #gzip_static on;
-
-    ### Nginx 1.26+ 不需要再进行302重定向到目录下的index.html,gzip_static也会生效.这段配置留作记录.
-    ##if ( -d $request_filename ) {
-        ## 不是 / 结尾
-    ##    rewrite [^\/]$ $uri/index.html redirect;
-        ##以 / 结尾的
-    ##    rewrite ^(.*) ${uri}index.html redirect;      
-    ##}
-    
-    ### 当前在用主题(default)的静态文件目录
-    root   /data/minrag/minragdatadir/statichtml/default;
-    
-    ### if 指令可能会和 try_files 指令冲突,造成 try_files 无效
-    ## 避免目录 301 重定向,例如 /about 会301到 /about/           
-    try_files $uri $uri/index.html;
-    
-    index  index.html index.htm;
-}
-
-``` 
 ## 后台管理支持英文
 minrag后台管理目前支持中英双语,支持扩展其他语言,语言文件在 ```minragdatadir/locales```,初始化安装默认使用的中文(```zh-CN```),如果需要英文,可以在安装前把```minragdatadir/install_config.json```中的```"locale":"zh-CN"```修改为```"locale":"en-US"```.也可以在安装成功之后,在```设置```中修改```语言```为```English```,并重启生效.  
 
@@ -137,7 +65,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
 | updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
 | createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  正序  |
+| sortNo      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 用户(表名:user)
@@ -152,7 +80,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
 | updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
 | createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  正序  |
+| sortNo      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 站点信息(表名:site)
@@ -173,7 +101,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
 | updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
 | createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  正序  |
+| sortNo      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 知识库(表名:knowledgeBase)
@@ -181,44 +109,77 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | ----------- | ----------- | ----------- | ----------- |
 | id          | string      | 主键         | URL路径,用/隔开,例如/web/ |
 | name        | string      | 知识库名称     |    -  |
-| hrefURL     | string      | 跳转路径     |    -  |
-| hrefTarget  | string      | 跳转方式     | _self,_blank,_parent,_top|
 | pid         | string      | 父知识库ID     | 父知识库ID  |
-| templateFile  | string      | 模板文件       | 当前知识库页的模板  |
-| childTemplateFile  | string | 子主题模板文件  | 子页面默认使用的模板,子页面如果不设置,默认使用这个模板 |
-| keyword     | string      | 知识库关键字   | 是      |        |
-| description | string      | 知识库描述     | 是      |        |
+| knowledgeBaseType  | int      | 知识库类型       | -  |
 | createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
 | updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
 | createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  正序  |
+| sortNo      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 文档(表名:document)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | URL路径,用/隔开,例如/web/nginx-use-hsts |
-| title       | string      | 文章标题     | 是      |    使用 jieba 分词器    |
-| keyword     | string      | 内容关键字   | 是      |    使用 jieba 分词器    |
-| description | string      | 内容描述     | 是      |    使用 jieba 分词器    |
-| hrefURL     | string      | 自身页面路径 | 否      |    -                    |
-| subtitle    | string      | 副标题       | 是      |      使用 jieba 分词器  |
-| author      | string      | 作者         | 是      |      使用 jieba 分词器  |
-| tag         | string      | 标签         | 是      |      使用 jieba 分词器  |
-| toc         | string      | 目录         | 是      |      使用 jieba 分词器  |
-| summary     | string      | 摘要         | 是      |      使用 jieba 分词器  |
-| knowledgeBaseName| string      | 知识库,逗号(,)隔开| 是| 使用 jieba 分词器.      |
-| knowledgeBaseID  | string      | 知识库ID       | 否      | -                       |
-| templateFile| string      | 模板文件     | 否      | 模板                    |
-| document     | string      | 文档     | 否      |                         |
-| markdown    | string      | Markdown内容 | 否      |                         |
-| thumbnail   | string      | 封面图       | 否      |                         |
-| signature   | string      | 私钥对内容的签名 | 否   |                         |
-| signAddress | string      | 签名的Address   | 否   |                         |
-| signChain   | string      | Address所属的链 | 否   |                         |
-| txID        | string      | 上链交易的Hash  | 否   |                         |
+| name        | string      | 文档名称     | 否      |    -    |
+| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
+| knowledgeBaseName | string | 知识库名称   | 否      |    -    |
+| toc         | string      | 目录         | 否      |      -  |
+| summary     | string      | 摘要         | 否      |      -  |
+| markdown    | string      | Markdown内容 | 否      | - |
+| filePath    | string      | 文件路径     | 否      |                         |
+| fileSize    | int      | 文件大小 | 否   |                         |
+| fileExt     | string      | 文件扩展名   | 否   |                         |
 | createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
 | updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
 | createUser  | string      | 创建人       | -       |  初始化 system          |
-| sortNo      | int         | 排序         | -       |  正序                   |
-| status      | int         | 状态     | -       |  禁用(0),可用(1)  |
+| sortNo      | int         | 排序         | -       |  倒序                   |
+| status      | int         | 状态     | - | 禁用(0),可用(1),处理中(2),处理失败(3) |
+
+
+### 文档拆分(表名:document_chunk)
+| columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
+| ----------- | ----------- | ----------- | ------- | ---------------------- |
+| id          | string      | 主键         |   否    | - |
+| documentID  | string      | 文档ID     | 否      |    -    |
+| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
+| knowledgeBaseName | string | 知识库名称   | 否      |    -    |
+| markdown    | string      | Markdown内容 | 是      | 使用 jieba 分词器 |
+| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| createUser  | string      | 创建人       | -       |  初始化 system          |
+| sortNo      | int         | 排序         | -       |  倒序                   |
+| status      | int         | 状态     | - | 禁用(0),可用(1),处理中(2),处理失败(3) |
+
+### 组件(表名:component)
+| columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
+| ----------- | ----------- | ----------- | ------- | ---------------------- |
+| id          | string      | 主键         |   否    | - |
+| componentType| string     | 组件类型     | 否      |    -    |
+| parameter  | string       | 组件参数     | 否      |    -    |
+| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| createUser  | string      | 创建人       | -       |  初始化 system          |
+| sortNo      | int         | 排序         | -       |  倒序                   |
+| status      | int         | 状态         | -       | 禁用(0),可用(1) |
+
+### 智能体(表名:agent)
+| columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
+| ----------- | ----------- | ----------- | ------- | ---------------------- |
+| id          | string      | 主键         |   否    | - |
+| name        | string      | 智能体名称    | 否      |    -    |
+| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
+| pipelineID  | string      | 流水线ID     | 否      |    -    |
+| defaultReply  | string    | 默认回复     | 否      |    -    |
+| agentType   | int         | 智能体类型     | 否      |    -    |
+| agentPrompt | string      | 智能体提示词 | 否      |    -    |
+| avatar      | string      | 智能体头像   | 否      |    -    |
+| welcome     | string      | 欢迎语       | 否      |    -    |
+| tools       | string      | 调用的函数   | 否      |    -    |
+| memoryLength| int         | 上下文记忆长度| 否      |    -    |
+| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| createUser  | string      | 创建人       | -       |  初始化 system          |
+| sortNo      | int         | 排序         | -       |  倒序                   |
+| status      | int         | 状态         | -       | 禁用(0),可用(1) |
+
