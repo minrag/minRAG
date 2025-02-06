@@ -21,10 +21,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol/http1/resp"
 )
 
 // init 初始化函数
@@ -41,7 +40,7 @@ func init() {
 
 	// 查看agent
 	h.GET("/agent/:agentID", funcAgentPre)
-
+	h.POST("/agent/sse", funcAgentSSE)
 }
 
 // funcIndex 模板首页
@@ -57,48 +56,81 @@ func funcError(ctx context.Context, c *app.RequestContext) {
 
 // funcAgentPre 智能体
 func funcAgentPre(ctx context.Context, c *app.RequestContext) {
+	data := warpRequestMap(c)
+	agentID := c.Param("agentID")
+	data["agentID"] = agentID
+	cHtml(c, http.StatusOK, "agent.html", data)
+}
 
+// funcAgent 智能体
+func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	input := make(map[string]interface{}, 0)
+	c.BindJSON(&input)
+	// 设置响应头
+	c.SetStatusCode(http.StatusOK)
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	writer := resp.NewChunkedBodyWriter(&c.Response, c.GetWriter())
+	c.Response.HijackWriter(writer)
+
 	input["c"] = c
-	input["query"] = "你在哪里?"
+	//input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
 	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
 	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
 	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
 	input["documentChunks"] = documentChunks
 
-	agentID := c.Param("agentID")
-	agent, _ := findAgentByID(ctx, agentID)
-	pipeline := componentMap[agent.PipelineID]
-	pipeline.Run(ctx, input)
-	choice := input["choice"]
-	err := input[errorKey]
+	agentIDObj, has := input["agentID"]
+	if !has || agentIDObj == nil || agentIDObj.(string) == "" {
+		c.WriteString(`data: agentID is empty\n\n`)
+		c.WriteString(`data: [DONE]\n\n`)
+		c.Flush()
+		c.Abort()
+		return
+	}
+	agentID := agentIDObj.(string)
+	agent, err := findAgentByID(ctx, agentID)
 	if err != nil {
-		fmt.Println(err)
-		c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice, ERR: err.(error)})
+		c.WriteString(`data: agent is empty\n\n`)
+		c.WriteString(`data: [DONE]\n\n`)
+		c.Flush()
+		c.Abort()
 		return
 	}
 
-	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice})
+	userId := c.GetString(tokenUserId)
+	if userId != "" {
+		input["roomID"] = userId + "_" + agentID
+	} else {
+		roomIDObj, has := input["roomID"]
+		if !has || roomIDObj.(string) == "" {
+			c.WriteString(`data: roomID is empty\n\n`)
+			c.WriteString(`data: [DONE]\n\n`)
+			c.Flush()
+			c.Abort()
+			return
+		}
+	}
+	input["knowledgeBaseID"] = agent.KnowledgeBaseID
+	pipeline := componentMap[agent.PipelineID]
+	pipeline.Run(ctx, input)
+	//choice := input["choice"]
+	errObj := input[errorKey]
+	if errObj != nil {
+		c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", err))
+		c.Flush()
+		c.Abort()
+		return
+	}
+	//fmt.Println(choice)
+	//c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice})
 }
 
 // warpRequestMap 包装请求参数为map
 func warpRequestMap(c *app.RequestContext) map[string]interface{} {
-	pageNoStr := c.Param("pageNo")
-	if pageNoStr == "" {
-		pageNoStr = c.GetString("pageNo")
-	}
-	if pageNoStr == "" {
-		//pageNoStr = c.DefaultQuery("pageNo", "1")
-		pageNoStr = "1"
-	}
-
-	pageNo, _ := strconv.Atoi(pageNoStr)
-	q := strings.TrimSpace(c.Query("q"))
-
 	data := make(map[string]interface{}, 0)
-	data["pageNo"] = pageNo
-	data["q"] = q
 	//设置用户角色,0是访客,1是管理员
 	userType, ok := c.Get(userTypeKey)
 	if ok {

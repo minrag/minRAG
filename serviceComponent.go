@@ -751,6 +751,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 
 		// 去掉行首的换行符
 		line = strings.TrimSpace(line)
+
 		if line == "" {
 			continue
 		}
@@ -761,8 +762,17 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		}
 		data := strings.TrimPrefix(line, "data: ")
 		if data == "[DONE]" {
+			// TODO 需要输出到前端页面
+			if c != nil {
+				c.WriteString("data: [DONE]\n\n")
+				c.Flush()
+			}
 			break
 		}
+		if data == "" {
+			continue
+		}
+
 		choiceObj, err := bodyJsonKeyValue([]byte(data), "choices")
 		if err != nil {
 			input[errorKey] = err
@@ -784,9 +794,10 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		}
 		// TODO 需要输出到前端页面
 		if c != nil {
-			c.WriteString(choiceDelta.Delta.Content)
+			c.WriteString("data: " + choiceDelta.Delta.Content + "\n\n")
 			c.Flush()
 		}
+
 		message.WriteString(choiceDelta.Delta.Content)
 	}
 	choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
