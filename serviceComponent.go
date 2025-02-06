@@ -515,7 +515,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
 		finder.Append(" and score >= ?", score)
 	}
-	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
+	finder.Append("ORDER BY score DESC LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
 	err := zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
