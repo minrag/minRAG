@@ -405,11 +405,12 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		finder.Append(" and documentID=?", documentID)
 	}
 	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID = ?", knowledgeBaseID)
+		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 	}
-	if score > 0.0 {
-		//finder.Append(" and score >= ?", score)
-	}
+	// 不支持 范围查询
+	//if score > 0.0 {
+	//finder.Append(" and score >= ?", score)
+	//}
 	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
 	err = zorm.Query(ctx, finder, &documentChunks, nil)
@@ -423,11 +424,16 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		input[errorKey] = err
 		return err
 	}
+
+	//重新排序
+	documentChunks = sortDocumentChunksScore(documentChunks, topK, score)
+
 	oldDcs, has := input["documentChunks"]
 	if has && oldDcs != nil {
 		oldDocumentChunks := oldDcs.([]DocumentChunk)
 		documentChunks = append(oldDocumentChunks, documentChunks...)
 	}
+
 	input["documentChunks"] = documentChunks
 	return nil
 }
@@ -498,15 +504,16 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if score <= 0 {
 		score = component.Score
 	}
-	finder := zorm.NewFinder().Append("SELECT rowid,rank as score,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
+	// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+	finder := zorm.NewFinder().Append("SELECT rowid,-1*rank as score,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
 	if knowledgeBaseID != "" {
 		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 	}
-	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-		//finder.Append(" and score <= ?", 0-score)
+	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
+		finder.Append(" and score >= ?", score)
 	}
 	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
@@ -515,6 +522,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 		input[errorKey] = err
 		return err
 	}
+
 	oldDcs, has := input["documentChunks"]
 	if has && oldDcs != nil {
 		oldDocumentChunks := oldDcs.([]DocumentChunk)
@@ -552,7 +560,8 @@ func (component *DocumentChunksReranker) Initialization(ctx context.Context, inp
 	return nil
 }
 func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
-
+	topK := 0
+	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
 	if !has || dcs == nil {
 		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
@@ -563,6 +572,25 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 	if !has {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+
+	tId, has := input["topK"]
+	if has {
+		topK = tId.(int)
+	}
+	if topK == 0 {
+		topK = component.TopK
+	}
+	if topK == 0 {
+		topK = 5
+	}
+	disId, has := input["score"]
+	if has {
+		score = disId.(float32)
+	}
+	if score <= 0 {
+		score = component.Score
+	}
+
 	documentChunks := dcs.([]DocumentChunk)
 	documents := make([]string, 0)
 	for i := 0; i < len(documentChunks); i++ {
@@ -589,9 +617,14 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 	rs := make([]float32, 0)
 	json.Unmarshal(rsStringByte, &rs)
 	for i := 0; i < len(documentChunks); i++ {
-		documentChunk := documentChunks[i]
-		documentChunk.Score = rs[i]
+		documentChunks[i].Score = rs[i]
 	}
+	documentChunks = sortDocumentChunksScore(documentChunks, topK, score)
+	input["documentChunks"] = documentChunks
+	return nil
+}
+
+func sortDocumentChunksScore(documentChunks []DocumentChunk, topK int, score float32) []DocumentChunk {
 	sort.Slice(documentChunks, func(i, j int) bool {
 		return documentChunks[i].Score > documentChunks[j].Score
 	})
@@ -599,16 +632,15 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 	resultDCS := make([]DocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
-		if len(resultDCS) >= component.TopK {
+		if len(resultDCS) >= topK {
 			break
 		}
-		if documentChunk.Score < component.Score {
+		if documentChunk.Score < score {
 			continue
 		}
 		resultDCS = append(resultDCS, documentChunk)
 	}
-	input["documentChunks"] = resultDCS
-	return nil
+	return resultDCS
 }
 
 // PromptBuilder 使用模板构建Prompt提示词
