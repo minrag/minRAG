@@ -93,11 +93,17 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 		c.Abort()
 		return
 	}
-
 	userId := c.GetString(tokenUserId)
 	if userId != "" {
 		input["roomID"] = userId + "_" + agentID
 	} else {
+		if agent.Status == 0 {
+			c.WriteString(`data: agent is disable\n\n`)
+			c.WriteString(`data: [DONE]\n\n`)
+			c.Flush()
+			c.Abort()
+			return
+		}
 		roomIDObj, has := input["roomID"]
 		if !has || roomIDObj.(string) == "" {
 			c.WriteString(`data: roomID is empty\n\n`)
