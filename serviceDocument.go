@@ -131,8 +131,7 @@ func findDocumentChunkMarkDown(ctx context.Context, documentChunks []DocumentChu
 		if err != nil {
 			return documentChunks, err
 		}
-		documentChunk.Markdown = markdown
-		documentChunks[i] = documentChunk
+		documentChunks[i].Markdown = markdown
 	}
 
 	return documentChunks, nil

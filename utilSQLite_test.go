@@ -25,6 +25,13 @@ import (
 	"gitee.com/chunanyong/zorm"
 )
 
+func TestVecLikeQuery(t *testing.T) {
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName).Append("WHERE knowledgeBaseID like ?  LIMIT 5", "%")
+	list, _ := zorm.QueryMap(context.Background(), finder, nil)
+	fmt.Println(len(list))
+	fmt.Println(list)
+}
+
 func TestVecQuery(t *testing.T) {
 	ctx := context.Background()
 	embedder := componentMap["OpenAITextEmbedder"]
