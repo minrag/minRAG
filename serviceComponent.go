@@ -27,6 +27,7 @@ import (
 	"io"
 	"net/http"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -404,10 +405,10 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		finder.Append(" and documentID=?", documentID)
 	}
 	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		finder.Append(" and knowledgeBaseID = ?", knowledgeBaseID)
 	}
 	if score > 0.0 {
-		finder.Append(" and score >= ?", score)
+		//finder.Append(" and score >= ?", score)
 	}
 	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
@@ -417,7 +418,11 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 		return err
 	}
 	//更新markdown内容
-	findDocumentChunkMarkDown(ctx, documentChunks)
+	documentChunks, err = findDocumentChunkMarkDown(ctx, documentChunks)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
 	oldDcs, has := input["documentChunks"]
 	if has && oldDcs != nil {
 		oldDocumentChunks := oldDcs.([]DocumentChunk)
@@ -501,7 +506,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 	}
 	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-		finder.Append(" and score <= ?", 0-score)
+		//finder.Append(" and score <= ?", 0-score)
 	}
 	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
@@ -554,25 +559,55 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 		input[errorKey] = err
 		return err
 	}
+	queryObj, has := input["query"]
+	if !has {
+		return errors.New(funcT("input['query'] cannot be empty"))
+	}
 	documentChunks := dcs.([]DocumentChunk)
 	documents := make([]string, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		documents = append(documents, documentChunks[i].Markdown)
 	}
 	bodyMap := map[string]interface{}{
-		"model":     component.Model,
-		"query":     component.Query,
-		"top_n":     component.TopK,
-		"documents": documents,
+		"inputs": map[string]interface{}{
+			"source_sentence": queryObj.(string),
+			"sentences":       documents,
+		},
 	}
 
-	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL, nil, bodyMap, "results")
-	if err != nil {
+	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL, nil, bodyMap, "")
+	if err != nil || result == nil {
 		input[errorKey] = err
 		return err
 	}
-	fmt.Println(result)
+	rsStringByte, ok := result.([]byte)
+	if !ok {
+		err := errors.New("result is not []byte")
+		input[errorKey] = err
+		return err
+	}
+	rs := make([]float32, 0)
+	json.Unmarshal(rsStringByte, &rs)
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		documentChunk.Score = rs[i]
+	}
+	sort.Slice(documentChunks, func(i, j int) bool {
+		return documentChunks[i].Score > documentChunks[j].Score
+	})
 
+	resultDCS := make([]DocumentChunk, 0)
+	for i := 0; i < len(documentChunks); i++ {
+		documentChunk := documentChunks[i]
+		if len(resultDCS) >= component.TopK {
+			break
+		}
+		if documentChunk.Score < component.Score {
+			continue
+		}
+		resultDCS = append(resultDCS, documentChunk)
+	}
+	input["documentChunks"] = resultDCS
 	return nil
 }
 

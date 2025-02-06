@@ -231,7 +231,7 @@ type DocumentChunk struct {
 
 	//----------数据库字段结束-----------//
 	// Embedding markdown向量化二进制
-	Embedding []float64 `json:"embedding,omitempty"`
+	Embedding []byte `json:"embedding,omitempty"`
 	// RowID 默认的rowid字段
 	RowID int `json:"rowID,omitempty"`
 	// Score 向量表的score匹配分数
