@@ -20,12 +20,11 @@
     <table class="layui-table table-component" id="table_list" lay-filter="parse-table-list">
         <thead>
             <tr>
-                <th width="15%">ID</th>
-                <th width="15%">{{T "Component Type"}}</th>
-                <th width="30%">{{T "Component Parameter"}}</th>
+                <th width="20%">ID</th>
+                <th width="20%">{{T "Component Type"}}</th>
                 <th width="10%">{{T "Sort"}}</th>
-                <th width="15%">{{T "Status"}}</th>
-                <th width="15%">{{T "Actions"}}</th>
+                <th width="10%">{{T "Status"}}</th>
+                <th width="10%">{{T "Actions"}}</th>
             </tr>
         </thead>
         <tbody>
@@ -35,7 +34,6 @@
                 <!-- 获取每一列的值 -->
                 <td title="{{ .Id }}"><a href="{{basePath}}admin/{{$.UrlPathParam}}/update?id={{.Id}}" style="cursor: pointer;"> {{ .Id }} </a></td>
                 <td title="{{ .ComponentType }}"> {{ .ComponentType }}</td>
-                <td title="{{ .Parameter }}"> {{ .Parameter }}</td>
                 <td> {{ .SortNo }}</td>
                 <td>
                     {{if eq .Status 0 }}
