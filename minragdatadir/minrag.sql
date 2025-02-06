@@ -86,11 +86,11 @@ INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,2,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-m3","baseURL":"https://ai.gitee.com/v1","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder','OpenAITextEmbedder');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"score":0.1}','VecEmbeddingRetriever','VecEmbeddingRetriever');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,4,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"topK":5,"score":0.1}','FtsKeywordRetriever','FtsKeywordRetriever');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,5,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-reranker-v2-m3","baseURL":"https://ai.gitee.com/api/serverless/rerank","topK":5,"score":0.1}','DocumentChunksReranker','DocumentChunksReranker');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,5,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"bge-reranker-v2-m3","baseURL":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/sentence-similarity","topK":5,"score":0.1}','DocumentChunksReranker','DocumentChunksReranker');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,6,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"promptTemplate":"根据提供的文档,请回答问题.\n 文档: \n {{ range $i,$v := .documentChunks }} {{ $v.Markdown }} \n {{end }} \n问题: {{ .query }} \n回答:"}','PromptBuilder','PromptBuilder');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,7,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"memoryLength":20}','OpenAIChatMessageMemory','OpenAIChatMessageMemory');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,8,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"apikey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11","model":"Qwen2.5-72B-Instruct","baseURL":"https://ai.gitee.com/v1","stream":true,"defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIChatCompletion','OpenAIChatCompletion');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"start":"PromptBuilder","process":{"PromptBuilder":"OpenAIChatMessageMemory","OpenAIChatMessageMemory":"OpenAIChatCompletion"}}','Pipeline','default');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-02-02 19:45:25','2025-02-02 19:45:25','{"start":"OpenAITextEmbedder","process":{"OpenAITextEmbedder":"VecEmbeddingRetriever","VecEmbeddingRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"DocumentChunksReranker","DocumentChunksReranker":"PromptBuilder","PromptBuilder":"OpenAIChatMessageMemory","OpenAIChatMessageMemory":"OpenAIChatCompletion"}}','Pipeline','default');
 
 
 CREATE TABLE IF NOT EXISTS agent (
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS agent (
 		sortNo            INT NOT NULL,
 		status            INT NOT NULL
 	 ) strict ;
-
+INSERT INTO agent (status,sortNo,createUser,updateTime,createTime,memoryLength,tools,welcome,avatar,agentPrompt,agentType,defaultReply,pipelineID,knowledgeBaseID,name,id) VALUES (1,1,'','2025-02-02 19:45:25','2025-02-02 19:45:25',0,'','你好,有什么可用帮助您吗?','','我是一个AI私人助手',0,'非常抱歉,可用聊其他话题吗?','default','/default/','默认智能体','default');
 
 CREATE TABLE IF NOT EXISTS site (
 		id TEXT PRIMARY KEY     NOT NULL,

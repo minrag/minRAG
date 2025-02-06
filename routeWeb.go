@@ -66,6 +66,7 @@ func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	input := make(map[string]interface{}, 0)
 	c.BindJSON(&input)
+
 	// 设置响应头
 	c.SetStatusCode(http.StatusOK)
 	c.Header("Content-Type", "text/event-stream")
@@ -73,14 +74,7 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	c.Header("Connection", "keep-alive")
 	writer := resp.NewChunkedBodyWriter(&c.Response, c.GetWriter())
 	c.Response.HijackWriter(writer)
-
 	input["c"] = c
-	//input["query"] = "你在哪里?"
-	documentChunks := make([]DocumentChunk, 3)
-	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
-	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
-	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
-	input["documentChunks"] = documentChunks
 
 	agentIDObj, has := input["agentID"]
 	if !has || agentIDObj == nil || agentIDObj.(string) == "" {
@@ -119,7 +113,7 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	//choice := input["choice"]
 	errObj := input[errorKey]
 	if errObj != nil {
-		c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", err))
+		c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", errObj))
 		c.Flush()
 		c.Abort()
 		return

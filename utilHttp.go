@@ -38,6 +38,9 @@ func httpPostJsonSlice0(client *http.Client, authorization string, url string, h
 	if err != nil {
 		return nil, err
 	}
+	if resultKey == "" {
+		return body, nil
+	}
 	return bodyJsonKeyValue(body, resultKey)
 }
 
