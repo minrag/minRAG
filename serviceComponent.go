@@ -50,10 +50,10 @@ var componentTypeMap = map[string]IComponent{
 	"OpenAIChatMessageMemory": &OpenAIChatMessageMemory{},
 	"PromptBuilder":           &PromptBuilder{},
 	"DocumentChunksReranker":  &DocumentChunksReranker{},
-	"DocumentSplitter":        &DocumentSplitter{},
-	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
-	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
 	"FtsKeywordRetriever":     &FtsKeywordRetriever{},
+	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
+	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
+	"DocumentSplitter":        &DocumentSplitter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
