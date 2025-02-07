@@ -119,6 +119,7 @@ p {
     border-radius: 15px;
     padding-top: 15px;
     padding-left:15px;
+    padding-right:15px;
     min-height: 30px;
     align-items: center; /* 内容垂直居中 */
     width: fit-content;
