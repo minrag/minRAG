@@ -101,7 +101,8 @@ async function fetchSSE(aiMessageId,messageText) {
                 if(data=="[DONE]"){
                     continue;
                 }
-                aiMarkdown=aiMarkdown+data
+                aiMarkdown=aiMarkdown+data;
+                $("#"+aiMessageId+"_markdown").val(aiMarkdown)
                 let dataHtml = marked.parse(aiMarkdown);
                 // 移除 <p> 标签
                 //dataHtml = dataHtml.replace(/<p>([\s\S]*?)<\/p>/g, '$1');
@@ -126,7 +127,7 @@ function sendMessage() {
     $('#chat-input').val('');
 
     const aiMessageId=new Date().getTime()+"_aiMessage"
-    const aiMessage = $('<div class="message ai-message" id="'+aiMessageId+'"></div>');
+    const aiMessage = $('<div class="message ai-message" id="'+aiMessageId+'"></div><input type="hidden" id="'+aiMessageId+'_markdown">');
     $('.chat-messages').append(aiMessage);
     $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
 
