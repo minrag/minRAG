@@ -11,11 +11,12 @@ body {
     display: flex;
     height: 100vh;
     border-radius: 5px;
+    overflow-y: auto;
 }
 
 .history-panel {
     width: 200px;
-    color: #262626;
+    color: #000000;
     padding: 10px;
     background-color: #f9f9f9;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -84,6 +85,7 @@ p {
 .ai-message {
     align-self: flex-start;
     background: white;
+    color: #000000;
     border-radius: 15px;
     max-width: 80%;
     padding: 15px 15px 15px 60px; /* 增加上下内边距，左侧为图标留空间 */
@@ -92,6 +94,9 @@ p {
     margin-right: auto; /* 确保靠左对齐 */
     display: flex;
     align-items: center; /* 内容垂直居中 */
+    word-wrap: break-word; /* 长单词或 URL 自动换行 */
+    overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
+    white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
 }
 
 .ai-message::before {
@@ -108,10 +113,14 @@ p {
 
 /* 用户消息样式 */
 .user-message {
-    background-color: #4d6bfe;
-    color: white;
+    background-color: #eff6ff;
+    color: #000000;
     align-self: flex-end;
     border-radius: 15px;
+    padding-top: 15px;
+    padding-left:15px;
+    min-height: 30px;
+    align-items: center; /* 内容垂直居中 */
     width: fit-content;
     max-width: 80%;
     margin-left: auto; /* 确保靠右对齐 */
