@@ -41,6 +41,7 @@ const (
 	errorKey         string = "__error__"
 	nextComponentKey string = "__next__"
 	endKey           string = "__end__"
+	ifEmptyStop      string = "__ifEmptyStop__"
 )
 
 // TODO 缺少 function call 的实现和测试
@@ -692,6 +693,20 @@ func (component *PromptBuilder) Initialization(ctx context.Context, input map[st
 	return nil
 }
 func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
+	_, has := input[ifEmptyStop]
+	if has {
+		dcs, hasdcs := input["documentChunks"]
+		if !hasdcs || dcs == nil {
+			input[endKey] = true
+			return nil
+		}
+		documentChunks := dcs.([]DocumentChunk)
+		if len(documentChunks) < 1 {
+			input[endKey] = true
+			return nil
+		}
+	}
+
 	// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
 	var buf bytes.Buffer
 	// 执行模板并将结果写入到 bytes.Buffer

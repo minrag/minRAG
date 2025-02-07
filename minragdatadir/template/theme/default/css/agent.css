@@ -1,7 +1,7 @@
 /* styles.css */
 body {
     font-family: Arial, sans-serif;
-    margin: 0 auto; /* 水平居中 */
+    margin: 0 auto;
     padding: 0;
     width: 90%;
     background-color: #f4f4f4;
@@ -50,7 +50,6 @@ body {
     display: flex;
     flex-direction: column;
     background-color: white;
-    
 }
 
 .chat-header {
@@ -63,31 +62,54 @@ body {
 
 .chat-messages {
     flex: 1;
-    padding: 10px;
+    padding: 20px 10px;
     overflow-y: auto;
     background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .message {
     margin-bottom: 10px;
     padding: 10px;
-    max-width: 80%;
     word-wrap: break-word;
+    position: relative;
 }
 
+/* AI消息样式 */
 .ai-message {
     align-self: flex-start;
-    border-radius: 5px;
+    background: white;
+    border-radius: 15px;
+    max-width: 80%;
+    padding-left: 50px; /* 为头像留出空间 */
+    min-height: 40px; /* 保持最小高度 */
 }
 
+.ai-message::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    /*top: 50%;*/
+    margin-top: 15px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234d6bfe" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>');
+    background-size: cover;
+    border-radius: 50%;
+}
+
+/* 用户消息样式 */
 .user-message {
-    background-color: #eff6ff;
+    background-color: #4d6bfe;
+    color: white;
     align-self: flex-end;
-    border-radius: 5px;
-    width: auto;
-    max-width: 100%;
-    /*float: left;*/
-    text-align: right;
+    border-radius: 15px;
+    width: fit-content;
+    max-width: 80%;
+    margin-left: auto; /* 确保靠右对齐 */
 }
 
 .chat-input {
