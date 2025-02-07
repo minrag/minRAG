@@ -13,74 +13,120 @@
     <meta http-equiv="X-UA-Compatible" document="IE=edge">
     <meta name="viewport" document="width=device-width, initial-scale=1">
     <title>{{$agent.Name}} - MINRAG</title>
+    <link rel="stylesheet" href="{{basePath}}css/agent.css" />
+
 </head>
+<script>
+    const basePath="{{basePath}}";
+    const locale="{{locale}}";
+</script>
 
 <body>
-        <h2>MINRAG SSE</h2>
-        <input type="text" name="query" id="query" /> <button onclick="send()">发送</button> </br>
-        <div id="messages"></div>
-      
-        
+    <div class="chat-container">
+        <!-- 左侧历史聊天记录 -->
+        <div class="history-panel">
+            <div class="history-header">{{T "Chat History"}}</div>
+            <div class="history-list">
+                <div class="history-item">{{T "Current Chat"}}</div>
+            </div>
+        </div>
+
+        <!-- 右侧聊天对话框 -->
+        <div class="chat-panel">
+            <div class="chat-header">{{$agent.Name}}</div>
+            <div class="chat-messages">
+                <div class="message ai-message">{{$agent.Welcome}}</div>
+            </div>
+            <div class="chat-input">
+                <input type="text" id="chat-input" placeholder='{{T "Send a message to MinRAG"}}' />
+                <button id="send-btn">{{T "Send"}}</button>
+            </div>
+        </div>
+    </div>
 </body>
+<script src="{{basePath}}js/jquery-3.7.1.min.js"></script>
 <script>
-    var roomID=new Date().getTime()+"_{{.agentID}}"
-    async function fetchSse(url) {
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'text/event-stream',
-                    'Cache-Control':'no-cache',
-                    'Connection':'keep-alive',
-                },
-                body:JSON.stringify({
-                    "agentID":"{{.agentID}}",
-                    "roomID":roomID,
-                    "query":document.getElementById("query").value,
-                }),
-            });
-    
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-    
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder('utf-8');
-            let buffer = '';
-    
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) {
-                    console.log('Stream complete');
-                    break;
-                }
-    
-                const chunk = decoder.decode(value, { stream: true });
-                const lines=chunk.split("\n\n");
-                for (const line of lines) {
-                    if (!line.startsWith('data: ')) {
-                        continue;
-                    }
-                    const data = line.substring(6);
-                    if(data=="[DONE]"){
-                        continue;
-                    }
-                    document.getElementById("messages").innerHTML=document.getElementById("messages").innerHTML+data
-            }
-                
-    
-    
-            }
-        } catch (error) {
-            console.error('Fetch stream failed:', error);
+    var roomID=new Date().getTime()+"_{{.agentID}}";
+
+$(document).ready(function() {
+    $('#send-btn').click(function() {
+        sendMessage();
+    });
+    $('#chat-input').keypress(function(e) {
+        if (e.which == 13) { // Enter key
+            sendMessage();
         }
+    });
+});
+
+async function fetchSSE(aiMessageId,messageText) {
+    try {
+        const response = await fetch('{{basePath}}agent/sse', {
+            method: 'POST',
+            headers: {
+                'Accept': 'text/event-stream',
+                'Cache-Control':'no-cache',
+                'Connection':'keep-alive',
+            },
+            body:JSON.stringify({
+                "agentID":"{{.agentID}}",
+                "roomID":roomID,
+                "query": messageText,
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                console.log('Stream complete');
+                break;
+            }
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines=chunk.split("\n\n");
+            for (const line of lines) {
+                if (!line.startsWith('data: ')) {
+                    continue;
+                }
+                const data = line.substring(6);
+                if(data=="[DONE]"){
+                    continue;
+                }
+                document.getElementById(aiMessageId).innerHTML=document.getElementById(aiMessageId).innerHTML+data
+            }
+            
+        }
+    } catch (error) {
+        console.error('Fetch stream failed:', error);
     }
-    
-    function send(){
-        document.getElementById("messages").innerHTML=document.getElementById("messages").innerHTML+"</br>"
-        // 调用函数
-        fetchSse('{{basePath}}agent/sse');
+}
+
+
+
+function sendMessage() {
+    const messageText = $('#chat-input').val().trim();
+    if (!!!messageText) {
+        return
     }
-    
+    const userMessage = $('<div class="message user-message"></div>').text(messageText);
+    $('.chat-messages').append(userMessage);
+    $('#chat-input').val('');
+
+    const aiMessageId=new Date().getTime()+"_aiMessage"
+    const aiMessage = $('<div class="message ai-message" id="'+aiMessageId+'"></div>');
+    $('.chat-messages').append(aiMessage);
+    $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
+
+    fetchSSE(aiMessageId,messageText)
+  
+}
 </script>
+
 </html>

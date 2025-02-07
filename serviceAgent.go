@@ -32,9 +32,9 @@ func findAllAgentList(ctx context.Context) ([]Agent, error) {
 }
 
 // findAgentByID 查询Agent
-func findAgentByID(ctx context.Context, agentID string) (Agent, error) {
+func findAgentByID(ctx context.Context, agentID string) (*Agent, error) {
 	finder := zorm.NewSelectFinder(tableAgentName).Append("WHERE id=? and status=1", agentID)
-	agent := Agent{}
-	_, err := zorm.QueryRow(ctx, finder, &agent)
+	agent := &Agent{}
+	_, err := zorm.QueryRow(ctx, finder, agent)
 	return agent, err
 }
