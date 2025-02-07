@@ -76,8 +76,9 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 	}
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
+		bodyByte, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
-		return nil, errors.New("http post error")
+		return nil, errors.New(string(bodyByte))
 	}
 	return resp, err
 }
