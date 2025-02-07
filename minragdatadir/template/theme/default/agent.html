@@ -45,8 +45,9 @@
     </div>
 </body>
 <script src="{{basePath}}js/jquery-3.7.1.min.js"></script>
+<script src="{{basePath}}js/marked.min.js"></script>
 <script>
-    var roomID=new Date().getTime()+"_{{.agentID}}";
+var roomID=new Date().getTime()+"_{{.agentID}}";
 
 $(document).ready(function() {
     $('#send-btn').click(function() {
@@ -60,6 +61,7 @@ $(document).ready(function() {
 });
 
 async function fetchSSE(aiMessageId,messageText) {
+    let aiMarkdown=""
     try {
         const response = await fetch('{{basePath}}agent/sse', {
             method: 'POST',
@@ -99,7 +101,11 @@ async function fetchSSE(aiMessageId,messageText) {
                 if(data=="[DONE]"){
                     continue;
                 }
-                document.getElementById(aiMessageId).innerHTML=document.getElementById(aiMessageId).innerHTML+data
+                aiMarkdown=aiMarkdown+data
+                let dataHtml = marked.parse(aiMarkdown);
+                // 移除 <p> 标签
+                //dataHtml = dataHtml.replace(/<p>([\s\S]*?)<\/p>/g, '$1');
+                document.getElementById(aiMessageId).innerHTML=dataHtml
             }
             
         }
