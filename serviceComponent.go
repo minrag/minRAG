@@ -305,26 +305,28 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
 	//bodyMap["dimensions"] = 1
-	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap, "data")
+	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
 
-	if err != nil || result == nil {
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	resultMap, ok := result.(map[string]interface{})
-	if !ok || resultMap == nil {
-		return errors.New("result is not map")
+	rs := struct {
+		Data []struct {
+			Embedding []float64 `json:"embedding,omitempty"`
+		} `json:"data,omitempty"`
+	}{}
+	err = json.Unmarshal(bodyByte, &rs)
+	if err != nil {
+		input[errorKey] = err
+		return err
 	}
-	embeddingObj, ok := resultMap["embedding"]
-	if !ok || embeddingObj == nil {
-		return errors.New("embedding is empty")
+	if len(rs.Data) < 1 {
+		err := errors.New("httpPostJsonBody data is empty")
+		input[errorKey] = err
+		return err
 	}
-	embedding := make([]float64, 0)
-	embeddingSlice := embeddingObj.([]interface{})
-	for i := 0; i < len(embeddingSlice); i++ {
-		embedding = append(embedding, embeddingSlice[i].(float64))
-	}
-	input["embedding"] = embedding
+	input["embedding"] = rs.Data[0].Embedding
 	return nil
 }
 
@@ -404,12 +406,15 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
+
 	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		// 不支持 like
+		//finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		finder.Append(" and knowledgeBaseID = ?", knowledgeBaseID)
 	}
-	// 不支持 范围查询
+	// 范围查询
 	//if score > 0.0 {
-	//finder.Append(" and score >= ?", score)
+	//	finder.Append(" and score >= ?", score)
 	//}
 	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
 	documentChunks := make([]DocumentChunk, 0)
@@ -572,6 +577,10 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 	if !has {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+	query := queryObj.(string)
+	if query == "" {
+		return errors.New(funcT("input['query'] cannot be empty"))
+	}
 
 	tId, has := input["topK"]
 	if has {
@@ -597,30 +606,46 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 		documents = append(documents, documentChunks[i].Markdown)
 	}
 	bodyMap := map[string]interface{}{
-		"inputs": map[string]interface{}{
-			"source_sentence": queryObj.(string),
-			"sentences":       documents,
-		},
+		"model":     component.Model,
+		"query":     query,
+		"top_n":     topK,
+		"documents": documents,
 	}
 
-	result, err := httpPostJsonSlice0(component.client, component.APIKey, component.BaseURL, nil, bodyMap, "")
-	if err != nil || result == nil {
+	rsStringByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	rsStringByte, ok := result.([]byte)
-	if !ok {
-		err := errors.New("result is not []byte")
+
+	rs := struct {
+		Results []struct {
+			Document struct {
+				Text string `json:"text,omitempty"`
+			} `json:"document,omitempty"`
+			RelevanceScore float32 `json:"relevance_score,omitempty"`
+		} `json:"results,omitempty"`
+	}{}
+
+	err = json.Unmarshal(rsStringByte, &rs)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	rs := make([]float32, 0)
-	json.Unmarshal(rsStringByte, &rs)
-	for i := 0; i < len(documentChunks); i++ {
-		documentChunks[i].Score = rs[i]
+	rerankerDCS := make([]DocumentChunk, 0)
+	for i := 0; i < len(rs.Results); i++ {
+		markdown := rs.Results[i].Document.Text
+		for j := 0; j < len(documentChunks); j++ {
+			dc := documentChunks[j]
+			if markdown == dc.Markdown { //相等
+				dc.Score = rs.Results[i].RelevanceScore
+				rerankerDCS = append(rerankerDCS, dc)
+				break
+			}
+		}
 	}
-	documentChunks = sortDocumentChunksScore(documentChunks, topK, score)
-	input["documentChunks"] = documentChunks
+	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topK, score)
+	input["documentChunks"] = rerankerDCS
 	return nil
 }
 
@@ -767,29 +792,31 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 	bodyMap["stream"] = component.Stream
 	url := component.BaseURL + "/chat/completions"
 	if !component.Stream {
-		choiceObj, err := httpPostJsonSlice0(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap, "choices")
+		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		choiceByte, err := json.Marshal(choiceObj)
+		rs := struct {
+			Choices []Choice `json:"choices,omitempty"`
+		}{}
+		err = json.Unmarshal(bodyByte, &rs)
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		choice := Choice{}
-		err = json.Unmarshal(choiceByte, &choice)
-		if err != nil {
+		if len(rs.Choices) < 1 {
+			err := errors.New("httpPostJsonBody choices is empty")
 			input[errorKey] = err
 			return err
 		}
-		input["choice"] = choice
+		input["choice"] = rs.Choices[0]
 		return nil
 	}
 	component.DefaultHeaders["Accept"] = "text/event-stream"
 	component.DefaultHeaders["Cache-Control"] = "no-cache"
 	component.DefaultHeaders["Connection"] = "keep-alive"
-	resp, err := httpPostResponse(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
+	resp, err := httpPostJsonResponse(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err
@@ -839,33 +866,28 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		if data == "" {
 			continue
 		}
-
-		choiceObj, err := bodyJsonKeyValue([]byte(data), "choices")
+		rs := struct {
+			Choices []Choice `json:"choices,omitempty"`
+		}{}
+		err = json.Unmarshal([]byte(data), &rs)
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		choiceByte, err := json.Marshal(choiceObj)
-		if err != nil {
+		if len(rs.Choices) < 1 {
+			err := errors.New("httpPostJsonResponse choices is empty")
 			input[errorKey] = err
 			return err
 		}
-		choiceDelta := Choice{}
-		err = json.Unmarshal(choiceByte, &choiceDelta)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
-		if choiceDelta.FinishReason != "" {
-			choice.FinishReason = choiceDelta.FinishReason
+		if rs.Choices[0].FinishReason != "" {
+			choice.FinishReason = rs.Choices[0].FinishReason
 		}
 		// TODO 需要输出到前端页面
 		if c != nil {
-			c.WriteString("data: " + choiceDelta.Delta.Content + "\n\n")
+			c.WriteString("data: " + rs.Choices[0].Delta.Content + "\n\n")
 			c.Flush()
 		}
-
-		message.WriteString(choiceDelta.Delta.Content)
+		message.WriteString(rs.Choices[0].Delta.Content)
 	}
 	choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
 	input["choice"] = choice
