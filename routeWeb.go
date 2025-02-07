@@ -21,6 +21,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
+	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/http1/resp"
@@ -112,6 +114,23 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 			c.Abort()
 			return
 		}
+		roomIDs := strings.Split(roomIDObj.(string), "_")
+		if len(roomIDs) != 2 {
+			c.WriteString(`data: roomID is error\n\n`)
+			c.WriteString(`data: [DONE]\n\n`)
+			c.Flush()
+			c.Abort()
+			return
+		}
+		timestampStr := roomIDs[0]
+		if len(timestampStr) > 20 || !isNumeric(timestampStr) {
+			c.WriteString(`data: roomID is error\n\n`)
+			c.WriteString(`data: [DONE]\n\n`)
+			c.Flush()
+			c.Abort()
+			return
+		}
+
 	}
 	input["knowledgeBaseID"] = agent.KnowledgeBaseID
 	pipeline := componentMap[agent.PipelineID]
@@ -139,4 +158,9 @@ func warpRequestMap(c *app.RequestContext) map[string]interface{} {
 		data[userTypeKey] = 0
 	}
 	return data
+}
+
+func isNumeric(s string) bool {
+	matched, _ := regexp.MatchString(`^\d+$`, s)
+	return matched
 }

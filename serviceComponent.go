@@ -408,11 +408,13 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	}
 
 	if knowledgeBaseID != "" {
-		// 不支持 like
+		// Only one of EQUALS, GREATER_THAN, LESS_THAN_OR_EQUAL, LESS_THAN, GREATER_THAN_OR_EQUAL, NOT_EQUALS is allowed
+		// vec不支持 like
 		//finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
 		finder.Append(" and knowledgeBaseID = ?", knowledgeBaseID)
 	}
-	// 范围查询
+	// Only one of EQUALS, GREATER_THAN, LESS_THAN_OR_EQUAL, LESS_THAN, GREATER_THAN_OR_EQUAL, NOT_EQUALS is allowed
+	// vec不支持 范围查询
 	//if score > 0.0 {
 	//	finder.Append(" and score >= ?", score)
 	//}
