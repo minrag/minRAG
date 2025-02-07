@@ -43,6 +43,8 @@ const (
 	endKey           string = "__end__"
 )
 
+// TODO 缺少 function call 的实现和测试
+
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
 	"Pipeline":                &Pipeline{},

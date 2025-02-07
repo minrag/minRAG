@@ -195,5 +195,9 @@
   "input['prompt'] cannot be empty":"input['prompt']不能为空",
   "input['messages'] cannot be empty":"input['messages']不能为空",
   "input['query'] cannot be empty":"input['query']不能为空",
-  "The %s component of the pipeline does not exist":"Pipeline流水线的组件%s不存在"
+  "The %s component of the pipeline does not exist":"Pipeline流水线的组件%s不存在",
+  "Chat History":"历史会话",
+  "Current Chat":"当前会话",
+  "Send":"发送",
+  "Send a message to MinRAG":"给 MinRAG 发送消息"
 }

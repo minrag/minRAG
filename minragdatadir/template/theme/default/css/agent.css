@@ -1,0 +1,119 @@
+/* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0 auto; /* 水平居中 */
+    padding: 0;
+    width: 90%;
+    background-color: #f4f4f4;
+}
+
+.chat-container {
+    display: flex;
+    height: 100vh;
+    border-radius: 5px;
+}
+
+.history-panel {
+    width: 200px;
+    color: #262626;
+    padding: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #ddd;
+}
+
+.history-header {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.history-list {
+    overflow-y: auto;
+    height: calc(100vh - 50px);
+}
+
+.history-item {
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.history-item:hover {
+    background-color: #eff6ff;
+}
+
+.chat-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    
+}
+
+.chat-header {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+.ai-message {
+    align-self: flex-start;
+    border-radius: 5px;
+}
+
+.user-message {
+    background-color: #eff6ff;
+    align-self: flex-end;
+    border-radius: 5px;
+    width: auto;
+    max-width: 100%;
+    /*float: left;*/
+    text-align: right;
+}
+
+.chat-input {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+    background-color: white;
+}
+
+#chat-input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+#send-btn {
+    padding: 10px 20px;
+    background-color: #4d6bfe;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#send-btn:hover {
+    background-color: #4166d5;
+}
