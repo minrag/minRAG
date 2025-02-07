@@ -25,9 +25,9 @@ import (
 	"net/http"
 )
 
-// httpPostJsonSlice0 使用Post发送Json请求,并把返回值中,指定key的值变成数组,然后取值第一个返回
-func httpPostJsonSlice0(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}, resultKey string) (interface{}, error) {
-	resp, err := httpPostResponse(client, authorization, url, header, bodyMap)
+// httpPostJsonBody 使用Post发送Json请求
+func httpPostJsonBody(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) ([]byte, error) {
+	resp, err := httpPostJsonResponse(client, authorization, url, header, bodyMap)
 	if err != nil {
 		return nil, err
 	}
@@ -38,14 +38,15 @@ func httpPostJsonSlice0(client *http.Client, authorization string, url string, h
 	if err != nil {
 		return nil, err
 	}
-	if resultKey == "" {
-		return body, nil
+	if len(body) < 1 {
+		return nil, errors.New("body is empty")
 	}
-	return bodyJsonKeyValue(body, resultKey)
+
+	return body, nil
 }
 
-// httpPostResponse post请求的response
-func httpPostResponse(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) (*http.Response, error) {
+// httpPostJsonResponse post请求的response
+func httpPostJsonResponse(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) (*http.Response, error) {
 	if client == nil {
 		return nil, errors.New("httpClient is nil")
 	}
@@ -79,26 +80,4 @@ func httpPostResponse(client *http.Client, authorization string, url string, hea
 		return nil, errors.New("http post error")
 	}
 	return resp, err
-}
-
-// bodyJsonKeyValue 从body中json对象中,获取指定的key
-func bodyJsonKeyValue(body []byte, key string) (interface{}, error) {
-
-	// 将 JSON 数据解析为 map[string]interface{}
-	var resultMap map[string]interface{}
-	if err := json.Unmarshal(body, &resultMap); err != nil {
-		return nil, err
-	}
-	if key == "" {
-		return resultMap, nil
-	}
-	resultSlice := resultMap[key]
-	if resultSlice == nil {
-		return resultSlice, nil
-	}
-	rs, ok := resultSlice.([]interface{})
-	if !ok || len(rs) < 1 {
-		return resultSlice, nil
-	}
-	return rs[0], nil
 }
