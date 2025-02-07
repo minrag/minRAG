@@ -288,7 +288,7 @@ type OpenAITextEmbedder struct {
 
 func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
-		component.Timeout = 60
+		component.Timeout = 180
 	}
 
 	component.client = &http.Client{
@@ -559,7 +559,7 @@ type DocumentChunksReranker struct {
 
 func (component *DocumentChunksReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
-		component.Timeout = 60
+		component.Timeout = 180
 	}
 
 	component.client = &http.Client{
@@ -605,10 +605,14 @@ func (component *DocumentChunksReranker) Run(ctx context.Context, input map[stri
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
+	if len(documentChunks) < 1 { //没有文档,不需要重排
+		return nil
+	}
 	documents := make([]string, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		documents = append(documents, documentChunks[i].Markdown)
 	}
+
 	bodyMap := map[string]interface{}{
 		"model":     component.Model,
 		"query":     query,
@@ -768,7 +772,7 @@ type OpenAIChatCompletion struct {
 
 func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
-		component.Timeout = 60
+		component.Timeout = 180
 	}
 
 	component.client = &http.Client{
