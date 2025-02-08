@@ -168,3 +168,16 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | createUser  | string      | Creator     | - | Initialized as system    |
 | sortNo      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1)  |
+
+### Message Log (Table Name: messageLog)
+| Column Name      | Type        | Description    | Tokenized |  Remarks  | 
+| ---              | ---         | ---            | -------   | ------    |
+| id               | string      | Primary Key         | No   |    -  |
+| agentID          | string      | Agent ID            | No   |    -  |
+| roomID           | string      | Chat Room ID        | No   |    -  |
+| pipelineID       | string      | Pipeline ID         | No   |    -  |
+| knowledgeBaseID  | string      | Knowledge Base ID   | No   |    -  |
+| userMessage      | string      | User's Message      | No   |    -  |
+| aiMessage        | string      | AI's Response       | No   |    -  |
+| userID           | string      | User ID             | No   |    -  |
+| createTime       | string      | Creation Time       |No   | 006-01-02 15:04:05|
