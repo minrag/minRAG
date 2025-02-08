@@ -117,10 +117,7 @@ p {
     color: #000000;
     align-self: flex-end;
     border-radius: 15px;
-    padding-top: 15px;
-    padding-left:15px;
-    padding-right:15px;
-    min-height: 30px;
+    padding: 15px;
     align-items: center; /* 内容垂直居中 */
     width: fit-content;
     max-width: 80%;
