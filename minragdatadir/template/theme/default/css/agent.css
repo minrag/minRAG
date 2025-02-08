@@ -6,6 +6,9 @@ body {
     width: 90%;
     background-color: #f4f4f4;
 }
+p {
+    margin: 0px;
+}
 
 .chat-container {
     display: flex;
@@ -18,9 +21,10 @@ body {
     width: 200px;
     color: #000000;
     padding: 10px;
+    margin-right:5px ;
     background-color: #f9f9f9;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    border-right: 1px solid #ddd;
+    /*border-right: 1px solid #ddd;*/
 }
 
 .history-header {
@@ -58,12 +62,16 @@ body {
     font-weight: bold;
     text-align: center;
     padding: 10px;
-    border-bottom: 1px solid #ddd;
+    /*border-bottom: 1px solid #ddd;*/
+    position: sticky; /* 固定位置 */
+    top: 0; /* 粘性定位的顶部偏移 */
+    z-index: 10; /* 确保在最上层 */
+    background-color: white; /* 防止背景透明导致文字不可见 */
 }
 
 .chat-messages {
     flex: 1;
-    padding: 20px 10px;
+    padding: 10px 10px;
     overflow-y: auto;
     background-color: #f9f9f9;
     display: flex;
@@ -77,9 +85,6 @@ body {
     word-wrap: break-word;
     position: relative;
 }
-p {
-    margin: 0px;
-}
 
 /* AI消息样式 */
 .ai-message {
@@ -87,9 +92,7 @@ p {
     background: white;
     color: #000000;
     border-radius: 15px;
-    max-width: 80%;
-    padding: 15px 15px 15px 60px; /* 增加上下内边距，左侧为图标留空间 */
-    min-height: 30px;
+    max-width: 90%;
     position: relative;
     margin-right: auto; /* 确保靠左对齐 */
     display: flex;
@@ -99,17 +102,6 @@ p {
     white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
 }
 
-.ai-message::before {
-    content: '';
-    position: absolute;
-    left: 15px;
-    top: 15px; /* 图标与内容的第一行顶端对齐 */
-    width: 32px;
-    height: 32px;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%234d6bfe" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/></svg>');
-    background-size: cover;
-    border-radius: 50%;
-}
 
 /* 用户消息样式 */
 .user-message {
@@ -117,26 +109,36 @@ p {
     color: #000000;
     align-self: flex-end;
     border-radius: 15px;
-    padding: 15px;
     align-items: center; /* 内容垂直居中 */
     width: fit-content;
-    max-width: 80%;
+    max-width: 90%;
     margin-left: auto; /* 确保靠右对齐 */
 }
 
 .chat-input {
     display: flex;
     padding: 10px;
-    border-top: 1px solid #ddd;
+    /*border-top: 1px solid #ddd;*/
     background-color: white;
+    position: sticky; /* 固定位置 */
+    bottom: 0; /* 粘性定位的底部偏移 */
+    z-index: 10; /* 确保在最上层 */
 }
 
 #chat-input {
     flex: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    padding: 20px; /* 增加内边距，使输入框更高 */
+    border: 2px solid #4d6bfe; /* 蓝色边框 */
+    /*border: 1px solid #ddd;*/
+    border-radius: 25px; /* 圆角 */
     margin-right: 10px;
+    width: calc(100% - 60px); /* 留出空间给发送按钮 */
+    outline: none; /* 移除默认的焦点边框 */
+}
+
+#chat-input:focus {
+    border-color: #4d6bfe; /* 选中时边框颜色保持为蓝色 */
+    box-shadow: 0 0 0 2px rgba(77, 107, 254, 0.3); /* 添加轻微的阴影效果 */
 }
 
 #send-btn {
