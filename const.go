@@ -51,6 +51,9 @@ const (
 
 	// 智能体
 	tableAgentName = "agent"
+
+	// 消息日志
+	tableMessageLogName = "messageLog"
 	//---------------------------//
 
 	// 模板的路径

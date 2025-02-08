@@ -23,7 +23,9 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
+	"gitee.com/chunanyong/zorm"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/http1/resp"
 )
@@ -149,6 +151,28 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 		c.Abort()
 		return
 	}
+	choice := Choice{}
+	choiceObj, has := input["choice"]
+	if has && choiceObj != nil {
+		choice = choiceObj.(Choice)
+	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	messageLog := &MessageLog{}
+	messageLog.Id = FuncGenerateStringID()
+	messageLog.CreateTime = now
+	messageLog.RoomID = input["roomID"].(string)
+	messageLog.KnowledgeBaseID = agent.KnowledgeBaseID
+	messageLog.AgentID = agentID
+	messageLog.PipelineID = agent.PipelineID
+	messageLog.UserID = userId
+	messageLog.UserMessage = input["query"].(string)
+	messageLog.AIMessage = choice.Message.Content
+
+	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		zorm.Insert(ctx, messageLog)
+		return nil, nil
+	})
+
 	//fmt.Println(choice)
 	//c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice})
 }

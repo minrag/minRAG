@@ -413,6 +413,54 @@ func (entity *Agent) GetPKColumnName() string {
 	return "id"
 }
 
+// MessageLog 消息日志
+type MessageLog struct {
+
+	// 引入默认的struct,隔离IEntityStruct的方法改动
+	zorm.EntityStruct
+
+	// ID
+	Id string `column:"id" json:"id,omitempty"`
+
+	// AgentID 智能体ID
+	AgentID string `column:"agentID" json:"agentID,omitempty"`
+
+	// RoomID 聊天室ID
+	RoomID string `column:"roomID" json:"roomID,omitempty"`
+
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+
+	// PipelineID 流水线ID
+	PipelineID string `column:"pipelineID" json:"pipelineID,omitempty"`
+
+	// UserMessage 用户发送的消息
+	UserMessage string `column:"userMessage" json:"userMessage,omitempty"`
+
+	// AIMessage AI发送的信息
+	AIMessage string `column:"aiMessage" json:"aiMessage,omitempty"`
+
+	// UserID 用户ID
+	UserID string `column:"userID" json:"userID,omitempty"`
+
+	// CreateTime 创建时间
+	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+}
+
+// GetTableName 获取表名称
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *MessageLog) GetTableName() string {
+	return tableMessageLogName
+}
+
+// GetPKColumnName 获取数据库表的主键字段名称.因为要兼容Map,只能是数据库的字段名称
+// 不支持联合主键,变通认为无主键,业务控制实现(艰难取舍)
+// 如果没有主键,也需要实现这个方法, return "" 即可
+// IEntityStruct 接口的方法,实体类需要实现!!!
+func (entity *MessageLog) GetPKColumnName() string {
+	return "id"
+}
+
 // Site 站点信息
 type Site struct {
 	// 引入默认的struct,隔离IEntityStruct的方法改动

@@ -189,13 +189,15 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 		return err
 	}
 
-	markdownByte, err := os.ReadFile(datadir + document.FilePath)
-	if err != nil {
-		input[errorKey] = err
-		return err
+	if document.Markdown == "" {
+		markdownByte, err := os.ReadFile(datadir + document.FilePath)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.Markdown = string(markdownByte)
+		document.FileSize = len(markdownByte)
 	}
-	document.Markdown = string(markdownByte)
-	document.FileSize = len(markdownByte)
 	document.Status = 2
 	input["document"] = document
 	return nil
@@ -324,7 +326,7 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 		vecdc.DocumentID = documentChunks[i].DocumentID
 		vecdc.KnowledgeBaseID = documentChunks[i].KnowledgeBaseID
 		vecdc.SortNo = documentChunks[i].SortNo
-		vecdc.Status = 1
+		vecdc.Status = 2
 		vecdc.Embedding = embedding
 
 		vecDocumentChunks = append(vecDocumentChunks, vecdc)
@@ -862,6 +864,9 @@ type OpenAIChatMessageMemory struct {
 }
 
 func (component *OpenAIChatMessageMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.MemoryLength == 0 {
+		component.MemoryLength = 10
+	}
 	return nil
 }
 func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) error {
@@ -886,7 +891,30 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 		agentPrompt := ChatMessage{Role: "system", Content: agent.AgentPrompt}
 		messages = append(messages, agentPrompt)
 	}
-	// TODO 查询历史记录的上下文
+
+	roomIDObj, has := input["roomID"]
+	roomID := ""
+	if has && roomIDObj != nil {
+		roomID = roomIDObj.(string)
+	}
+	messageLogs := make([]MessageLog, 0)
+	if roomID != "" {
+		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE roomID=? order by createTime desc", roomID)
+		finder.SelectTotalCount = false
+		page := zorm.NewPage()
+		page.PageSize = component.MemoryLength
+		zorm.Query(ctx, finder, &messageLogs, page)
+	}
+	for i := len(messageLogs) - 1; i >= 0; i-- {
+		messageLog := messageLogs[i]
+		if messageLog.UserMessage != "" {
+			messages = append(messages, ChatMessage{Role: "user", Content: messageLog.UserMessage})
+		}
+		if messageLog.AIMessage != "" {
+			messages = append(messages, ChatMessage{Role: "assistant", Content: messageLog.AIMessage})
+		}
+
+	}
 
 	promptMessage := ChatMessage{Role: "user", Content: prompt.(string)}
 	messages = append(messages, promptMessage)

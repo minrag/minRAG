@@ -278,6 +278,7 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		c.Abort() // 终止后续调用
 		return
 	}
+	now := time.Now().Format("2006-01-02 15:04:05")
 	document := Document{}
 	document.Status = 2
 	document.FilePath = filePath
@@ -286,6 +287,8 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 	document.SortNo = funcMaxSortNo(tableDocumentName)
 	document.Name = funcLastURI(filePath)
 	document.FileExt = filepath.Ext(document.Name)
+	document.CreateTime = now
+	document.UpdateTime = now
 
 	documentID, _ := findDocumentIdByFilePath(ctx, filePath)
 
@@ -665,6 +668,8 @@ func funcUpdateDocument(ctx context.Context, c *app.RequestContext) {
 	if !ok {
 		return
 	}
+	now := time.Now().Format("2006-01-02 15:04:05")
+	entity.UpdateTime = now
 	go updateDocumentChunk(ctx, entity)
 
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
