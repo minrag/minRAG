@@ -130,6 +130,8 @@ func init() {
 
 	//ajax POST删除数据
 	adminGroup.POST("/:urlPathParam/delete", funcDelete)
+	//ajax POST删除Document
+	adminGroup.POST("/document/delete", funcDeleteDocument)
 
 	//ajax POST执行更新语句
 	adminGroup.POST("/updatesql", funcUpdateSQL)
@@ -253,7 +255,7 @@ func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 
 // funcUploadFile 上传文件
 func funcUploadFile(ctx context.Context, c *app.RequestContext) {
-	filePath, _, _, err := funcUploadFilePath(c, "upload/")
+	filePath, _, err := funcUploadFilePath(c, "upload/")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
 		c.Abort() // 终止后续调用
@@ -264,7 +266,7 @@ func funcUploadFile(ctx context.Context, c *app.RequestContext) {
 
 // funcUploadDocument 上传文档
 func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
-	filePath, knowledgeBaseId, fileSize, err := funcUploadFilePath(c, "upload/")
+	filePath, knowledgeBaseId, err := funcUploadFilePath(c, "upload/")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
 		c.Abort() // 终止后续调用
@@ -277,18 +279,13 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	document := Document{}
-
-	document.FilePath = filePath
-	document.FileSize = fileSize
 	document.Status = 2
+	document.FilePath = filePath
 	document.KnowledgeBaseID = knowledgeBaseId
 	document.KnowledgeBaseName = knowledgeBaseName
 	document.SortNo = funcMaxSortNo(tableDocumentName)
 	document.Name = funcLastURI(filePath)
-	document.FileExt = filepath.Ext(document.Name)
 
-	// 读取上传文件的内容
-	readDocumentFile(ctx, &document)
 	documentID, _ := findDocumentIdByFilePath(ctx, filePath)
 
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
@@ -301,18 +298,18 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 		return nil, nil
 	})
 	// 文档分块,分析处理
-	go updateDocumentChunk(context.Background(), &document)
+	go updateDocumentChunk(ctx, &document)
 
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: filePath})
 }
 
 // funcUploadFilePath 上传文件,返回文件的path路径
-func funcUploadFilePath(c *app.RequestContext, baseDir string) (string, string, int, error) {
+func funcUploadFilePath(c *app.RequestContext, baseDir string) (string, string, error) {
 	fileHeader, err := c.FormFile("file")
 	// 相对于上传的目录路径,只能是目录路径
 	dirPath := string(c.FormValue("dirPath"))
 	if err != nil {
-		return "", "", 0, err
+		return "", "", err
 	}
 	dirPath = filepath.ToSlash(dirPath)
 	dirPath = funcTrimSlash(dirPath)
@@ -328,13 +325,13 @@ func funcUploadFilePath(c *app.RequestContext, baseDir string) (string, string, 
 	serverDirPath := datadir + baseDir + dirPath
 	err = os.MkdirAll(serverDirPath, 0600)
 	if err != nil && !os.IsExist(err) {
-		return "", dirPath, 0, err
+		return "", dirPath, err
 	}
 	path := baseDir + dirPath + fileName
 	newFileName := datadir + path
 	err = c.SaveUploadedFile(fileHeader, newFileName)
 
-	return path, "/" + dirPath, int(fileHeader.Size), err
+	return path, "/" + dirPath, err
 }
 
 // funcUploadTheme 上传主题
@@ -667,13 +664,8 @@ func funcUpdateDocument(ctx context.Context, c *app.RequestContext) {
 	if !ok {
 		return
 	}
-	_, err := updateDocumentChunk(ctx, entity)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to update data")})
-		c.Abort() // 终止后续调用
-		FuncLogError(ctx, err)
-		return
-	}
+	go updateDocumentChunk(ctx, entity)
+
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1})
 }
 
@@ -938,6 +930,23 @@ func funcDelete(ctx context.Context, c *app.RequestContext) {
 		}
 		c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Message: funcT("Data deleted successfully")})
 	}
+}
+
+// funcDeleteDocument 删除Document,DocumentChunk,VecDocumentChunk
+func funcDeleteDocument(ctx context.Context, c *app.RequestContext) {
+	id := c.PostForm("id")
+	//id := c.Query("id")
+	if id == "" { //没有id,终止调用
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("ID cannot be empty")})
+		c.Abort() // 终止后续调用
+		return
+	}
+	err := funcDeleteDocumentById(ctx, id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to delete data")})
+		c.Abort() // 终止后续调用
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Message: funcT("Data deleted successfully")})
 }
 
 func funcUpdateSQL(ctx context.Context, c *app.RequestContext) {

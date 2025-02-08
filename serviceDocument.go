@@ -19,109 +19,31 @@ package main
 
 import (
 	"context"
-	"os"
+	"errors"
+	"strings"
 
 	"gitee.com/chunanyong/zorm"
 )
 
-// updateDocumentChunk 根据Document更新DocumentChunk
+// updateDocumentChunk 运行indexPipeline流水线,更新Document,DocumentChunk,VecDocumentChunk
 func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) {
-	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		// 更新文档
-		zorm.Update(ctx, document)
-
-		// 删除关联的数据,重新插入
-		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", document.Id)
-		count, err := zorm.UpdateFinder(ctx, finderDeleteChunk)
-		if err != nil {
-			return count, err
-		}
-		embedder, hasmbedder := componentMap["OpenAITextEmbedder"]
-		if hasmbedder {
-			finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
-			count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
-			if err != nil {
-				return count, err
-			}
-		}
-
-		documentChunks, err := splitDocument4Chunk(ctx, document)
-		if err != nil {
-			return documentChunks, err
-		}
-
-		dcs := make([]zorm.IEntityStruct, 0)
-		vecdcs := make([]zorm.IEntityStruct, 0)
-		for i := 0; i < len(documentChunks); i++ {
-			dc := documentChunks[i]
-			dc.Status = 1
-			dcs = append(dcs, &dc)
-
-			if !hasmbedder {
-				continue
-			}
-
-			vecdc := &VecDocumentChunk{}
-			vecdc.Id = dc.Id
-			vecdc.DocumentID = dc.DocumentID
-			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
-			vecdc.SortNo = dc.SortNo
-			vecdc.Status = 1
-			input := map[string]interface{}{"query": dc.Markdown}
-			err := embedder.Run(ctx, input)
-			if err != nil {
-				return nil, err
-			}
-			embedding := input["embedding"].([]float64)
-			vecdc.Embedding, _ = vecSerializeFloat64(embedding)
-			vecdcs = append(vecdcs, vecdc)
-
-		}
-		if len(dcs) > 1 {
-			count, err = zorm.InsertSlice(ctx, dcs)
-			if err != nil {
-				return count, err
-			}
-		}
-		if len(vecdcs) > 1 {
-			count, err = zorm.InsertSlice(ctx, vecdcs)
-			if err != nil {
-				return count, err
-			}
-		}
-
-		finderUpdateDocument := zorm.NewUpdateFinder(tableDocumentName).Append("status=1 WHERE id=?", document.Id)
-		return zorm.UpdateFinder(ctx, finderUpdateDocument)
-	})
-
-	return false, err
-
-}
-
-// splitDocument4Chunk 分割文档为DocumentChunk
-func splitDocument4Chunk(ctx context.Context, document *Document) ([]DocumentChunk, error) {
-	documentChunks := make([]DocumentChunk, 0)
-	documentSplitter := componentMap["DocumentSplitter"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]interface{})
 	input["document"] = document
-	err := documentSplitter.Run(ctx, input)
+	indexPipeline, has := componentMap["indexPipeline"]
+	if !has || indexPipeline == nil {
+		return false, errors.New("indexPipeline is empty")
+	}
+	err := indexPipeline.Run(ctx, input)
 	if err != nil {
-		return documentChunks, err
+		return false, err
 	}
-	ds, has := input["documentChunks"]
-	if !has || ds == nil {
-		return documentChunks, err
+	errObj, has := input[errorKey]
+	if has || errObj != nil {
+		return false, errObj.(error)
 	}
-	documentChunks = ds.([]DocumentChunk)
-	return documentChunks, nil
-}
 
-// readDocumentFile 读取文件内容
-func readDocumentFile(ctx context.Context, document *Document) error {
-	// TODO 先处理markdown文件,以后扩展获取
-	markdownByte, err := os.ReadFile(datadir + document.FilePath)
-	document.Markdown = string(markdownByte)
-	return err
+	return true, nil
+
 }
 
 // findDocumentIdByFilePath 根据文档路径查询文档ID
@@ -146,4 +68,84 @@ func findDocumentChunkMarkDown(ctx context.Context, documentChunks []DocumentChu
 	}
 
 	return documentChunks, nil
+}
+
+// funcDeleteDocumentById 根据文档ID删除 Document,DocumentChunk,VecDocumentChunk
+func funcDeleteDocumentById(ctx context.Context, id string) error {
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		f1 := zorm.NewDeleteFinder(tableDocumentName).Append("WHERE id=?", id)
+		count, err := zorm.UpdateFinder(ctx, f1)
+		if err != nil {
+			return count, err
+		}
+		f2 := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", id)
+		count, err = zorm.UpdateFinder(ctx, f2)
+		if err != nil {
+			return count, err
+		}
+		f3 := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", id)
+		return zorm.UpdateFinder(ctx, f3)
+	})
+	return err
+}
+
+// recursiveSplit 递归分割实现
+func (component *DocumentSplitter) recursiveSplit(text string, depth int) []string {
+	chunks := make([]string, 0)
+	// 终止条件：处理完所有分隔符
+	if depth >= len(component.SplitBy) {
+		if text != "" {
+			return append(chunks, text)
+		}
+		return chunks
+	}
+
+	currentSep := component.SplitBy[depth]
+	parts := strings.Split(text, currentSep)
+	for i, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		partContent := part
+		if i < len(parts)-1 { //不是最后一个
+			partContent = partContent + currentSep
+		}
+
+		// 处理超长内容
+		if len(part) >= component.SplitLength {
+			partLeaf := component.recursiveSplit(partContent, depth+1)
+			if len(partLeaf) > 0 {
+				chunks = append(chunks, partLeaf...)
+			}
+			continue
+		} else {
+			chunks = append(chunks, partContent)
+		}
+	}
+	return chunks
+}
+
+// mergeChunks 合并短内容
+func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
+	// 合并短内容
+	for i := 0; i < len(chunks); i++ {
+		chunk := chunks[i]
+		if len(chunk) >= component.SplitLength || i+1 >= len(chunks) {
+			continue
+		}
+		nextChunk := chunks[i+1]
+
+		// 汉字字符占位3个长度
+		if (len(chunk) + len(nextChunk)) > (component.SplitLength*18)/10 {
+			continue
+		}
+		chunks[i] = chunk + nextChunk
+		if i+2 >= len(chunks) { //倒数第二个元素,去掉最后一个
+			chunks = chunks[:len(chunks)-1]
+		} else { // 去掉 i+1 索引元素,合并到了 i 索引
+			chunks = append(chunks[:i+1], chunks[i+2:]...)
+		}
+	}
+	return chunks
 }

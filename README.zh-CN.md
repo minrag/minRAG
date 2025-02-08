@@ -1,10 +1,12 @@
 ## 介绍  
 minrag是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.        
-使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了DocumentSplitter、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMessageMemory、OpenAIChatCompletion、Pipeline等组件,支持流水线设置和扩展. 
+  
+使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
+MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMessageMemory、OpenAIChatCompletion、Pipeline等组件,支持流水线设置和扩展. 
 
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度  
-- OpenAITextEmbedder 默认使用的是 bge-m3 模型  
-- DocumentChunksReranker 默认使用的是 bge-reranker-v2-m3 模型
+- OpenAITextEmbedder 默认使用 bge-m3 模型  
+- DocumentChunksReranker 默认使用 bge-reranker-v2-m3 模型
 - OpenAIChatCompletion 默认使用 Qwen2.5-72B-Instruct 模型  
 以上模型都可以在组件中修改  
 

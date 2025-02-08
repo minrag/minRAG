@@ -26,6 +26,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -56,7 +58,10 @@ var componentTypeMap = map[string]IComponent{
 	"FtsKeywordRetriever":     &FtsKeywordRetriever{},
 	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
 	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
+	"SQLiteVecDocumentStore":  &SQLiteVecDocumentStore{},
+	"OpenAIDocumentEmbedder":  &OpenAIDocumentEmbedder{},
 	"DocumentSplitter":        &DocumentSplitter{},
+	"MarkdownConverter":       &MarkdownConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -77,7 +82,8 @@ func init() {
 // initComponentMap 初始化componentMap
 func initComponentMap() {
 	componentMap = make(map[string]IComponent, 0)
-	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1")
+	// indexPipeline 比较特殊,默认禁用,为了不让Agent绑定上
+	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 or id=?", "indexPipeline")
 	cs := make([]Component, 0)
 	ctx := context.Background()
 	zorm.Query(ctx, finder, &cs, nil)
@@ -158,6 +164,45 @@ func (component *Pipeline) runProcess(ctx context.Context, input map[string]inte
 	return nil
 }
 
+// MarkdownConverter markdown文件读取
+type MarkdownConverter struct {
+	FilePath string `json:"filePath,omitempty"`
+}
+
+func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
+	document := &Document{}
+	documentObj, has := input["document"]
+	if has {
+		document = documentObj.(*Document)
+	}
+	filePath := component.FilePath
+	if filePath == "" {
+		filePath = document.FilePath
+	} else {
+		document.FilePath = filePath
+	}
+	if filePath == "" {
+		err := errors.New(funcT("The filePath of MarkdownConverter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+
+	markdownByte, err := os.ReadFile(datadir + document.FilePath)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	document.Markdown = string(markdownByte)
+	document.FileSize = len(markdownByte)
+	document.FileExt = filepath.Ext(document.FilePath)
+	document.Status = 2
+	input["document"] = document
+	return nil
+}
+
 // DocumentSplitter 文档拆分
 type DocumentSplitter struct {
 	SplitBy      []string `json:"splitBy,omitempty"`
@@ -215,65 +260,160 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	return nil
 }
 
-// recursiveSplit 递归分割实现
-func (component *DocumentSplitter) recursiveSplit(text string, depth int) []string {
-	chunks := make([]string, 0)
-	// 终止条件：处理完所有分隔符
-	if depth >= len(component.SplitBy) {
-		if text != "" {
-			return append(chunks, text)
-		}
-		return chunks
-	}
-
-	currentSep := component.SplitBy[depth]
-	parts := strings.Split(text, currentSep)
-	for i, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
-			continue
-		}
-		partContent := part
-		if i < len(parts)-1 { //不是最后一个
-			partContent = partContent + currentSep
-		}
-
-		// 处理超长内容
-		if len(part) >= component.SplitLength {
-			partLeaf := component.recursiveSplit(partContent, depth+1)
-			if len(partLeaf) > 0 {
-				chunks = append(chunks, partLeaf...)
-			}
-			continue
-		} else {
-			chunks = append(chunks, partContent)
-		}
-	}
-	return chunks
+// OpenAIDocumentEmbedder 向量化文档字符串
+type OpenAIDocumentEmbedder struct {
+	APIKey         string            `json:"apikey,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	BaseURL        string            `json:"baseURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	MaxRetries     int               `json:"maxRetries,omitempty"`
+	client         *http.Client      `json:"-"`
 }
 
-// mergeChunks 合并短内容
-func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
-	// 合并短内容
-	for i := 0; i < len(chunks); i++ {
-		chunk := chunks[i]
-		if len(chunk) >= component.SplitLength || i+1 >= len(chunks) {
-			continue
-		}
-		nextChunk := chunks[i+1]
-
-		// 汉字字符占位3个长度
-		if (len(chunk) + len(nextChunk)) > (component.SplitLength*18)/10 {
-			continue
-		}
-		chunks[i] = chunk + nextChunk
-		if i+2 >= len(chunks) { //倒数第二个元素,去掉最后一个
-			chunks = chunks[:len(chunks)-1]
-		} else { // 去掉 i+1 索引元素,合并到了 i 索引
-			chunks = append(chunks[:i+1], chunks[i+2:]...)
-		}
+func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Timeout == 0 {
+		component.Timeout = 180
 	}
-	return chunks
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+	return nil
+}
+func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
+	documentChunksObj, has := input["documentChunks"]
+	if !has {
+		return errors.New(funcT("input['documentChunks'] cannot be empty"))
+	}
+	documentChunks := documentChunksObj.([]DocumentChunk)
+	rs := struct {
+		Data []struct {
+			Embedding []float64 `json:"embedding,omitempty"`
+		} `json:"data,omitempty"`
+	}{}
+	vecDocumentChunks := make([]VecDocumentChunk, 0)
+	for i := 0; i < len(documentChunks); i++ {
+		bodyMap := make(map[string]interface{}, 0)
+		bodyMap["input"] = documentChunks[i].Markdown
+		bodyMap["model"] = component.Model
+		bodyMap["encoding_format"] = "float"
+		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
+
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+
+		err = json.Unmarshal(bodyByte, &rs)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		if len(rs.Data) < 1 {
+			err := errors.New("httpPostJsonBody data is empty")
+			input[errorKey] = err
+			return err
+		}
+		embedding, err := vecSerializeFloat64(rs.Data[0].Embedding)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		documentChunks[i].Embedding = embedding
+
+		vecdc := VecDocumentChunk{}
+		vecdc.Id = documentChunks[i].Id
+		vecdc.DocumentID = documentChunks[i].DocumentID
+		vecdc.KnowledgeBaseID = documentChunks[i].KnowledgeBaseID
+		vecdc.SortNo = documentChunks[i].SortNo
+		vecdc.Status = 1
+		vecdc.Embedding = embedding
+
+		vecDocumentChunks = append(vecDocumentChunks, vecdc)
+	}
+	input["documentChunks"] = documentChunks
+	input["vecDocumentChunks"] = vecDocumentChunks
+
+	return nil
+}
+
+// SQLiteVecDocumentStore 更新文档和向量
+type SQLiteVecDocumentStore struct {
+}
+
+func (component *SQLiteVecDocumentStore) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[string]interface{}) error {
+	documentObj, has := input["document"]
+	if !has {
+		err := errors.New(funcT("The document of SQLiteVecDocumentStore cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	document := documentObj.(*Document)
+
+	documentChunksObj, has := input["documentChunks"]
+	var documentChunks []DocumentChunk
+	if has {
+		documentChunks = documentChunksObj.([]DocumentChunk)
+	}
+
+	var vecDocumentChunks []VecDocumentChunk
+	vecDocumentChunksObj, has := input["vecDocumentChunks"]
+	if has {
+		vecDocumentChunks = vecDocumentChunksObj.([]VecDocumentChunk)
+	}
+
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		//先删除,重新插入
+		zorm.Delete(ctx, document)
+		document.Status = 1
+		zorm.Insert(ctx, document)
+		// 删除关联的数据,重新插入
+		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", document.Id)
+		count, err := zorm.UpdateFinder(ctx, finderDeleteChunk)
+		if err != nil {
+			return count, err
+		}
+		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
+		count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
+		if err != nil {
+			return count, err
+		}
+
+		dcs := make([]zorm.IEntityStruct, 0)
+		vecdcs := make([]zorm.IEntityStruct, 0)
+		for i := 0; i < len(documentChunks); i++ {
+			documentChunks[i].Status = 1
+			dcs = append(dcs, &documentChunks[i])
+			if len(vecDocumentChunks) < 1 {
+				continue
+			}
+			vecDocumentChunks[i].Status = 1
+			vecdcs = append(vecdcs, &vecDocumentChunks[i])
+		}
+		if len(dcs) > 0 {
+			count, err = zorm.InsertSlice(ctx, dcs)
+			if err != nil {
+				return count, err
+			}
+		}
+		if len(vecdcs) > 0 {
+			count, err = zorm.InsertSlice(ctx, vecdcs)
+			if err != nil {
+				return count, err
+			}
+		}
+
+		return nil, nil
+	})
+
+	if err != nil {
+		input[errorKey] = err
+	}
+
+	return err
 }
 
 // OpenAITextEmbedder 向量化字符串文本
@@ -291,11 +431,9 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
-
 	component.client = &http.Client{
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
-
 	return nil
 }
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
@@ -307,9 +445,7 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 	bodyMap["input"] = queryObj.(string)
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
-	//bodyMap["dimensions"] = 1
 	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
-
 	if err != nil {
 		input[errorKey] = err
 		return err
