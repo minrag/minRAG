@@ -285,6 +285,7 @@ func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 	document.KnowledgeBaseName = knowledgeBaseName
 	document.SortNo = funcMaxSortNo(tableDocumentName)
 	document.Name = funcLastURI(filePath)
+	document.FileExt = filepath.Ext(document.Name)
 
 	documentID, _ := findDocumentIdByFilePath(ctx, filePath)
 

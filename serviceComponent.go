@@ -27,7 +27,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -197,7 +196,6 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	}
 	document.Markdown = string(markdownByte)
 	document.FileSize = len(markdownByte)
-	document.FileExt = filepath.Ext(document.FilePath)
 	document.Status = 2
 	input["document"] = document
 	return nil
