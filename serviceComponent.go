@@ -742,6 +742,18 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 	if has {
 		messages = ms.([]ChatMessage)
 	}
+	agentID, has := input["agentID"]
+	if has {
+		agent, err := findAgentByID(ctx, agentID.(string))
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		agentPrompt := ChatMessage{Role: "system", Content: agent.AgentPrompt}
+		messages = append(messages, agentPrompt)
+	}
+	// TODO 查询历史记录的上下文
+
 	promptMessage := ChatMessage{Role: "user", Content: prompt.(string)}
 	messages = append(messages, promptMessage)
 	input["messages"] = messages
