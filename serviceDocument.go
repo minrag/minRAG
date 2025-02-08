@@ -36,11 +36,15 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 		if err != nil {
 			return count, err
 		}
-		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
-		count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
-		if err != nil {
-			return count, err
+		embedder, hasmbedder := componentMap["OpenAITextEmbedder"]
+		if hasmbedder {
+			finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
+			count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
+			if err != nil {
+				return count, err
+			}
 		}
+
 		documentChunks, err := splitDocument4Chunk(ctx, document)
 		if err != nil {
 			return documentChunks, err
@@ -52,33 +56,40 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 			dc := documentChunks[i]
 			dc.Status = 1
 			dcs = append(dcs, &dc)
+
+			if !hasmbedder {
+				continue
+			}
+
 			vecdc := &VecDocumentChunk{}
 			vecdc.Id = dc.Id
 			vecdc.DocumentID = dc.DocumentID
 			vecdc.KnowledgeBaseID = dc.KnowledgeBaseID
 			vecdc.SortNo = dc.SortNo
 			vecdc.Status = 1
-
-			embedder := componentMap["OpenAITextEmbedder"]
 			input := map[string]interface{}{"query": dc.Markdown}
 			err := embedder.Run(ctx, input)
-
 			if err != nil {
 				return nil, err
 			}
-
 			embedding := input["embedding"].([]float64)
 			vecdc.Embedding, _ = vecSerializeFloat64(embedding)
 			vecdcs = append(vecdcs, vecdc)
+
 		}
-		count, err = zorm.InsertSlice(ctx, dcs)
-		if err != nil {
-			return count, err
+		if len(dcs) > 1 {
+			count, err = zorm.InsertSlice(ctx, dcs)
+			if err != nil {
+				return count, err
+			}
 		}
-		count, err = zorm.InsertSlice(ctx, vecdcs)
-		if err != nil {
-			return count, err
+		if len(vecdcs) > 1 {
+			count, err = zorm.InsertSlice(ctx, vecdcs)
+			if err != nil {
+				return count, err
+			}
 		}
+
 		finderUpdateDocument := zorm.NewUpdateFinder(tableDocumentName).Append("status=1 WHERE id=?", document.Id)
 		return zorm.UpdateFinder(ctx, finderUpdateDocument)
 	})
