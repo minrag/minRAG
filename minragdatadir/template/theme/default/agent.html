@@ -49,7 +49,16 @@
 <script>
 var roomID=new Date().getTime()+"_{{.agentID}}";
 
+var oldRoomID=localStorage.getItem("roomID");
+if(!!oldRoomID){
+    roomID=oldRoomID;
+}else{
+    localStorage.setItem("roomID", roomID);
+}
+
 $(document).ready(function() {
+
+
     $('#send-btn').click(function() {
         sendMessage();
     });
