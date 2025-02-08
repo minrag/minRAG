@@ -864,9 +864,6 @@ type OpenAIChatMessageMemory struct {
 }
 
 func (component *OpenAIChatMessageMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.MemoryLength == 0 {
-		component.MemoryLength = 10
-	}
 	return nil
 }
 func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) error {
@@ -898,7 +895,7 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 		roomID = roomIDObj.(string)
 	}
 	messageLogs := make([]MessageLog, 0)
-	if roomID != "" {
+	if roomID != "" && component.MemoryLength > 0 {
 		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE roomID=? order by createTime desc", roomID)
 		finder.SelectTotalCount = false
 		page := zorm.NewPage()
