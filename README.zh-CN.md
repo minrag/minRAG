@@ -1,8 +1,5 @@
-<img src="minragdatadir/public/minrag-logo.png" height="150px" />  
-  
 ## 介绍  
-minrag追求极致的简单和强大,不超过1万行代码,无需安装,双击启动,实现dify的核心功能.    
-Fork [gpress v1.0.8](https://gitee.com/gpress/gpress)代码修改,无需安装,双击启动即可使用.    
+minrag是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.        
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了DocumentSplitter、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMessageMemory、OpenAIChatCompletion、Pipeline等组件,支持流水线设置和扩展. 
 
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度  
