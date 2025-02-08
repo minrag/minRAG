@@ -1,9 +1,6 @@
-<img src="minragdatadir/public/minrag-logo.png" height="150px" />    
-
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
 ## Introduction  
-Minrag pursues the ultimate simplicity and power, with no more than 10,000 lines of code. It requires no installation and can be started with a double-click, implementing the core functions of Dify.  
-The code is modified based on [gpress v1.0.8](https://gitee.com/gpress/gpress). It requires no installation and can be used by simply double-clicking to start.  
+Minrag is a RAG system that starts from scratch, aiming for ultimate simplicity and power, with no more than 10,000 lines of code, no installation required, and double-click to launch.    
 It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as DocumentSplitter, OpenAITextEmbedder, VecEmbeddingRetriever, FtsKeywordRetriever, DocumentChunksReranker, PromptBuilder, OpenAIChatMessageMemory, OpenAIChatCompletion, and Pipeline, supporting pipeline settings and extensions.
 
 
