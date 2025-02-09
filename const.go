@@ -52,8 +52,12 @@ const (
 	// 智能体
 	tableAgentName = "agent"
 
+	// 聊天室
+	tableMessageRoomName = "message_room"
+
 	// 消息日志
 	tableMessageLogName = "message_log"
+
 	//---------------------------//
 
 	// 模板的路径
