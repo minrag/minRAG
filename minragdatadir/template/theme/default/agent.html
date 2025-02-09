@@ -48,9 +48,11 @@
 <script src="{{basePath}}js/marked.min.js"></script>
 <script>
 function generateRandomNumber(n) {
-    const min = Math.pow(10, n - 1); // 最小值
-    const max = Math.pow(10, n) - 1; // 最大值
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    let random="";
+    for (i = 0; i < n; i++) {
+        random=random+""+Math.floor(Math.random()*10)
+    }
+    return random;
 }
 var roomID=generateRandomNumber(20)+"_{{.agentID}}";
 
