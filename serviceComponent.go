@@ -1046,7 +1046,8 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 
 	url := component.BaseURL + "/chat/completions"
 
-	if !component.Stream {
+	if !component.Stream { //一次性输出,不是流式输出
+		//请求大模型
 		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 		if err != nil {
 			input[errorKey] = err
@@ -1065,55 +1066,63 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 			input[errorKey] = err
 			return err
 		}
+		//获取第一个结果
 		choice := rs.Choices[0]
+		//没有函数调用,把模型返回的choice放入到input["choice"]
 		if len(choice.Message.ToolCalls) == 0 {
 			input["choice"] = choice
-			content := choice.Message.Content
-			content = strings.ReplaceAll(content, "\n\n", "\n \n")
-			c.WriteString("data: " + content + "\n\n")
-			c.Flush()
-			c.WriteString("data: [DONE]\n\n")
-			c.Flush()
-
-		} else {
-			for i := 0; i < len(choice.Message.ToolCalls); i++ {
-				tc := choice.Message.ToolCalls[i]
-				funcName := tc.Function.Name
-				fc, has := functionCallingMap[funcName]
-				if !has {
-					continue
-				}
-				content, err := fc.Run(ctx, tc.Function.Arguments)
-				if err != nil {
-					continue
-				}
-				messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
-			}
-			input["messages"] = messages
-			//删除函数,重新调用
-			delete(input, "tools")
-			component.Run(ctx, input)
+			return nil
 		}
+
+		//遍历所有的函数,追加到messages列表
+		for i := 0; i < len(choice.Message.ToolCalls); i++ {
+			tc := choice.Message.ToolCalls[i]
+			funcName := tc.Function.Name
+			//获取函数的实现对象
+			fc, has := functionCallingMap[funcName]
+			if !has {
+				continue
+			}
+			//执行函数
+			content, err := fc.Run(ctx, tc.Function.Arguments)
+			if err != nil {
+				continue
+			}
+			//将函数执行的结果和tool_call_id追加到messages列表
+			messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
+		}
+
+		//重新放入 input["messages"]
+		input["messages"] = messages
+		//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
+		delete(input, "tools")
+		//重新运行组件,调用大模型.
+		component.Run(ctx, input)
 
 		return nil
 	}
 
+	// toolCalls 需要调用的函数列表,如果有值,说明需要调用函数,不能直接返回结果
 	var toolCalls []ToolCall
 
+	//设置SSE的协议头
 	component.DefaultHeaders["Accept"] = "text/event-stream"
 	component.DefaultHeaders["Cache-Control"] = "no-cache"
 	component.DefaultHeaders["Connection"] = "keep-alive"
+
+	//请求大模型
 	resp, err := httpPostJsonResponse(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err
 	}
 	defer resp.Body.Close()
-
+	//用于拼接stream返回的最终结果
 	choice := Choice{FinishReason: "stop"}
 	var message strings.Builder
 	// 使用 bufio.NewReader 逐行读取响应体
 	reader := bufio.NewReader(resp.Body)
+	//循环处理stream流输出
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
@@ -1123,23 +1132,19 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 			input[errorKey] = err
 			return err
 		}
-
-		// 去掉行首的换行符
 		line = strings.TrimSpace(line)
-
-		fmt.Println(line)
-
 		if line == "" {
 			continue
 		}
+		// SSE的标准格式是 data:空格 开头,后面跟着数据
 		if !strings.HasPrefix(line, "data: ") {
 			err := errors.New("stream data format is error")
 			input[errorKey] = err
 			return err
 		}
 		data := strings.TrimPrefix(line, "data: ")
-		if data == "[DONE]" {
-			// TODO 需要输出到前端页面
+		if data == "[DONE]" { //结束符
+			// 没有需要调用的函数,就输出结束 DONE
 			if c != nil && len(toolCalls) == 0 {
 				c.WriteString("data: [DONE]\n\n")
 				c.Flush()
@@ -1152,6 +1157,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		rs := struct {
 			Choices []Choice `json:"choices,omitempty"`
 		}{}
+		//大模型返回的json对象,进行接受
 		err = json.Unmarshal([]byte(data), &rs)
 		if err != nil {
 			input[errorKey] = err
@@ -1162,65 +1168,71 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 			input[errorKey] = err
 			return err
 		}
+		//FinishReason结束符
 		if rs.Choices[0].FinishReason != "" {
 			choice.FinishReason = rs.Choices[0].FinishReason
 		}
 
-		// tool_calls 函数调用
-		if len(rs.Choices[0].Delta.ToolCalls) > 0 {
-			if len(toolCalls) == 0 {
-				toolCalls = rs.Choices[0].Delta.ToolCalls
-			} else {
-				for i := 0; i < len(rs.Choices[0].Delta.ToolCalls); i++ {
-					tc := rs.Choices[0].Delta.ToolCalls[i]
-					if tc.Id != "" {
-						toolCalls[i].Id = tc.Id
-					}
-					if tc.Function.Name != "" {
-						toolCalls[i].Function.Name = tc.Function.Name
-					}
-					if tc.Function.Arguments != "" {
-						toolCalls[i].Function.Arguments += tc.Function.Arguments
-					}
-				}
+		// 模型返回的调用函数,有可能是多个函数
+		tcLen := len(rs.Choices[0].Delta.ToolCalls)
+		// 模型返回的有函数调用,初始化toolCalls,长度一致
+		if tcLen > 0 && len(toolCalls) == 0 {
+			toolCalls = make([]ToolCall, tcLen)
+		}
+		//stream会把函数参数片段输出,需要重新拼接为完整的函数信息
+		for i := 0; i < tcLen; i++ {
+			tc := rs.Choices[0].Delta.ToolCalls[i]
+			if tc.Id != "" { //tool_call_id 不会分段
+				toolCalls[i].Id = tc.Id
 			}
-
+			if tc.Function.Name != "" { //tool_call_name 函数名称,不会分段
+				toolCalls[i].Function.Name = tc.Function.Name
+			}
+			if tc.Function.Arguments != "" { //函数的参数,会分段,所以循环拼接起来
+				toolCalls[i].Function.Arguments += tc.Function.Arguments
+			}
 		}
 
-		// TODO 需要输出到前端页面
+		// 不是函数调用,把返回的内容输出到页面
 		if c != nil && len(toolCalls) == 0 {
 			c.WriteString("data: " + rs.Choices[0].Delta.Content + "\n\n")
 			c.Flush()
 		}
+		// 不是函数调用,把内容拼接起来
 		if len(toolCalls) == 0 {
 			message.WriteString(rs.Choices[0].Delta.Content)
 		}
 	}
+	//没有函数调用,把模型返回的choice放入到input["choice"]
 	if len(toolCalls) == 0 {
 		choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
 		input["choice"] = choice
-	} else { //函数调用
-		for i := 0; i < len(toolCalls); i++ {
-			tc := toolCalls[i]
-			funcName := tc.Function.Name
-			fc, has := functionCallingMap[funcName]
-			if !has {
-				continue
-			}
-			content, err := fc.Run(ctx, tc.Function.Arguments)
-			if err != nil {
-				continue
-			}
-			messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
-		}
-
-		input["messages"] = messages
-		//重新调用
-		toolCalls = nil
-		//删除函数,重新调用
-		delete(input, "tools")
-		component.Run(ctx, input)
+		return nil
 	}
+	//遍历所有的函数,追加到messages列表
+	for i := 0; i < len(toolCalls); i++ {
+		tc := toolCalls[i]
+		funcName := tc.Function.Name
+		//获取函数的实现对象
+		fc, has := functionCallingMap[funcName]
+		if !has {
+			continue
+		}
+		//执行函数
+		content, err := fc.Run(ctx, tc.Function.Arguments)
+		if err != nil {
+			continue
+		}
+		//将函数执行的结果和tool_call_id追加到messages列表
+		messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
+	}
+	//重新放入 input["messages"]
+	input["messages"] = messages
+	//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
+	delete(input, "tools")
+	//重新运行组件,调用大模型.
+	component.Run(ctx, input)
+
 	return nil
 
 }
