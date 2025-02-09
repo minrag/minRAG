@@ -72,13 +72,17 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 
 	// 设置响应头
 	c.SetStatusCode(http.StatusOK)
-	c.Header("Content-Type", "text/event-stream")
-	c.Header("Cache-Control", "no-cache")
-	c.Header("Connection", "keep-alive")
-	writer := resp.NewChunkedBodyWriter(&c.Response, c.GetWriter())
-	c.Response.HijackWriter(writer)
-	input["c"] = c
 
+	accept := string(c.GetHeader("Accept"))
+	stream := strings.Contains(strings.ToLower(accept), "text/event-stream")
+	if stream {
+		c.Header("Accept", "text/event-stream")
+		c.Header("Cache-Control", "no-cache")
+		c.Header("Connection", "keep-alive")
+		writer := resp.NewChunkedBodyWriter(&c.Response, c.GetWriter())
+		c.Response.HijackWriter(writer)
+	}
+	input["c"] = c
 	agentIDObj, has := input["agentID"]
 	if !has || agentIDObj == nil || agentIDObj.(string) == "" {
 		c.WriteString("data: agentID is empty\n\n")
@@ -135,6 +139,12 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	if has && choiceObj != nil {
 		choice = choiceObj.(Choice)
 	}
+
+	if !stream { //不是stream流输出
+		c.WriteString(choice.Message.Content)
+		c.Flush()
+	}
+
 	jwttoken := string(c.Cookie(config.JwttokenKey))
 	userId, _ := userIdByToken(jwttoken)
 
