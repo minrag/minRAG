@@ -51,10 +51,10 @@ type Config struct {
 	// Proxy 代理,用于翻墙 格式: http://127.0.0.1:8090
 	Proxy string `column:"proxy" json:"proxy,omitempty"`
 
-	// AIBaseURL AI平台baseURL,默认gitee
+	// AIBaseURL AI平台base_url
 	AIBaseURL string `column:"aiBaseURL" json:"aiBaseURL,omitempty"`
 
-	// AIAPIkey AI平台aiAPIKey,默认gitee
+	// AIAPIkey AI平台api_key
 	AIAPIkey string `column:"aiAPIKey" json:"aiAPIKey,omitempty"`
 
 	// CreateTime 创建时间

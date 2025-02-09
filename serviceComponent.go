@@ -262,9 +262,9 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 
 // OpenAIDocumentEmbedder 向量化文档字符串
 type OpenAIDocumentEmbedder struct {
-	APIKey         string            `json:"apikey,omitempty"`
+	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"baseURL,omitempty"`
+	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -424,9 +424,9 @@ func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[stri
 
 // OpenAITextEmbedder 向量化字符串文本
 type OpenAITextEmbedder struct {
-	APIKey         string            `json:"apikey,omitempty"`
+	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"baseURL,omitempty"`
+	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -692,9 +692,9 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 
 // DocumentChunksReranker 对DocumentChunks进行重新排序
 type DocumentChunksReranker struct {
-	APIKey         string            `json:"apikey,omitempty"`
+	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"baseURL,omitempty"`
+	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	// Query 需要查询的关键字
@@ -988,9 +988,9 @@ type ChatFunction struct {
 
 // OpenAIChatCompletion OpenAI的LLM大语言模型
 type OpenAIChatCompletion struct {
-	APIKey         string            `json:"apikey,omitempty"`
+	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"baseURL,omitempty"`
+	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
