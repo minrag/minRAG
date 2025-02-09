@@ -247,6 +247,8 @@ func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 		c.Abort() // 终止后续调用
 		return
 	}
+	// 刷新组件Map
+	initComponentMap()
 
 	//重新生成静态文件
 	go genStaticFile()
@@ -615,6 +617,8 @@ func funcUpdateConfig(ctx context.Context, c *app.RequestContext) {
 	}
 	entity.UpdateTime = now
 	funcUpdate(ctx, c, entity, entity.Id)
+	// 刷新组件Map
+	initComponentMap()
 }
 
 // funcUpdateSite 更新站点
