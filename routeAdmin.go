@@ -617,6 +617,9 @@ func funcUpdateConfig(ctx context.Context, c *app.RequestContext) {
 	}
 	entity.UpdateTime = now
 	funcUpdate(ctx, c, entity, entity.Id)
+
+	// 刷新config之后,刷新组件Map才会有效果
+	config, site = loadInstallConfig()
 	// 刷新组件Map
 	initComponentMap()
 }
