@@ -151,26 +151,26 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	messageLog.UserMessage = query
 	messageLog.AIMessage = choice.Message.Content
 
-	finder := zorm.NewSelectFinder(tableMessageRoomName).Append("WHERE id=?", roomID)
-	messageRoom := &MessageRoom{}
-	zorm.QueryRow(ctx, finder, messageRoom)
-	messageRoom.CreateTime = now
-	messageRoom.KnowledgeBaseID = agent.KnowledgeBaseID
-	messageRoom.AgentID = agentID
-	messageRoom.PipelineID = agent.PipelineID
-	messageRoom.UserID = userId
-	if messageRoom.Name == "" {
+	finder := zorm.NewSelectFinder(tableChatRoomName).Append("WHERE id=?", roomID)
+	chatRoom := &ChatRoom{}
+	zorm.QueryRow(ctx, finder, chatRoom)
+	chatRoom.CreateTime = now
+	chatRoom.KnowledgeBaseID = agent.KnowledgeBaseID
+	chatRoom.AgentID = agentID
+	chatRoom.PipelineID = agent.PipelineID
+	chatRoom.UserID = userId
+	if chatRoom.Name == "" {
 		qLen := len(query)
 		if qLen > 20 {
 			qLen = 20
 		}
-		messageRoom.Name = query[:qLen]
+		chatRoom.Name = query[:qLen]
 	}
 
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		if messageRoom.Id == "" {
-			messageRoom.Id = messageLog.RoomID
-			zorm.Insert(ctx, messageRoom)
+		if chatRoom.Id == "" {
+			chatRoom.Id = messageLog.RoomID
+			zorm.Insert(ctx, chatRoom)
 		}
 		zorm.Insert(ctx, messageLog)
 

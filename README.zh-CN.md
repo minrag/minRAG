@@ -189,6 +189,17 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | sortNo      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态         | -       | 禁用(0),可用(1) |
 
+### 聊天室(表名:chat_room)
+| columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
+| ----------- | ----------- | ----------- | ------- | ---------------------- |
+| id          | string      | 主键         |   否    | - |
+| name        | string      | 名称         | 否      |    -    |
+| agentID     | string      | 智能体ID     | 否      |    -    |
+| pipelineID  | string      | 流水线ID     | 否      |    -    |
+| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
+| userID      | string      | 用户ID       | 否      |    -    |
+| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+
 ### 消息日志(表名:message_log)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
