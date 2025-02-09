@@ -72,6 +72,13 @@
 				</div>
 
 				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "Tools"}}</label>
+					<div class="layui-input-block">
+						<input type="text" name="tools"  autocomplete="off" class="layui-input" value="{{ .Data.Tools }}">
+					</div>
+				</div>
+
+				<div class="layui-form-item layui-col-md6">
 					<label class="layui-form-label">{{T "Sort"}}</label>
 					<div class="layui-input-block">
 						<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off" class="layui-input" value="{{ .Data.SortNo }}">

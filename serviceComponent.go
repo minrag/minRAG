@@ -912,6 +912,23 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 		}
 		agentPrompt := ChatMessage{Role: "system", Content: agent.AgentPrompt}
 		messages = append(messages, agentPrompt)
+		//tools
+		if len(agent.Tools) > 0 {
+			toolSlice := make([]string, 0)
+			json.Unmarshal([]byte(agent.Tools), &toolSlice)
+			tools := make([]interface{}, 0)
+			for i := 0; i < len(toolSlice); i++ {
+				toolName := toolSlice[i]
+				fc, has := functionCallingMap[toolName]
+				if has {
+					tools = append(tools, fc.Description(ctx))
+				}
+			}
+			if len(tools) > 0 {
+				input["tools"] = tools
+			}
+
+		}
 	}
 
 	roomIDObj, has := input["roomID"]
@@ -941,6 +958,7 @@ func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[str
 	promptMessage := ChatMessage{Role: "user", Content: prompt.(string)}
 	messages = append(messages, promptMessage)
 	input["messages"] = messages
+
 	return nil
 }
 
@@ -1015,7 +1033,19 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		bodyMap["temperature"] = component.Temperature
 	}
 	bodyMap["stream"] = component.Stream
+	tools, has := input["tools"]
+	if has {
+		bodyMap["tools"] = tools
+	}
+
+	var c *app.RequestContext
+	cObj, has := input["c"]
+	if has {
+		c = cObj.(*app.RequestContext)
+	}
+
 	url := component.BaseURL + "/chat/completions"
+
 	if !component.Stream {
 		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 		if err != nil {
@@ -1035,9 +1065,41 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 			input[errorKey] = err
 			return err
 		}
-		input["choice"] = rs.Choices[0]
+		choice := rs.Choices[0]
+		if len(choice.Message.ToolCalls) == 0 {
+			input["choice"] = choice
+			content := choice.Message.Content
+			content = strings.ReplaceAll(content, "\n\n", "\n \n")
+			c.WriteString("data: " + content + "\n\n")
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+
+		} else {
+			for i := 0; i < len(choice.Message.ToolCalls); i++ {
+				tc := choice.Message.ToolCalls[i]
+				funcName := tc.Function.Name
+				fc, has := functionCallingMap[funcName]
+				if !has {
+					continue
+				}
+				content, err := fc.Run(ctx, tc.Function.Arguments)
+				if err != nil {
+					continue
+				}
+				messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
+			}
+			input["messages"] = messages
+			//删除函数,重新调用
+			delete(input, "tools")
+			component.Run(ctx, input)
+		}
+
 		return nil
 	}
+
+	var toolCalls []ToolCall
+
 	component.DefaultHeaders["Accept"] = "text/event-stream"
 	component.DefaultHeaders["Cache-Control"] = "no-cache"
 	component.DefaultHeaders["Connection"] = "keep-alive"
@@ -1047,12 +1109,6 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		return err
 	}
 	defer resp.Body.Close()
-
-	var c *app.RequestContext
-	cObj, has := input["c"]
-	if has {
-		c = cObj.(*app.RequestContext)
-	}
 
 	choice := Choice{FinishReason: "stop"}
 	var message strings.Builder
@@ -1071,6 +1127,8 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		// 去掉行首的换行符
 		line = strings.TrimSpace(line)
 
+		fmt.Println(line)
+
 		if line == "" {
 			continue
 		}
@@ -1082,7 +1140,7 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		data := strings.TrimPrefix(line, "data: ")
 		if data == "[DONE]" {
 			// TODO 需要输出到前端页面
-			if c != nil {
+			if c != nil && len(toolCalls) == 0 {
 				c.WriteString("data: [DONE]\n\n")
 				c.Flush()
 			}
@@ -1107,15 +1165,62 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		if rs.Choices[0].FinishReason != "" {
 			choice.FinishReason = rs.Choices[0].FinishReason
 		}
+
+		// tool_calls 函数调用
+		if len(choice.Delta.ToolCalls) > 0 {
+			if len(toolCalls) == 0 {
+				toolCalls = choice.Delta.ToolCalls
+			} else {
+				for i := 0; i < len(choice.Delta.ToolCalls); i++ {
+					tc := choice.Delta.ToolCalls[i]
+					if tc.Id != "" {
+						toolCalls[i].Id = tc.Id
+					}
+					if tc.Function.Name != "" {
+						toolCalls[i].Function.Name += tc.Function.Name
+					}
+					if tc.Function.Arguments != "" {
+						toolCalls[i].Function.Arguments += tc.Function.Arguments
+					}
+				}
+			}
+
+		}
+
 		// TODO 需要输出到前端页面
-		if c != nil {
+		if c != nil && len(toolCalls) == 0 {
 			c.WriteString("data: " + rs.Choices[0].Delta.Content + "\n\n")
 			c.Flush()
 		}
-		message.WriteString(rs.Choices[0].Delta.Content)
+		if len(toolCalls) == 0 {
+			message.WriteString(rs.Choices[0].Delta.Content)
+		}
 	}
-	choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
-	input["choice"] = choice
+	if len(toolCalls) == 0 {
+		choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
+		input["choice"] = choice
+	} else { //函数调用
+		for i := 0; i < len(toolCalls); i++ {
+			tc := toolCalls[i]
+			funcName := tc.Function.Name
+			fc, has := functionCallingMap[funcName]
+			if !has {
+				continue
+			}
+			content, err := fc.Run(ctx, tc.Function.Arguments)
+			if err != nil {
+				continue
+			}
+			messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
+		}
+
+		input["messages"] = messages
+		//重新调用
+		toolCalls = nil
+		//删除函数,重新调用
+		delete(input, "tools")
+		component.Run(ctx, input)
+	}
 	return nil
 
 }
