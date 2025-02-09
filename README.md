@@ -177,7 +177,7 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | pipelineID       | string      | Pipeline ID         | No   |    -  |
 | knowledgeBaseID  | string      | Knowledge Base ID   | No   |    -  |
 | userID           | string      | User ID             | No   |    -  |
-| createTime       | string      | Creation Time       |No   | 006-01-02 15:04:05|
+| createTime       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
 
 ### Message Log (Table Name: message_log)
 | Column Name      | Type        | Description    | Tokenized |  Remarks  | 
@@ -190,4 +190,4 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | userMessage      | string      | User's Message      | No   |    -  |
 | aiMessage        | string      | AI's Response       | No   |    -  |
 | userID           | string      | User ID             | No   |    -  |
-| createTime       | string      | Creation Time       |No   | 006-01-02 15:04:05|
+| createTime       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
