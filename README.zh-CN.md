@@ -4,11 +4,11 @@ minrag是从零开始的RAG系统,追求极致的简单和强大,不超过1万�
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
 MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMessageMemory、OpenAIChatCompletion、Pipeline等组件,支持流水线设置和扩展. 
 
-AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度  
+AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
 - DocumentChunksReranker 默认使用 bge-reranker-v2-m3 模型
 - OpenAIChatCompletion 默认使用 Qwen2.5-72B-Instruct 模型  
-以上模型都可以在组件中修改  
+ 
 
 
 
@@ -189,7 +189,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | sortNo      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态         | -       | 禁用(0),可用(1) |
 
-### 消息日志(表名:messageLog)
+### 消息日志(表名:message_log)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |

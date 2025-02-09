@@ -47,7 +47,12 @@
 <script src="{{basePath}}js/jquery-3.7.1.min.js"></script>
 <script src="{{basePath}}js/marked.min.js"></script>
 <script>
-var roomID=new Date().getTime()+"_{{.agentID}}";
+function generateRandomNumber(n) {
+    const min = Math.pow(10, n - 1); // 最小值
+    const max = Math.pow(10, n) - 1; // 最大值
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+var roomID=generateRandomNumber(20)+"_{{.agentID}}";
 
 var oldRoomID=localStorage.getItem("roomID");
 if(!!oldRoomID){
