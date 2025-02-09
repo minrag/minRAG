@@ -977,6 +977,7 @@ type ChatMessage struct {
 }
 type ToolCall struct {
 	Id         string       `json:"id,omitempty"`
+	Index      int          `json:"index,omitempty"`
 	Type       string       `json:"type,omitempty"`
 	ToolCallId string       `json:"tool_call_id,omitempty"`
 	Function   ChatFunction `json:"function,omitempty"`
@@ -1183,13 +1184,13 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		for i := 0; i < tcLen; i++ {
 			tc := rs.Choices[0].Delta.ToolCalls[i]
 			if tc.Id != "" { //tool_call_id 不会分段
-				toolCalls[i].Id = tc.Id
+				toolCalls[tc.Index].Id = tc.Id
 			}
 			if tc.Function.Name != "" { //tool_call_name 函数名称,不会分段
-				toolCalls[i].Function.Name = tc.Function.Name
+				toolCalls[tc.Index].Function.Name = tc.Function.Name
 			}
 			if tc.Function.Arguments != "" { //函数的参数,会分段,所以循环拼接起来
-				toolCalls[i].Function.Arguments += tc.Function.Arguments
+				toolCalls[tc.Index].Function.Arguments += tc.Function.Arguments
 			}
 		}
 
