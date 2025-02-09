@@ -1167,17 +1167,17 @@ func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string
 		}
 
 		// tool_calls 函数调用
-		if len(choice.Delta.ToolCalls) > 0 {
+		if len(rs.Choices[0].Delta.ToolCalls) > 0 {
 			if len(toolCalls) == 0 {
-				toolCalls = choice.Delta.ToolCalls
+				toolCalls = rs.Choices[0].Delta.ToolCalls
 			} else {
-				for i := 0; i < len(choice.Delta.ToolCalls); i++ {
-					tc := choice.Delta.ToolCalls[i]
+				for i := 0; i < len(rs.Choices[0].Delta.ToolCalls); i++ {
+					tc := rs.Choices[0].Delta.ToolCalls[i]
 					if tc.Id != "" {
 						toolCalls[i].Id = tc.Id
 					}
 					if tc.Function.Name != "" {
-						toolCalls[i].Function.Name += tc.Function.Name
+						toolCalls[i].Function.Name = tc.Function.Name
 					}
 					if tc.Function.Arguments != "" {
 						toolCalls[i].Function.Arguments += tc.Function.Arguments
