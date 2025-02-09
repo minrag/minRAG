@@ -6,5 +6,7 @@
  "basePath":"/",
  "proxy":"",
  "maxRequestBodySize":20971520,
- "locale":"zh-CN"
+ "locale":"zh-CN",
+ "aiBaseURL":"https://ai.gitee.com/v1",
+ "aiAPIkey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11"
 }
