@@ -81,9 +81,9 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 
 	agentIDObj, has := input["agentID"]
 	if !has || agentIDObj == nil || agentIDObj.(string) == "" {
-		c.WriteString(`data: agentID is empty\n\n`)
+		c.WriteString("data: agentID is empty\n\n")
 		c.Flush()
-		c.WriteString(`data: [DONE]\n\n`)
+		c.WriteString("data: [DONE]\n\n")
 		c.Flush()
 		c.Abort()
 		return
@@ -91,9 +91,9 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	agentID := agentIDObj.(string)
 	agent, err := findAgentByID(ctx, agentID)
 	if err != nil || agent.Id == "" {
-		c.WriteString(`data: agent is empty\n\n`)
+		c.WriteString("data: agent is empty\n\n")
 		c.Flush()
-		c.WriteString(`data: [DONE]\n\n`)
+		c.WriteString("data: [DONE]\n\n")
 		c.Flush()
 		c.Abort()
 		return
@@ -101,9 +101,9 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 
 	roomIDObj, has := input["roomID"]
 	if !has || roomIDObj.(string) == "" {
-		c.WriteString(`data: roomID is empty\n\n`)
+		c.WriteString("data: roomID is empty\n\n")
 		c.Flush()
-		c.WriteString(`data: [DONE]\n\n`)
+		c.WriteString("data: [DONE]\n\n")
 		c.Flush()
 		c.Abort()
 		return
@@ -111,9 +111,9 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	roomID := roomIDObj.(string)
 	roomIDs := strings.Split(roomID, "_")
 	if len(roomIDs) != 2 || len(roomIDs[0]) != 20 {
-		c.WriteString(`data: roomID is error\n\n`)
+		c.WriteString("data: roomID is error\n\n")
 		c.Flush()
-		c.WriteString(`data: [DONE]\n\n`)
+		c.WriteString("data: [DONE]\n\n")
 		c.Flush()
 		c.Abort()
 		return
