@@ -53,7 +53,7 @@ const (
 	tableAgentName = "agent"
 
 	// 消息日志
-	tableMessageLogName = "messageLog"
+	tableMessageLogName = "message_log"
 	//---------------------------//
 
 	// 模板的路径

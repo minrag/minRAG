@@ -8,7 +8,6 @@ The default AI platform is [Gitee AI](https://ai.gitee.com), with 100 free daily
 - OpenAITextEmbedder uses the bge-m3 model by default.
 - DocumentChunksReranker uses the bge-reranker-v2-m3 model by default.
 - OpenAIChatCompletion uses the Qwen2.5-72B-Instruct model by default.
-All of the above models can be modified within the components.
 
 
 ## Development Environment  
@@ -169,7 +168,7 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | sortNo      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1)  |
 
-### Message Log (Table Name: messageLog)
+### Message Log (Table Name: message_log)
 | Column Name      | Type        | Description    | Tokenized |  Remarks  | 
 | ---              | ---         | ---            | -------   | ------    |
 | id               | string      | Primary Key         | No   |    -  |

@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
@@ -99,47 +98,27 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 		c.Abort()
 		return
 	}
-	userId := c.GetString(tokenUserId)
-	if userId != "" {
-		input["roomID"] = userId + "_" + agentID
-	} else {
-		if agent.Status == 0 {
-			c.WriteString(`data: agent is disable\n\n`)
-			c.Flush()
-			c.WriteString(`data: [DONE]\n\n`)
-			c.Flush()
-			c.Abort()
-			return
-		}
-		roomIDObj, has := input["roomID"]
-		if !has || roomIDObj.(string) == "" {
-			c.WriteString(`data: roomID is empty\n\n`)
-			c.Flush()
-			c.WriteString(`data: [DONE]\n\n`)
-			c.Flush()
-			c.Abort()
-			return
-		}
-		roomIDs := strings.Split(roomIDObj.(string), "_")
-		if len(roomIDs) != 2 {
-			c.WriteString(`data: roomID is error\n\n`)
-			c.Flush()
-			c.WriteString(`data: [DONE]\n\n`)
-			c.Flush()
-			c.Abort()
-			return
-		}
-		timestampStr := roomIDs[0]
-		if len(timestampStr) > 20 || !isNumeric(timestampStr) {
-			c.WriteString(`data: roomID is error\n\n`)
-			c.Flush()
-			c.WriteString(`data: [DONE]\n\n`)
-			c.Flush()
-			c.Abort()
-			return
-		}
 
+	roomIDObj, has := input["roomID"]
+	if !has || roomIDObj.(string) == "" {
+		c.WriteString(`data: roomID is empty\n\n`)
+		c.Flush()
+		c.WriteString(`data: [DONE]\n\n`)
+		c.Flush()
+		c.Abort()
+		return
 	}
+	roomID := roomIDObj.(string)
+	roomIDs := strings.Split(roomID, "_")
+	if len(roomIDs) != 2 || len(roomIDs[0]) != 20 {
+		c.WriteString(`data: roomID is error\n\n`)
+		c.Flush()
+		c.WriteString(`data: [DONE]\n\n`)
+		c.Flush()
+		c.Abort()
+		return
+	}
+
 	input["knowledgeBaseID"] = agent.KnowledgeBaseID
 	pipeline := componentMap[agent.PipelineID]
 	pipeline.Run(ctx, input)
@@ -156,11 +135,14 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	if has && choiceObj != nil {
 		choice = choiceObj.(Choice)
 	}
+	jwttoken := string(c.Cookie(config.JwttokenKey))
+	userId, _ := userIdByToken(jwttoken)
+
 	now := time.Now().Format("2006-01-02 15:04:05")
 	messageLog := &MessageLog{}
 	messageLog.Id = FuncGenerateStringID()
 	messageLog.CreateTime = now
-	messageLog.RoomID = input["roomID"].(string)
+	messageLog.RoomID = roomID
 	messageLog.KnowledgeBaseID = agent.KnowledgeBaseID
 	messageLog.AgentID = agentID
 	messageLog.PipelineID = agent.PipelineID
@@ -188,9 +170,4 @@ func warpRequestMap(c *app.RequestContext) map[string]interface{} {
 		data[userTypeKey] = 0
 	}
 	return data
-}
-
-func isNumeric(s string) bool {
-	matched, _ := regexp.MatchString(`^\d+$`, s)
-	return matched
 }
