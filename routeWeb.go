@@ -162,10 +162,10 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 // warpRequestMap 包装请求参数为map
 func warpRequestMap(c *app.RequestContext) map[string]interface{} {
 	data := make(map[string]interface{}, 0)
-	//设置用户角色,0是访客,1是管理员
-	userType, ok := c.Get(userTypeKey)
-	if ok {
-		data[userTypeKey] = userType
+	jwttoken := string(c.Cookie(config.JwttokenKey))
+	userId, _ := userIdByToken(jwttoken)
+	if userId != "" {
+		data[userTypeKey] = 1
 	} else {
 		data[userTypeKey] = 0
 	}
