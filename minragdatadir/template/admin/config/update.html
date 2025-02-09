@@ -72,7 +72,19 @@
 					<div class="layui-input-block">
 					  <input type="number" name="maxRequestBodySize"  autocomplete="off" class="layui-input" value="{{.Data.MaxRequestBodySize}}">
 					</div>
+				</div>
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "AI platform base_url"}}</label>
+					<div class="layui-input-block">
+					  <input type="text" name="aiBaseURL"  autocomplete="off" class="layui-input" value="{{.Data.AIBaseURL}}">
+					</div>
 				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "api_key for the AI platform"}}</label>
+					<div class="layui-input-block">
+					  <input type="text" name="aiAPIkey"  autocomplete="off" class="layui-input" value="{{.Data.AIAPIkey}}">
+					</div>
+				</div>		
 				<div class="layui-form-item">
 					<div class="layui-input-block">
 					  <button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-update">{{T "Submit Changes"}}</button>

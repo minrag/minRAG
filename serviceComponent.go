@@ -278,6 +278,12 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 	component.client = &http.Client{
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL
+	}
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
+	}
 	return nil
 }
 func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
@@ -433,6 +439,12 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	}
 	component.client = &http.Client{
 		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL
+	}
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
 	}
 	return nil
 }
@@ -703,6 +715,19 @@ func (component *DocumentChunksReranker) Initialization(ctx context.Context, inp
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
 
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
+	}
+	if component.BaseURL == "" {
+		if config.AIBaseURL == "" {
+			return nil
+		}
+		index := strings.Index(config.AIBaseURL, "/v1")
+		if index <= 0 {
+			return nil
+		}
+		component.BaseURL = config.AIBaseURL[:index] + "/api/serverless/bge-reranker-v2-m3/rerank"
+	}
 	return nil
 }
 func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
@@ -964,7 +989,12 @@ func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input
 	component.client = &http.Client{
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
-
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL
+	}
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
+	}
 	return nil
 }
 func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {

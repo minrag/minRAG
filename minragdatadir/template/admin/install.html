@@ -48,6 +48,12 @@
         padding-top: 20px;
         text-decoration: underline;
     }
+
+    .layui-form-label {
+        padding: 9px 0px;
+        width: 100px;
+        text-align:left;
+    }
 </style>
 </head>
 
@@ -78,6 +84,21 @@
                         <i class="layui-icon layui-icon-password"></i>
                     </div>
                     <input type="password" id="password2" value="" lay-verify="required|confirmPassword" placeholder="{{T "Please re-enter the administrator password"}}" lay-reqtext="{{T "Please re-enter the administrator password"}}" autocomplete="off" class="layui-input" lay-affix="eye">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label>{{T "The AI platform defaults to using Gitee AI, with 100 free calls per day"}},<a href="https://ai.gitee.com" target="_blank" style="text-decoration: underline;">{{T "Go to register"}}</a></label>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{T "AI platform base_url"}}</label>
+                <div class="layui-input-block">
+                  <input type="text" name="aiBaseURL" value="https://ai.gitee.com/v1" placeholder='{{T "Please enter the base_url path of the AI platform"}}' autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">{{T "api_key for the AI platform"}}</label>
+                <div class="layui-input-block">
+                  <input type="text" name="aiAPIkey" value="A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11" placeholder='{{T "Please enter the api_key of the AI platform"}}' autocomplete="off" class="layui-input">
                 </div>
             </div>
             <div class="layui-form-item">
