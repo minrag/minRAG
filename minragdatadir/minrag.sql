@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS config (
 		locale           TEXT NOT NULL,
 		proxy            TEXT,
 		aiBaseURL        TEXT,
-		aiAPIkey         TEXT,
+		aiAPIKey         TEXT,
 		createTime       TEXT,
 		updateTime       TEXT,
 		createUser       TEXT,

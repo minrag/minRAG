@@ -54,8 +54,8 @@ type Config struct {
 	// AIBaseURL AI平台baseURL,默认gitee
 	AIBaseURL string `column:"aiBaseURL" json:"aiBaseURL,omitempty"`
 
-	// AIAPIkey AI平台aiAPIkey,默认gitee
-	AIAPIkey string `column:"aiAPIkey" json:"aiAPIkey,omitempty"`
+	// AIAPIkey AI平台aiAPIKey,默认gitee
+	AIAPIkey string `column:"aiAPIKey" json:"aiAPIKey,omitempty"`
 
 	// CreateTime 创建时间
 	CreateTime string `column:"createTime" json:"createTime,omitempty"`
