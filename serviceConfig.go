@@ -112,10 +112,22 @@ func insertConfig(ctx context.Context) error {
 	return err
 }
 
+// updateConfigAI 安装时更新AI配置
+func updateConfigAI(ctx context.Context, aiBaseURL string, aiAPIKey string) error {
+	if aiBaseURL == "" || aiAPIKey == "" {
+		return nil
+	}
+	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		finder := zorm.NewUpdateFinder(tableConfigName).Append("aiBaseURL=?,aiAPIKey=? WHERE id=?", aiBaseURL, aiAPIKey, "minrag_config")
+		return zorm.UpdateFinder(ctx, finder)
+	})
+	return err
+}
+
 // findConfig 查询配置
 func findConfig() (Config, error) {
 
-	finder := zorm.NewSelectFinder(tableConfigName, "*")
+	finder := zorm.NewSelectFinder(tableConfigName)
 
 	m, err := zorm.QueryRowMap(context.Background(), finder)
 
