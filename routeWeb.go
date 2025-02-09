@@ -139,6 +139,7 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	userId, _ := userIdByToken(jwttoken)
 
 	now := time.Now().Format("2006-01-02 15:04:05")
+	query := input["query"].(string)
 	messageLog := &MessageLog{}
 	messageLog.Id = FuncGenerateStringID()
 	messageLog.CreateTime = now
@@ -147,11 +148,32 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	messageLog.AgentID = agentID
 	messageLog.PipelineID = agent.PipelineID
 	messageLog.UserID = userId
-	messageLog.UserMessage = input["query"].(string)
+	messageLog.UserMessage = query
 	messageLog.AIMessage = choice.Message.Content
 
+	finder := zorm.NewSelectFinder(tableMessageRoomName).Append("WHERE id=?", roomID)
+	messageRoom := &MessageRoom{}
+	zorm.QueryRow(ctx, finder, messageRoom)
+	messageRoom.CreateTime = now
+	messageRoom.KnowledgeBaseID = agent.KnowledgeBaseID
+	messageRoom.AgentID = agentID
+	messageRoom.PipelineID = agent.PipelineID
+	messageRoom.UserID = userId
+	if messageRoom.Name == "" {
+		qLen := len(query)
+		if qLen > 20 {
+			qLen = 20
+		}
+		messageRoom.Name = query[:qLen]
+	}
+
 	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		if messageRoom.Id == "" {
+			messageRoom.Id = messageLog.RoomID
+			zorm.Insert(ctx, messageRoom)
+		}
 		zorm.Insert(ctx, messageLog)
+
 		return nil, nil
 	})
 

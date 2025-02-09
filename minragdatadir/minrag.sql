@@ -119,6 +119,15 @@ CREATE TABLE IF NOT EXISTS agent (
 	 ) strict ;
 INSERT INTO agent (status,sortNo,createUser,updateTime,createTime,memoryLength,tools,welcome,avatar,agentPrompt,agentType,defaultReply,pipelineID,knowledgeBaseID,name,id) VALUES (1,1,'','2025-02-02 19:45:25','2025-02-02 19:45:25',0,'','您好,有什么可以帮助您吗?','','我是一个AI私人助手',0,'非常抱歉,可用聊其他话题吗?','default','/default/','默认智能体','default');
 
+CREATE TABLE IF NOT EXISTS message_room (
+		id TEXT PRIMARY KEY NOT NULL,
+		name              TEXT NOT NULL,
+		agentID           TEXT NOT NULL,
+		pipelineID        TEXT NOT NULL,
+		knowledgeBaseID   TEXT NOT NULL,
+		userID            TEXT,
+		createTime        TEXT NOT NULL
+	 ) strict ;
 
 CREATE TABLE IF NOT EXISTS message_log (
 		id TEXT PRIMARY KEY NOT NULL,
