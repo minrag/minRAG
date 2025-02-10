@@ -1,6 +1,6 @@
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
 ## Introduction  
-Minrag is a RAG system that starts from scratch, aiming for ultimate simplicity and power, with no more than 10,000 lines of code, no installation required, and double-click to launch.  
+MinRAG is a RAG system that starts from scratch, aiming for ultimate simplicity and power, with no more than 10,000 lines of code, no installation required, and double-click to launch.  
     
 It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter,DocumentSplitter,OpenAIDocumentEmbedder,SQLiteVecDocumentStore,OpenAITextEmbedder,VecEmbeddingRetriever,FtsKeywordRetriever,DocumentChunksReranker,PromptBuilder,OpenAIChatMemory,OpenAIChatGenerator and Pipeline, supporting pipeline settings and extensions.  
 
@@ -11,7 +11,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com), with 100 free daily
 
 
 ## Development Environment  
-minrag uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minrag fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
+MinRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If MinRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
 
 The default port is 738, and the backend management address is http://127.0.0.1:738/admin/login.  
 First, unzip ```minragdatadir/dict.zip```.  
@@ -32,7 +32,7 @@ make && make install
 ```
 
 ## Backend Management Supports English
-The minrag backend management currently supports both Chinese and English, with the capability to extend to other languages. Language files are located in ```minragdatadir/locales```. By default, the system uses Chinese (```zh-CN```) upon initial installation. If English is preferred, you can modify the ```"locale":"zh-CN"``` to ```"locale":"en-US"``` in the ```minragdatadir/install_config.json``` file before installation. Alternatively, after successful installation, you can change the ```Language``` setting to ```English``` in the ```Settings``` and restart the system to apply the changes.
+The MinRAG backend management currently supports both Chinese and English, with the capability to extend to other languages. Language files are located in ```minragdatadir/locales```. By default, the system uses Chinese (```zh-CN```) upon initial installation. If English is preferred, you can modify the ```"locale":"zh-CN"``` to ```"locale":"en-US"``` in the ```minragdatadir/install_config.json``` file before installation. Alternatively, after successful installation, you can change the ```Language``` setting to ```English``` in the ```Settings``` and restart the system to apply the changes.
 
 ## Table Structure  
 ID defaults to timestamp (23 digits) + random number (9 digits), globally unique.  
