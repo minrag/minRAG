@@ -7,7 +7,7 @@ It uses FTS5 to implement BM25 full-text search and Vec for vector search. It ha
 The default AI platform is [Gitee AI](https://ai.gitee.com), with 100 free daily call credits.
 - OpenAITextEmbedder uses the bge-m3 model by default.
 - DocumentChunkReranker uses the bge-reranker-v2-m3 model by default.
-- OpenAIChatGenerator uses the Qwen2.5-72B-Instruct model by default.
+- OpenAIChatGenerator uses the DeepSeek-V3 model by default.
 
 
 ## Development Environment  
