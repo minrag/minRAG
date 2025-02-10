@@ -127,11 +127,11 @@ func TestPromptBuilder(t *testing.T) {
 	}
 	fmt.Println(input["prompt"])
 
-	openAIChatMessageMemory := componentMap["OpenAIChatMessageMemory"]
-	err = openAIChatMessageMemory.Run(ctx, input)
+	openAIChatMemory := componentMap["OpenAIChatMemory"]
+	err = openAIChatMemory.Run(ctx, input)
 
-	openAIChatCompletion := componentMap["OpenAIChatCompletion"]
-	err = openAIChatCompletion.Run(ctx, input)
+	openAIChatGenerator := componentMap["OpenAIChatGenerator"]
+	err = openAIChatGenerator.Run(ctx, input)
 	choice := input["choice"]
 	fmt.Println(choice)
 }
