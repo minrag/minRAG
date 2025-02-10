@@ -50,6 +50,7 @@ const (
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
 	"Pipeline":               &Pipeline{},
+	"ChatMessageLogStore":    &ChatMessageLogStore{},
 	"OpenAIChatGenerator":    &OpenAIChatGenerator{},
 	"OpenAIChatMemory":       &OpenAIChatMemory{},
 	"PromptBuilder":          &PromptBuilder{},
@@ -1248,6 +1249,94 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 
 	return nil
 
+}
+
+// ChatMessageLogStore 保存消息记录到数据库
+type ChatMessageLogStore struct {
+}
+
+func (component *ChatMessageLogStore) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+
+func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]interface{}) error {
+	cObj, has := input["c"]
+	if !has || cObj == nil {
+		return errors.New(`input["c"] is nil`)
+	}
+	c := cObj.(*app.RequestContext)
+
+	roomIDObj, has := input["roomID"]
+	if !has || roomIDObj == nil {
+		return errors.New(`input["roomID"] is nil`)
+	}
+	roomID := roomIDObj.(string)
+
+	agentIDObj, has := input["agentID"]
+	if !has || agentIDObj == nil {
+		return errors.New(`input["agentID"] is nil`)
+	}
+	agentID := agentIDObj.(string)
+
+	queryObj, has := input["query"]
+	if !has || queryObj == nil {
+		return errors.New(`input["query"] is nil`)
+	}
+	query := queryObj.(string)
+
+	agent, err := findAgentByID(ctx, agentID)
+	if err != nil {
+		return err
+	}
+
+	choice := Choice{}
+	choiceObj, has := input["choice"]
+	if has && choiceObj != nil {
+		choice = choiceObj.(Choice)
+	}
+
+	jwttoken := string(c.Cookie(config.JwttokenKey))
+	userId, _ := userIdByToken(jwttoken)
+
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	messageLog := &MessageLog{}
+	messageLog.Id = FuncGenerateStringID()
+	messageLog.CreateTime = now
+	messageLog.RoomID = roomID
+	messageLog.KnowledgeBaseID = agent.KnowledgeBaseID
+	messageLog.AgentID = agentID
+	messageLog.PipelineID = agent.PipelineID
+	messageLog.UserID = userId
+	messageLog.UserMessage = query
+	messageLog.AIMessage = choice.Message.Content
+
+	finder := zorm.NewSelectFinder(tableChatRoomName).Append("WHERE id=?", roomID)
+	chatRoom := &ChatRoom{}
+	zorm.QueryRow(ctx, finder, chatRoom)
+	chatRoom.CreateTime = now
+	chatRoom.KnowledgeBaseID = agent.KnowledgeBaseID
+	chatRoom.AgentID = agentID
+	chatRoom.PipelineID = agent.PipelineID
+	chatRoom.UserID = userId
+	if chatRoom.Name == "" {
+		qLen := len(query)
+		if qLen > 20 {
+			qLen = 20
+		}
+		chatRoom.Name = query[:qLen]
+	}
+
+	_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		if chatRoom.Id == "" {
+			chatRoom.Id = messageLog.RoomID
+			zorm.Insert(ctx, chatRoom)
+		}
+		zorm.Insert(ctx, messageLog)
+
+		return nil, nil
+	})
+	return err
 }
 
 // findAllComponentList 查询所有的组件

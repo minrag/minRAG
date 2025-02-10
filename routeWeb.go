@@ -22,9 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"gitee.com/chunanyong/zorm"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/http1/resp"
 )
@@ -185,53 +183,6 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 		c.Abort()
 		return
 	}
-	choice := Choice{}
-	choiceObj, has := input["choice"]
-	if has && choiceObj != nil {
-		choice = choiceObj.(Choice)
-	}
-
-	jwttoken := string(c.Cookie(config.JwttokenKey))
-	userId, _ := userIdByToken(jwttoken)
-
-	now := time.Now().Format("2006-01-02 15:04:05")
-	query := input["query"].(string)
-	messageLog := &MessageLog{}
-	messageLog.Id = FuncGenerateStringID()
-	messageLog.CreateTime = now
-	messageLog.RoomID = roomID
-	messageLog.KnowledgeBaseID = agent.KnowledgeBaseID
-	messageLog.AgentID = agentID
-	messageLog.PipelineID = agent.PipelineID
-	messageLog.UserID = userId
-	messageLog.UserMessage = query
-	messageLog.AIMessage = choice.Message.Content
-
-	finder := zorm.NewSelectFinder(tableChatRoomName).Append("WHERE id=?", roomID)
-	chatRoom := &ChatRoom{}
-	zorm.QueryRow(ctx, finder, chatRoom)
-	chatRoom.CreateTime = now
-	chatRoom.KnowledgeBaseID = agent.KnowledgeBaseID
-	chatRoom.AgentID = agentID
-	chatRoom.PipelineID = agent.PipelineID
-	chatRoom.UserID = userId
-	if chatRoom.Name == "" {
-		qLen := len(query)
-		if qLen > 20 {
-			qLen = 20
-		}
-		chatRoom.Name = query[:qLen]
-	}
-
-	zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		if chatRoom.Id == "" {
-			chatRoom.Id = messageLog.RoomID
-			zorm.Insert(ctx, chatRoom)
-		}
-		zorm.Insert(ctx, messageLog)
-
-		return nil, nil
-	})
 
 	//fmt.Println(choice)
 	//c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Data: choice})
