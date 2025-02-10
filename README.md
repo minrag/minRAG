@@ -2,12 +2,12 @@
 ## Introduction  
 Minrag is a RAG system that starts from scratch, aiming for ultimate simplicity and power, with no more than 10,000 lines of code, no installation required, and double-click to launch.  
     
-It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter,DocumentSplitter,OpenAIDocumentEmbedder,SQLiteVecDocumentStore,OpenAITextEmbedder,VecEmbeddingRetriever,FtsKeywordRetriever,DocumentChunksReranker,PromptBuilder,OpenAIChatMessageMemory,OpenAIChatCompletion and Pipeline, supporting pipeline settings and extensions.  
+It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter,DocumentSplitter,OpenAIDocumentEmbedder,SQLiteVecDocumentStore,OpenAITextEmbedder,VecEmbeddingRetriever,FtsKeywordRetriever,DocumentChunksReranker,PromptBuilder,OpenAIChatMemory,OpenAIChatGenerator and Pipeline, supporting pipeline settings and extensions.  
 
 The default AI platform is [Gitee AI](https://ai.gitee.com), with 100 free daily call credits.
 - OpenAITextEmbedder uses the bge-m3 model by default.
 - DocumentChunksReranker uses the bge-reranker-v2-m3 model by default.
-- OpenAIChatCompletion uses the Qwen2.5-72B-Instruct model by default.
+- OpenAIChatGenerator uses the Qwen2.5-72B-Instruct model by default.
 
 
 ## Development Environment  

@@ -49,18 +49,18 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"Pipeline":                &Pipeline{},
-	"OpenAIChatCompletion":    &OpenAIChatCompletion{},
-	"OpenAIChatMessageMemory": &OpenAIChatMessageMemory{},
-	"PromptBuilder":           &PromptBuilder{},
-	"DocumentChunksReranker":  &DocumentChunksReranker{},
-	"FtsKeywordRetriever":     &FtsKeywordRetriever{},
-	"VecEmbeddingRetriever":   &VecEmbeddingRetriever{},
-	"OpenAITextEmbedder":      &OpenAITextEmbedder{},
-	"SQLiteVecDocumentStore":  &SQLiteVecDocumentStore{},
-	"OpenAIDocumentEmbedder":  &OpenAIDocumentEmbedder{},
-	"DocumentSplitter":        &DocumentSplitter{},
-	"MarkdownConverter":       &MarkdownConverter{},
+	"Pipeline":               &Pipeline{},
+	"OpenAIChatGenerator":    &OpenAIChatGenerator{},
+	"OpenAIChatMemory":       &OpenAIChatMemory{},
+	"PromptBuilder":          &PromptBuilder{},
+	"DocumentChunksReranker": &DocumentChunksReranker{},
+	"FtsKeywordRetriever":    &FtsKeywordRetriever{},
+	"VecEmbeddingRetriever":  &VecEmbeddingRetriever{},
+	"OpenAITextEmbedder":     &OpenAITextEmbedder{},
+	"SQLiteVecDocumentStore": &SQLiteVecDocumentStore{},
+	"OpenAIDocumentEmbedder": &OpenAIDocumentEmbedder{},
+	"DocumentSplitter":       &DocumentSplitter{},
+	"MarkdownConverter":      &MarkdownConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -882,16 +882,16 @@ func (component *PromptBuilder) Run(ctx context.Context, input map[string]interf
 	return nil
 }
 
-// OpenAIChatMessageMemory 上下文记忆聊天记录
-type OpenAIChatMessageMemory struct {
+// OpenAIChatMemory 上下文记忆聊天记录
+type OpenAIChatMemory struct {
 	// 上下文记忆长度
 	MemoryLength int `json:"memoryLength,omitempty"`
 }
 
-func (component *OpenAIChatMessageMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
 	return nil
 }
-func (component *OpenAIChatMessageMemory) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]interface{}) error {
 	prompt, has := input["prompt"]
 	if !has {
 		err := errors.New(funcT("input['prompt'] cannot be empty"))
@@ -987,8 +987,8 @@ type ChatFunction struct {
 	Arguments string `json:"arguments,omitempty"`
 }
 
-// OpenAIChatCompletion OpenAI的LLM大语言模型
-type OpenAIChatCompletion struct {
+// OpenAIChatGenerator OpenAI的LLM大语言模型
+type OpenAIChatGenerator struct {
 	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
 	BaseURL        string            `json:"base_url,omitempty"`
@@ -1001,7 +1001,7 @@ type OpenAIChatCompletion struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
@@ -1017,7 +1017,7 @@ func (component *OpenAIChatCompletion) Initialization(ctx context.Context, input
 	}
 	return nil
 }
-func (component *OpenAIChatCompletion) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
 	var messages []ChatMessage
 	ms, has := input["messages"]
 
