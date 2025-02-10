@@ -47,14 +47,35 @@
 <script src="{{basePath}}js/jquery-3.7.1.min.js"></script>
 <script src="{{basePath}}js/marked.min.js"></script>
 <script>
-function generateRandomNumber(n) {
-    let random="";
-    for (i = 0; i < n; i++) {
-        random=random+""+Math.floor(Math.random()*10)
+function generateStringID() {
+    let randomNum="";
+    for (i = 0; i < 9; i++) {
+        randomNum=randomNum+""+Math.floor(Math.random()*10)
     }
-    return random;
+
+    // 获取当前时间的纳秒级时间戳
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hour = String(now.getHours()).padStart(2, '0');
+    const minute = String(now.getMinutes()).padStart(2, '0');
+    const second = String(now.getSeconds()).padStart(2, '0');
+    const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+
+    // 获取更高精度的时间（纳秒级）
+    const performanceNow = performance.now();
+    const microseconds = String(Math.floor((performanceNow % 1) * 1000)).padStart(3, '0');
+    const nanoseconds = String(Math.floor((performanceNow % 1e-3) * 1e6)).padStart(3, '0');
+
+    // 拼接时间字符串
+    const pk = `${year}${month}${day}${hour}${minute}${second}${milliseconds}${microseconds}${nanoseconds}`;
+
+    // 拼接最终的32位字符串
+    const result = `${pk}${randomNum}`;
+    return result;
 }
-var roomID=generateRandomNumber(32);
+var roomID=generateStringID();
 
 var oldRoomID=localStorage.getItem("roomID");
 if(!!oldRoomID){
