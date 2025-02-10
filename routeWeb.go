@@ -191,11 +191,6 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 		choice = choiceObj.(Choice)
 	}
 
-	if !stream { //不是stream流输出
-		c.WriteString(choice.Message.Content)
-		c.Flush()
-	}
-
 	jwttoken := string(c.Cookie(config.JwttokenKey))
 	userId, _ := userIdByToken(jwttoken)
 

@@ -1079,9 +1079,11 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 		}
 		//获取第一个结果
 		choice := rs.Choices[0]
-		//没有函数调用,把模型返回的choice放入到input["choice"]
+		//没有函数调用,把模型返回的choice放入到input["choice"],并输出
 		if len(choice.Message.ToolCalls) == 0 {
 			input["choice"] = choice
+			c.WriteString(choice.Message.Content)
+			c.Flush()
 			return nil
 		}
 
