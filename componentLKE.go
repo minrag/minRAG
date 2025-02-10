@@ -26,15 +26,33 @@ import (
 	"time"
 )
 
+//POST https://lkeap.tencentcloudapi.com/
+//Authorization: TC3-HMAC-SHA256 Credential=AKID********************************/2019-02-25/lkeap/tc3_request, SignedHeaders=content-type;host;x-tc-action, Signature=10b1a37a7301a02ca19a647ad722d5e43b4b3cff309d421d85b46093f6ab6c4f
+/**
+Content-Type: application/json; charset=utf-8
+Host: lkeap.tencentcloudapi.com
+X-TC-Action: GetEmbedding
+X-TC-Version: 2024-05-22
+X-TC-Timestamp: 1551113065
+X-TC-Region: ap-guangzhou
+
+{"Limit": 1, "Filters": [{"Values": ["\u672a\u547d\u540d"], "Name": "instance-name"}]}
+
+*/
 // https://cloud.tencent.com/document/product/1772/115368
+
+var lkeapHost = "lkeap.tencentcloudapi.com"
+var lkeAlgorithm = "TC3-HMAC-SHA256"
 
 // LKETextEmbedder  LKE向量化字符串文本
 type LKETextEmbedder struct {
-	Action         string            `json:"Action,omitempty"`
-	Region         string            `json:"Region,omitempty"`
-	Model          string            `json:"Model,omitempty"`
-	Version        string            `json:"Version,omitempty"`
-	Timestamp      int               `json:"-"`
+	Host      string `json:"Host,omitempty"`        // lkeap.tencentcloudapi.com
+	Action    string `json:"X-TC-Action,omitempty"` // GetEmbedding
+	Region    string `json:"X-TC-Region,omitempty"` // ap-guangzhou
+	Timestamp int    `json:"X-TC-Timestamp,omitempty"`
+	Version   string `json:"X-TC-Version,omitempty"` // 2024-05-22
+
+	Model          string            `json:"Model,omitempty"` // lke-text-embedding-v1
 	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
@@ -43,14 +61,15 @@ type LKETextEmbedder struct {
 }
 
 func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+	component.Host = "lkeap.tencentcloudapi.com"
+	component.Region = "ap-guangzhou"
+	component.Version = "2024-05-22"
+
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
 	component.client = &http.Client{
 		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL
 	}
 
 	return nil
