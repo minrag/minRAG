@@ -89,9 +89,9 @@ func TestFtsKeywordRetriever(t *testing.T) {
 	}
 }
 
-func TestDocumentChunksReranker(t *testing.T) {
+func TestDocumentChunkReranker(t *testing.T) {
 	ctx := context.Background()
-	documentChunksReranker := componentMap["DocumentChunksReranker"]
+	documentChunkReranker := componentMap["DocumentChunkReranker"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
@@ -99,7 +99,7 @@ func TestDocumentChunksReranker(t *testing.T) {
 	documentChunks[1] = DocumentChunk{Markdown: "今天晴天"}
 	documentChunks[2] = DocumentChunk{Markdown: "我明天去旅游"}
 	input["documentChunks"] = documentChunks
-	err := documentChunksReranker.Run(ctx, input)
+	err := documentChunkReranker.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
 	}
