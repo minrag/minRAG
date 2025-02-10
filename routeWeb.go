@@ -41,9 +41,11 @@ func init() {
 	// 默认首页
 	h.GET("/", funcIndex)
 
-	// 查看agent
+	// agent 页面
 	h.GET("/agent/:agentID", funcAgentPre)
-	h.POST("/agent/sse", funcAgentSSE)
+
+	// 兼容OpenAI模型接口,api_key是agentID,user是roomID
+	h.POST("/v1/chat/completions", funcChatCompletions)
 }
 
 // funcIndex 模板首页
@@ -65,16 +67,82 @@ func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 	cHtml(c, http.StatusOK, "agent.html", data)
 }
 
-// funcAgent 智能体
-func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
-	input := make(map[string]interface{}, 0)
-	c.BindJSON(&input)
+// funcChatCompletions 兼容OpenAI模型接口,api_key是agentID,user是roomID
+func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 
 	// 设置响应头
 	c.SetStatusCode(http.StatusOK)
 
 	accept := string(c.GetHeader("Accept"))
 	stream := strings.Contains(strings.ToLower(accept), "text/event-stream")
+
+	aByte := c.GetHeader("Authorization")
+	if len(aByte) < 1 {
+		if stream {
+			c.WriteString("data: Authorization is empty\n\n")
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString("Authorization is empty")
+			c.Flush()
+		}
+		c.Abort()
+		return
+	}
+	authorization := string(aByte)
+	agentID := strings.TrimPrefix(authorization, "Bearer ")
+	if agentID == "" {
+		if stream {
+			c.WriteString("data: Authorization is empty\n\n")
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString("Authorization is empty")
+			c.Flush()
+		}
+		c.Abort()
+		return
+	}
+
+	agentRequestBody := &AgentRequestBody{}
+	err := c.BindJSON(agentRequestBody)
+	if err != nil {
+		if stream {
+			c.WriteString(fmt.Sprintf("data: body is error:%v\n\n", err))
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString(fmt.Sprintf("body is error:%v", err))
+			c.Flush()
+		}
+	}
+	if len(agentRequestBody.Messages) < 1 {
+		if stream {
+			c.WriteString("data: messages is empty\n\n")
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString("messages is empty")
+			c.Flush()
+		}
+		c.Abort()
+		return
+	}
+	input := make(map[string]interface{}, 0)
+	// 用户发送的第一个消息
+	input["query"] = agentRequestBody.Messages[0].Content
+	// agentID
+	input["agentID"] = agentID
+	// 获取roomID,可能会空
+	roomID := agentRequestBody.User
+	if roomID != "" && len(roomID) == 32 {
+		input["roomID"] = roomID
+	}
+
 	if stream {
 		c.Header("Accept", "text/event-stream")
 		c.Header("Cache-Control", "no-cache")
@@ -83,42 +151,18 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 		c.Response.HijackWriter(writer)
 	}
 	input["c"] = c
-	agentIDObj, has := input["agentID"]
-	if !has || agentIDObj == nil || agentIDObj.(string) == "" {
-		c.WriteString("data: agentID is empty\n\n")
-		c.Flush()
-		c.WriteString("data: [DONE]\n\n")
-		c.Flush()
-		c.Abort()
-		return
-	}
-	agentID := agentIDObj.(string)
+
 	agent, err := findAgentByID(ctx, agentID)
 	if err != nil || agent.Id == "" {
-		c.WriteString("data: agent is empty\n\n")
-		c.Flush()
-		c.WriteString("data: [DONE]\n\n")
-		c.Flush()
-		c.Abort()
-		return
-	}
-
-	roomIDObj, has := input["roomID"]
-	if !has || roomIDObj.(string) == "" {
-		c.WriteString("data: roomID is empty\n\n")
-		c.Flush()
-		c.WriteString("data: [DONE]\n\n")
-		c.Flush()
-		c.Abort()
-		return
-	}
-	roomID := roomIDObj.(string)
-	roomIDs := strings.Split(roomID, "_")
-	if len(roomIDs) != 2 || len(roomIDs[0]) != 20 {
-		c.WriteString("data: roomID is error\n\n")
-		c.Flush()
-		c.WriteString("data: [DONE]\n\n")
-		c.Flush()
+		if stream {
+			c.WriteString("data: agent is empty\n\n")
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString("agent is empty")
+			c.Flush()
+		}
 		c.Abort()
 		return
 	}
@@ -129,8 +173,15 @@ func funcAgentSSE(ctx context.Context, c *app.RequestContext) {
 	//choice := input["choice"]
 	errObj := input[errorKey]
 	if errObj != nil {
-		c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", errObj))
-		c.Flush()
+		if stream {
+			c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", errObj))
+			c.Flush()
+			c.WriteString("data: [DONE]\n\n")
+			c.Flush()
+		} else {
+			c.WriteString(fmt.Sprintf("component run is error:%v", errObj))
+			c.Flush()
+		}
 		c.Abort()
 		return
 	}
