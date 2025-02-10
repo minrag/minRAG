@@ -1330,19 +1330,16 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		if chatRoom.Id == "" {
 			chatRoom.Id = messageLog.RoomID
-			zorm.Insert(ctx, chatRoom)
+			count, err := zorm.Insert(ctx, chatRoom)
+			if err != nil {
+				return count, err
+			}
 		}
-		zorm.Insert(ctx, messageLog)
-
+		count, err := zorm.Insert(ctx, messageLog)
+		if err != nil {
+			return count, err
+		}
 		return nil, nil
 	})
 	return err
-}
-
-// findAllComponentList 查询所有的组件
-func findAllComponentList(ctx context.Context) ([]Component, error) {
-	finder := zorm.NewSelectFinder(tableComponentName).Append("order by sortNo desc")
-	list := make([]Component, 0)
-	err := zorm.Query(ctx, finder, &list, nil)
-	return list, err
 }
