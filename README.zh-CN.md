@@ -7,7 +7,7 @@ MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumen
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
 - DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型
-- OpenAIChatGenerator 默认使用 Qwen2.5-72B-Instruct 模型  
+- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型  
  
 
 
