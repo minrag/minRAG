@@ -54,7 +54,7 @@ var componentTypeMap = map[string]IComponent{
 	"OpenAIChatGenerator":    &OpenAIChatGenerator{},
 	"OpenAIChatMemory":       &OpenAIChatMemory{},
 	"PromptBuilder":          &PromptBuilder{},
-	"DocumentChunksReranker": &DocumentChunksReranker{},
+	"DocumentChunkReranker":  &DocumentChunkReranker{},
 	"FtsKeywordRetriever":    &FtsKeywordRetriever{},
 	"VecEmbeddingRetriever":  &VecEmbeddingRetriever{},
 	"OpenAITextEmbedder":     &OpenAITextEmbedder{},
@@ -691,8 +691,8 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	return nil
 }
 
-// DocumentChunksReranker 对DocumentChunks进行重新排序
-type DocumentChunksReranker struct {
+// DocumentChunkReranker 对DocumentChunks进行重新排序
+type DocumentChunkReranker struct {
 	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
 	BaseURL        string            `json:"base_url,omitempty"`
@@ -707,7 +707,7 @@ type DocumentChunksReranker struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *DocumentChunksReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
@@ -731,7 +731,7 @@ func (component *DocumentChunksReranker) Initialization(ctx context.Context, inp
 	}
 	return nil
 }
-func (component *DocumentChunksReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
 	topK := 0
 	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
