@@ -54,7 +54,7 @@ function generateRandomNumber(n) {
     }
     return random;
 }
-var roomID=generateRandomNumber(20)+"_{{.agentID}}";
+var roomID=generateRandomNumber(32);
 
 var oldRoomID=localStorage.getItem("roomID");
 if(!!oldRoomID){
@@ -64,8 +64,6 @@ if(!!oldRoomID){
 }
 
 $(document).ready(function() {
-
-
     $('#send-btn').click(function() {
         sendMessage();
     });
@@ -79,17 +77,17 @@ $(document).ready(function() {
 async function fetchSSE(aiMessageId,messageText) {
     let aiMarkdown=""
     try {
-        const response = await fetch('{{basePath}}agent/sse', {
+        const response = await fetch('{{basePath}}v1/chat/completions', {
             method: 'POST',
             headers: {
+                'Authorization': 'Bearer {{.agentID}}',
                 'Accept': 'text/event-stream',
                 'Cache-Control':'no-cache',
                 'Connection':'keep-alive',
             },
             body:JSON.stringify({
-                "agentID":"{{.agentID}}",
-                "roomID":roomID,
-                "query": messageText,
+                "messages": [{"role":"user","content":messageText}],
+                "user":roomID,
             }),
         });
 

@@ -23,6 +23,14 @@ import (
 	"gitee.com/chunanyong/zorm"
 )
 
+// AgentRequestBody 请求Agent的参数
+type AgentRequestBody struct {
+	Model    string        `json:"model,omitempty"`
+	Messages []ChatMessage `json:"messages,omitempty"`
+	Stream   bool          `json:"stream,omitempty"`
+	User     string        `json:"user,omitempty"`
+}
+
 // findAllAgentList 查询所有的智能体
 func findAllAgentList(ctx context.Context) ([]Agent, error) {
 	finder := zorm.NewSelectFinder(tableAgentName).Append("order by sortNo desc")
