@@ -1,5 +1,5 @@
 ## 介绍  
-minrag是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.        
+MinRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.        
   
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
 MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunksReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、Pipeline等组件,支持流水线设置和扩展. 
@@ -14,7 +14,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 
 ## 开发环境  
 ### fts5
-minrag使用了 ```https://github.com/wangfenjin/simple``` 作为FTS5的全文检索扩展,编译好的libsimple文件放到 ```minragdatadir/extensions``` 目录下,如果minrag启动报错连不上数据库,请检查libsimple文件是否正确,如果需要重新编译libsimple,请参考 https://github.com/wangfenjin/simple.  
+MinRAG使用了 ```https://github.com/wangfenjin/simple``` 作为FTS5的全文检索扩展,编译好的libsimple文件放到 ```minragdatadir/extensions``` 目录下,如果MinRAG启动报错连不上数据库,请检查libsimple文件是否正确,如果需要重新编译libsimple,请参考 https://github.com/wangfenjin/simple.  
 
 默认端口738,后台管理地址 http://127.0.0.1:738/admin/login    
 需要先解压```minragdatadir/dict.zip```      
@@ -48,7 +48,7 @@ make loadable
 ```
 
 ## 后台管理支持英文
-minrag后台管理目前支持中英双语,支持扩展其他语言,语言文件在 ```minragdatadir/locales```,初始化安装默认使用的中文(```zh-CN```),如果需要英文,可以在安装前把```minragdatadir/install_config.json```中的```"locale":"zh-CN"```修改为```"locale":"en-US"```.也可以在安装成功之后,在```设置```中修改```语言```为```English```,并重启生效.  
+MinRAG后台管理目前支持中英双语,支持扩展其他语言,语言文件在 ```minragdatadir/locales```,初始化安装默认使用的中文(```zh-CN```),如果需要英文,可以在安装前把```minragdatadir/install_config.json```中的```"locale":"zh-CN"```修改为```"locale":"en-US"```.也可以在安装成功之后,在```设置```中修改```语言```为```English```,并重启生效.  
 
 ## 表结构  
 ID默认使用时间戳(23位)+随机数(9位),全局唯一.  
