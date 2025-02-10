@@ -533,7 +533,9 @@ func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 func funcComponentList(ctx context.Context, c *app.RequestContext) {
 	urlPathParam := "component"
 	listFile := "admin/" + urlPathParam + "/list.html"
-	list, err := findAllComponentList(ctx)
+	finder := zorm.NewSelectFinder(tableComponentName).Append("order by sortNo desc")
+	list := make([]Component, 0)
+	err := zorm.Query(ctx, finder, &list, nil)
 	if err != nil {
 		c.Redirect(http.StatusOK, cRedirecURI("admin/error"))
 		c.Abort() // 终止后续调用
