@@ -996,7 +996,7 @@ type OpenAIChatGenerator struct {
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
 	Temperature    float32           `json:"temperature,omitempty"`
-	Stream         bool              `json:"stream,omitempty"`
+	Stream         *bool             `json:"stream,omitempty"`
 	//MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
 	client *http.Client `json:"-"`
 }
@@ -1033,7 +1033,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	if component.Temperature != 0 {
 		bodyMap["temperature"] = component.Temperature
 	}
-	bodyMap["stream"] = component.Stream
+
 	tools, has := input["tools"]
 	if has {
 		bodyMap["tools"] = tools
@@ -1046,8 +1046,18 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	}
 
 	url := component.BaseURL + "/chat/completions"
+	stream := true
+	// 如果没有设置,根据请求类型,自动获取是否流式输出
+	if component.Stream == nil && c != nil {
+		accept := string(c.GetHeader("Accept"))
+		stream = strings.Contains(strings.ToLower(accept), "text/event-stream")
+	} else {
+		stream = *component.Stream
+	}
+	//输出类型
+	bodyMap["stream"] = stream
 
-	if !component.Stream { //一次性输出,不是流式输出
+	if !stream { //一次性输出,不是流式输出
 		//请求大模型
 		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
 		if err != nil {
