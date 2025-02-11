@@ -12,21 +12,22 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - AI平台base_url 填写 https://ai.gitee.com/v1
 - AI平台api_key  填写 免费或者付费的token
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
-- DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型,base_url是 https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank
-- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型  
+- GiteeDocumentChunkReranker 组件参数 {"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}  
+- OpenAIChatGenerator 建议使用 DeepSeek-V3 模型  
 
 支持腾讯云LKE知识引擎:
 - AI平台base_url 填写 SecretId  ,或在组件参数配置{"SecretId":"xxx"}
 - AI平台api_key  填写 SecretKey ,或在组件参数配置{"SecretKey":"xxx"}
-- LKETextEmbedder 默认使用 lke-text-embedding-v1 模型  
+- LKETextEmbedder和LKEDocumentEmbedder 默认使用 lke-text-embedding-v1 模型  
 - LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
 - OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
 
 支持百度千帆平台
 - AI平台base_url 填写 https://qianfan.baidubce.com/v2
 - AI平台api_key  填写 永久有效API Key
-- Embedder 默认使用 bge-large-zh 模型,1024维度  
-- DocumentChunkReranker 默认使用 bce-reranker-base 模型,base_url是https://qianfan.baidubce.com/v2/rerankers
+- OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 bge-large-zh 模型,1024维度  
+- DocumentChunkReranker 组件参数 {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}  
+- OpenAIChatGenerator 建议使用 deepseek-v3 模型 
 
 
 
