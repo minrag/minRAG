@@ -501,8 +501,8 @@ type VecEmbeddingRetriever struct {
 	KnowledgeBaseID string `json:"knowledgeBaseID,omitempty"`
 	// Embedding 需要查询的向量化数组
 	Embedding []float64 `json:"embedding,omitempty"`
-	// TopK 检索多少条
-	TopK int `json:"topK,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
 	// Score 向量表的score匹配分数
 	Score float32 `json:"score,omitempty"`
 }
@@ -513,7 +513,7 @@ func (component *VecEmbeddingRetriever) Initialization(ctx context.Context, inpu
 func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
-	topK := 0
+	topN := 0
 	var score float32 = 0.0
 	var embedding []float64 = nil
 	eId, has := input["embedding"]
@@ -542,15 +542,15 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	if knowledgeBaseID == "" {
 		knowledgeBaseID = component.KnowledgeBaseID
 	}
-	tId, has := input["topK"]
+	tId, has := input["topN"]
 	if has {
-		topK = tId.(int)
+		topN = tId.(int)
 	}
-	if topK == 0 {
-		topK = component.TopK
+	if topN == 0 {
+		topN = component.TopN
 	}
-	if topK == 0 {
-		topK = 5
+	if topN == 0 {
+		topN = 5
 	}
 	disId, has := input["score"]
 	if has {
@@ -581,7 +581,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	//if score > 0.0 {
 	//	finder.Append(" and score >= ?", score)
 	//}
-	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topK))
+	finder.Append("ORDER BY score LIMIT " + strconv.Itoa(topN))
 	documentChunks := make([]DocumentChunk, 0)
 	err = zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
@@ -596,7 +596,7 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	}
 
 	//重新排序
-	documentChunks = sortDocumentChunksScore(documentChunks, topK, score)
+	documentChunks = sortDocumentChunksScore(documentChunks, topN, score)
 
 	oldDcs, has := input["documentChunks"]
 	if has && oldDcs != nil {
@@ -616,8 +616,8 @@ type FtsKeywordRetriever struct {
 	KnowledgeBaseID string `json:"knowledgeBaseID,omitempty"`
 	// Query 需要查询的关键字
 	Query string `json:"query,omitempty"`
-	// TopK 检索多少条
-	TopK int `json:"topK,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
 	// Score BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
 	Score float32 `json:"score,omitempty"`
 }
@@ -628,7 +628,7 @@ func (component *FtsKeywordRetriever) Initialization(ctx context.Context, input 
 func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
-	topK := 0
+	topN := 0
 	query := ""
 	var score float32 = 0.0
 	qId, has := input["query"]
@@ -657,15 +657,15 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if knowledgeBaseID == "" {
 		knowledgeBaseID = component.KnowledgeBaseID
 	}
-	tId, has := input["topK"]
+	tId, has := input["topN"]
 	if has {
-		topK = tId.(int)
+		topN = tId.(int)
 	}
-	if topK == 0 {
-		topK = component.TopK
+	if topN == 0 {
+		topN = component.TopN
 	}
-	if topK == 0 {
-		topK = 5
+	if topN == 0 {
+		topN = 5
 	}
 	disId, has := input["score"]
 	if has {
@@ -685,7 +685,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
 		finder.Append(" and score >= ?", score)
 	}
-	finder.Append("ORDER BY score DESC LIMIT " + strconv.Itoa(topK))
+	finder.Append("ORDER BY score DESC LIMIT " + strconv.Itoa(topN))
 	documentChunks := make([]DocumentChunk, 0)
 	err := zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
@@ -711,8 +711,8 @@ type DocumentChunkReranker struct {
 	Timeout        int               `json:"timeout,omitempty"`
 	// Query 需要查询的关键字
 	Query string `json:"query,omitempty"`
-	// TopK 检索多少条
-	TopK int `json:"topK,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
 	// Score ranker的score匹配分数
 	Score  float32      `json:"score,omitempty"`
 	client *http.Client `json:"-"`
@@ -740,7 +740,7 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 	return nil
 }
 func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topK := 0
+	topN := 0
 	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
 	if !has || dcs == nil {
@@ -757,15 +757,15 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 
-	tId, has := input["topK"]
+	tId, has := input["topN"]
 	if has {
-		topK = tId.(int)
+		topN = tId.(int)
 	}
-	if topK == 0 {
-		topK = component.TopK
+	if topN == 0 {
+		topN = component.TopN
 	}
-	if topK == 0 {
-		topK = 5
+	if topN == 0 {
+		topN = 5
 	}
 	disId, has := input["score"]
 	if has {
@@ -776,8 +776,8 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
-	if topK > len(documentChunks) {
-		topK = len(documentChunks)
+	if topN > len(documentChunks) {
+		topN = len(documentChunks)
 	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
@@ -790,7 +790,7 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	bodyMap := map[string]interface{}{
 		"model":     component.Model,
 		"query":     query,
-		"top_n":     topK,
+		"top_n":     topN,
 		"documents": documents,
 	}
 
@@ -825,12 +825,12 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 			}
 		}
 	}
-	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topK, score)
+	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topN, score)
 	input["documentChunks"] = rerankerDCS
 	return nil
 }
 
-func sortDocumentChunksScore(documentChunks []DocumentChunk, topK int, score float32) []DocumentChunk {
+func sortDocumentChunksScore(documentChunks []DocumentChunk, topN int, score float32) []DocumentChunk {
 	sort.Slice(documentChunks, func(i, j int) bool {
 		return documentChunks[i].Score > documentChunks[j].Score
 	})
@@ -838,7 +838,7 @@ func sortDocumentChunksScore(documentChunks []DocumentChunk, topK int, score flo
 	resultDCS := make([]DocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
-		if len(resultDCS) >= topK {
+		if len(resultDCS) >= topN {
 			break
 		}
 		if documentChunk.Score < score {

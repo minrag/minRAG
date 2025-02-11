@@ -294,8 +294,8 @@ type LKEDocumentChunkReranker struct {
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
 
-	// TopK 检索多少条
-	TopK int `json:"topK,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
 	// Score ranker的score匹配分数
 	Score  float32      `json:"score,omitempty"`
 	client *http.Client `json:"-"`
@@ -348,7 +348,7 @@ func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, i
 	return nil
 }
 func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topK := 0
+	topN := 0
 	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
 	if !has || dcs == nil {
@@ -365,15 +365,15 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 
-	tId, has := input["topK"]
+	tId, has := input["topN"]
 	if has {
-		topK = tId.(int)
+		topN = tId.(int)
 	}
-	if topK == 0 {
-		topK = component.TopK
+	if topN == 0 {
+		topN = component.TopN
 	}
-	if topK == 0 {
-		topK = 5
+	if topN == 0 {
+		topN = 5
 	}
 	disId, has := input["score"]
 	if has {
@@ -384,8 +384,8 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
-	if topK > len(documentChunks) {
-		topK = len(documentChunks)
+	if topN > len(documentChunks) {
+		topN = len(documentChunks)
 	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
@@ -425,7 +425,7 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 		documentChunks[i].Score = rs.Response.ScoreList[i]
 	}
 
-	documentChunks = sortDocumentChunksScore(documentChunks, topK, score)
+	documentChunks = sortDocumentChunksScore(documentChunks, topN, score)
 	input["documentChunks"] = documentChunks
 
 	return nil

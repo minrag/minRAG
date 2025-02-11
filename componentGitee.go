@@ -36,8 +36,8 @@ type GiteeDocumentChunkReranker struct {
 	Timeout        int               `json:"timeout,omitempty"`
 	// Query 需要查询的关键字
 	Query string `json:"query,omitempty"`
-	// TopK 检索多少条
-	TopK int `json:"topK,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
 	// Score ranker的score匹配分数
 	Score  float32      `json:"score,omitempty"`
 	client *http.Client `json:"-"`
@@ -71,7 +71,7 @@ func (component *GiteeDocumentChunkReranker) Initialization(ctx context.Context,
 	return nil
 }
 func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topK := 0
+	topN := 0
 	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
 	if !has || dcs == nil {
@@ -88,15 +88,15 @@ func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 
-	tId, has := input["topK"]
+	tId, has := input["topN"]
 	if has {
-		topK = tId.(int)
+		topN = tId.(int)
 	}
-	if topK == 0 {
-		topK = component.TopK
+	if topN == 0 {
+		topN = component.TopN
 	}
-	if topK == 0 {
-		topK = 5
+	if topN == 0 {
+		topN = 5
 	}
 	disId, has := input["score"]
 	if has {
@@ -107,8 +107,8 @@ func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
-	if topK > len(documentChunks) {
-		topK = len(documentChunks)
+	if topN > len(documentChunks) {
+		topN = len(documentChunks)
 	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
@@ -121,7 +121,7 @@ func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[
 	bodyMap := map[string]interface{}{
 		"model":     component.Model,
 		"query":     query,
-		"top_n":     topK,
+		"top_n":     topN,
 		"documents": documents,
 	}
 
@@ -157,7 +157,7 @@ func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[
 			}
 		}
 	}
-	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topK, score)
+	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topN, score)
 	input["documentChunks"] = rerankerDCS
 	return nil
 }
