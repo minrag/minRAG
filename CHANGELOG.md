@@ -1,7 +1,6 @@
 v0.0.2
 - 组件默认初始化DefaultHeaders
-- 支持百度千帆平台,新增QianFanDocumentChunkReranker组件
-- 支持腾讯云LKE知识引擎,新增LKEDocumentEmbedder,LKETextEmbedder和LKEDocumentChunkReranker组件
+- 支持百度千帆平台和腾讯云LKE知识引擎,新增LKEDocumentEmbedder,LKETextEmbedder,LKEDocumentChunkReranker和GiteeDocumentChunkReranker组件
 - 完善注释,文档
 
 v0.0.1

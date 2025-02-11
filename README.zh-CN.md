@@ -11,8 +11,8 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - AI平台base_url 填写 https://ai.gitee.com/v1
 - AI平台api_key  填写 免费或者付费的token
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
-- DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型
-- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型    
+- DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型,base_url是 https://ai.gitee.com/v1/api/serverless/bge-reranker-v2-m3/rerank
+- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型  
 
 支持腾讯云LKE知识引擎:
 - AI平台base_url 填写 SecretId  ,或在组件参数配置{"SecretId":"xxx"}
@@ -25,7 +25,9 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - AI平台base_url 填写 https://qianfan.baidubce.com/v2
 - AI平台api_key  填写 永久有效API Key
 - Embedder 默认使用 bge-large-zh 模型,1024维度  
-- QianFanDocumentChunkReranker 默认使用 bce-reranker-base 模型
+- DocumentChunkReranker 默认使用 bce-reranker-base 模型,base_url是https://qianfan.baidubce.com/v2/rerankers
+
+
 
  
 

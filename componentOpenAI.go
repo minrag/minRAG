@@ -49,23 +49,23 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"Pipeline":                     &Pipeline{},
-	"ChatMessageLogStore":          &ChatMessageLogStore{},
-	"OpenAIChatGenerator":          &OpenAIChatGenerator{},
-	"OpenAIChatMemory":             &OpenAIChatMemory{},
-	"PromptBuilder":                &PromptBuilder{},
-	"DocumentChunkReranker":        &DocumentChunkReranker{},
-	"QianFanDocumentChunkReranker": &QianFanDocumentChunkReranker{},
-	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
-	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
-	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
-	"OpenAITextEmbedder":           &OpenAITextEmbedder{},
-	"LKETextEmbedder":              &LKETextEmbedder{},
-	"SQLiteVecDocumentStore":       &SQLiteVecDocumentStore{},
-	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
-	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
-	"DocumentSplitter":             &DocumentSplitter{},
-	"MarkdownConverter":            &MarkdownConverter{},
+	"Pipeline":                   &Pipeline{},
+	"ChatMessageLogStore":        &ChatMessageLogStore{},
+	"OpenAIChatGenerator":        &OpenAIChatGenerator{},
+	"OpenAIChatMemory":           &OpenAIChatMemory{},
+	"PromptBuilder":              &PromptBuilder{},
+	"DocumentChunkReranker":      &DocumentChunkReranker{},
+	"GiteeDocumentChunkReranker": &GiteeDocumentChunkReranker{},
+	"LKEDocumentChunkReranker":   &LKEDocumentChunkReranker{},
+	"FtsKeywordRetriever":        &FtsKeywordRetriever{},
+	"VecEmbeddingRetriever":      &VecEmbeddingRetriever{},
+	"OpenAITextEmbedder":         &OpenAITextEmbedder{},
+	"LKETextEmbedder":            &LKETextEmbedder{},
+	"SQLiteVecDocumentStore":     &SQLiteVecDocumentStore{},
+	"OpenAIDocumentEmbedder":     &OpenAIDocumentEmbedder{},
+	"LKEDocumentEmbedder":        &LKEDocumentEmbedder{},
+	"DocumentSplitter":           &DocumentSplitter{},
+	"MarkdownConverter":          &MarkdownConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -731,18 +731,12 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 		component.APIKey = config.AIAPIkey
 	}
 	if component.BaseURL == "" {
-		if config.AIBaseURL == "" {
-			return nil
-		}
-		index := strings.Index(config.AIBaseURL, "/v1")
-		if index <= 0 {
-			return nil
-		}
-		component.BaseURL = config.AIBaseURL[:index] + "/api/serverless/bge-reranker-v2-m3/rerank"
+		component.BaseURL = config.AIBaseURL + "/reranker"
 	}
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
 	}
+
 	return nil
 }
 func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
@@ -808,10 +802,9 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 
 	rs := struct {
 		Results []struct {
-			Document struct {
-				Text string `json:"text,omitempty"`
-			} `json:"document,omitempty"`
+			Document       string  `json:"document,omitempty"`
 			RelevanceScore float32 `json:"relevance_score,omitempty"`
+			Index          int     `json:"index,omitempty"`
 		} `json:"results,omitempty"`
 	}{}
 
@@ -822,7 +815,7 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	}
 	rerankerDCS := make([]DocumentChunk, 0)
 	for i := 0; i < len(rs.Results); i++ {
-		markdown := rs.Results[i].Document.Text
+		markdown := rs.Results[i].Document
 		for j := 0; j < len(documentChunks); j++ {
 			dc := documentChunks[j]
 			if markdown == dc.Markdown { //相等

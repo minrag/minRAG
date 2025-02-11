@@ -23,11 +23,12 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 )
 
-// QianFanDocumentChunkReranker  百度千帆对DocumentChunks进行重新排序
-type QianFanDocumentChunkReranker struct {
+// GiteeDocumentChunkReranker  百度千帆对DocumentChunks进行重新排序
+type GiteeDocumentChunkReranker struct {
 	APIKey         string            `json:"api_key,omitempty"`
 	Model          string            `json:"model,omitempty"`
 	BaseURL        string            `json:"base_url,omitempty"`
@@ -42,7 +43,7 @@ type QianFanDocumentChunkReranker struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *GiteeDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
@@ -55,15 +56,21 @@ func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Contex
 		component.APIKey = config.AIAPIkey
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL
+		if config.AIBaseURL == "" {
+			return nil
+		}
+		index := strings.Index(config.AIBaseURL, "/v1")
+		if index <= 0 {
+			return nil
+		}
+		component.BaseURL = config.AIBaseURL[:index] + "/api/serverless/bge-reranker-v2-m3/rerank"
 	}
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
 	}
-
 	return nil
 }
-func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *GiteeDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
 	topK := 0
 	var score float32 = 0.0
 	dcs, has := input["documentChunks"]
@@ -118,7 +125,7 @@ func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input ma
 		"documents": documents,
 	}
 
-	rsStringByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/rerankers", component.DefaultHeaders, bodyMap)
+	rsStringByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err
@@ -126,9 +133,10 @@ func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input ma
 
 	rs := struct {
 		Results []struct {
-			Document       string  `json:"document,omitempty"`
+			Document struct {
+				Text string `json:"text,omitempty"`
+			} `json:"document,omitempty"`
 			RelevanceScore float32 `json:"relevance_score,omitempty"`
-			Index          int     `json:"index,omitempty"`
 		} `json:"results,omitempty"`
 	}{}
 
@@ -139,7 +147,7 @@ func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input ma
 	}
 	rerankerDCS := make([]DocumentChunk, 0)
 	for i := 0; i < len(rs.Results); i++ {
-		markdown := rs.Results[i].Document
+		markdown := rs.Results[i].Document.Text
 		for j := 0; j < len(documentChunks); j++ {
 			dc := documentChunks[j]
 			if markdown == dc.Markdown { //相等
