@@ -4,10 +4,20 @@ minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万�
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
 MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline等组件,支持流水线设置和扩展. 
 
+## 支持的平台
+migRAG实现了OpenAI的标准协议,所有兼容OpenAI的平台都可以使用.  
+
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
 - DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型
-- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型  
+- OpenAIChatGenerator 默认使用 DeepSeek-V3 模型    
+
+支持腾讯云LKE知识引擎:
+- AI平台base_url 填写 SecretId  ,或在组件参数配置{"SecretId":"xxx"}
+- AI平台api_key  填写 SecretKey ,或在组件参数配置{"SecretKey":"xxx"}
+- LKETextEmbedder 默认使用 lke-text-embedding-v1 模型  
+- LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
+- OpenAIChatGenerator 建议配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx"}  
  
 
 
