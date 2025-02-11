@@ -49,19 +49,22 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"Pipeline":               &Pipeline{},
-	"ChatMessageLogStore":    &ChatMessageLogStore{},
-	"OpenAIChatGenerator":    &OpenAIChatGenerator{},
-	"OpenAIChatMemory":       &OpenAIChatMemory{},
-	"PromptBuilder":          &PromptBuilder{},
-	"DocumentChunkReranker":  &DocumentChunkReranker{},
-	"FtsKeywordRetriever":    &FtsKeywordRetriever{},
-	"VecEmbeddingRetriever":  &VecEmbeddingRetriever{},
-	"OpenAITextEmbedder":     &OpenAITextEmbedder{},
-	"SQLiteVecDocumentStore": &SQLiteVecDocumentStore{},
-	"OpenAIDocumentEmbedder": &OpenAIDocumentEmbedder{},
-	"DocumentSplitter":       &DocumentSplitter{},
-	"MarkdownConverter":      &MarkdownConverter{},
+	"Pipeline":                 &Pipeline{},
+	"ChatMessageLogStore":      &ChatMessageLogStore{},
+	"OpenAIChatGenerator":      &OpenAIChatGenerator{},
+	"OpenAIChatMemory":         &OpenAIChatMemory{},
+	"PromptBuilder":            &PromptBuilder{},
+	"DocumentChunkReranker":    &DocumentChunkReranker{},
+	"LKEDocumentChunkReranker": &LKEDocumentChunkReranker{},
+	"FtsKeywordRetriever":      &FtsKeywordRetriever{},
+	"VecEmbeddingRetriever":    &VecEmbeddingRetriever{},
+	"OpenAITextEmbedder":       &OpenAITextEmbedder{},
+	"LKETextEmbedder":          &LKETextEmbedder{},
+	"SQLiteVecDocumentStore":   &SQLiteVecDocumentStore{},
+	"OpenAIDocumentEmbedder":   &OpenAIDocumentEmbedder{},
+	"LKEDocumentEmbedder":      &LKEDocumentEmbedder{},
+	"DocumentSplitter":         &DocumentSplitter{},
+	"MarkdownConverter":        &MarkdownConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -285,6 +288,9 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
 	}
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
+	}
 	return nil
 }
 func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
@@ -293,11 +299,7 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
 	}
 	documentChunks := documentChunksObj.([]DocumentChunk)
-	rs := struct {
-		Data []struct {
-			Embedding []float64 `json:"embedding,omitempty"`
-		} `json:"data,omitempty"`
-	}{}
+
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		bodyMap := make(map[string]interface{}, 0)
@@ -310,7 +312,11 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 			input[errorKey] = err
 			return err
 		}
-
+		rs := struct {
+			Data []struct {
+				Embedding []float64 `json:"embedding,omitempty"`
+			} `json:"data,omitempty"`
+		}{}
 		err = json.Unmarshal(bodyByte, &rs)
 		if err != nil {
 			input[errorKey] = err
@@ -446,6 +452,9 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	}
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
+	}
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
 	}
 	return nil
 }
@@ -728,6 +737,9 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 			return nil
 		}
 		component.BaseURL = config.AIBaseURL[:index] + "/api/serverless/bge-reranker-v2-m3/rerank"
+	}
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
 	}
 	return nil
 }
@@ -1015,6 +1027,9 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 	}
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
+	}
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
 	}
 	return nil
 }

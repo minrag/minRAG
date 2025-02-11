@@ -121,6 +121,10 @@ func updateConfigAI(ctx context.Context, aiBaseURL string, aiAPIKey string) erro
 		finder := zorm.NewUpdateFinder(tableConfigName).Append("aiBaseURL=?,aiAPIKey=? WHERE id=?", aiBaseURL, aiAPIKey, "minrag_config")
 		return zorm.UpdateFinder(ctx, finder)
 	})
+	if err != nil {
+		return err
+	}
+	config, err = findConfig()
 	return err
 }
 
