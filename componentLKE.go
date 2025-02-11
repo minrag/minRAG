@@ -19,10 +19,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -41,9 +47,6 @@ X-TC-Region: ap-guangzhou
 */
 // https://cloud.tencent.com/document/product/1772/115368
 
-var lkeapHost = "lkeap.tencentcloudapi.com"
-var lkeAlgorithm = "TC3-HMAC-SHA256"
-
 // LKETextEmbedder  LKE向量化字符串文本
 type LKETextEmbedder struct {
 	Host      string `json:"Host,omitempty"`        // lkeap.tencentcloudapi.com
@@ -52,8 +55,12 @@ type LKETextEmbedder struct {
 	Timestamp int    `json:"X-TC-Timestamp,omitempty"`
 	Version   string `json:"X-TC-Version,omitempty"` // 2024-05-22
 
+	Algorithm string `json:"Algorithm"` // TC3-HMAC-SHA256
+
+	SecretId  string `json:"SecretId"`
+	SecretKey string `json:"SecretKey"`
+
 	Model          string            `json:"Model,omitempty"` // lke-text-embedding-v1
-	BaseURL        string            `json:"base_url,omitempty"`
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -61,9 +68,30 @@ type LKETextEmbedder struct {
 }
 
 func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
-	component.Host = "lkeap.tencentcloudapi.com"
-	component.Region = "ap-guangzhou"
-	component.Version = "2024-05-22"
+	if component.Host == "" {
+		component.Host = "lkeap.tencentcloudapi.com"
+	}
+	if component.Action == "" {
+		component.Action = "GetEmbedding"
+	}
+	if component.Region == "" {
+		component.Region = "ap-guangzhou"
+	}
+	if component.Version == "" {
+		component.Version = "2024-05-22"
+	}
+
+	if component.Model == "" {
+		component.Model = "lke-text-embedding-v1"
+	}
+
+	if component.Algorithm == "" {
+		component.Algorithm = "TC3-HMAC-SHA256"
+	}
+
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
+	}
 
 	if component.Timeout == 0 {
 		component.Timeout = 180
@@ -83,7 +111,7 @@ func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]inte
 	bodyMap["input"] = queryObj.(string)
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
-	bodyByte, err := httpPostJsonBody(component.client, "Authorization", component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
+	bodyByte, err := httpPostJsonBody(component.client, "Authorization", "/embeddings", component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err
@@ -105,4 +133,94 @@ func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]inte
 	}
 	input["embedding"] = rs.Data[0].Embedding
 	return nil
+}
+
+func genAuthorization(ctx context.Context, secretId, secretKey, host, algorithm, service, version, action, region string, bodyMap map[string]interface{}) ([]byte, error) {
+	// 需要设置环境变量 TENCENTCLOUD_SECRET_ID，值为示例的 AKIDz8krbsJ5yKBZQpn74WFkmLPx3*******
+	var timestamp int64 = time.Now().Unix()
+	// step 1: build canonical request string
+	httpRequestMethod := "POST"
+	canonicalURI := "/"
+	canonicalQueryString := ""
+	canonicalHeaders := fmt.Sprintf("content-type:%s\nhost:%s\nx-tc-action:%s\n",
+		"application/json; charset=utf-8", host, strings.ToLower(action))
+	signedHeaders := "content-type;host;x-tc-action"
+	payload := `{"Limit": 1, "Filters": [{"Values": ["\u672a\u547d\u540d"], "Name": "instance-name"}]}`
+	hashedRequestPayload := sha256hex(payload)
+	canonicalRequest := fmt.Sprintf("%s\n%s\n%s\n%s\n%s\n%s",
+		httpRequestMethod,
+		canonicalURI,
+		canonicalQueryString,
+		canonicalHeaders,
+		signedHeaders,
+		hashedRequestPayload)
+	fmt.Println(canonicalRequest)
+
+	// step 2: build string to sign
+	date := time.Unix(timestamp, 0).UTC().Format("2006-01-02")
+	credentialScope := fmt.Sprintf("%s/%s/tc3_request", date, service)
+	hashedCanonicalRequest := sha256hex(canonicalRequest)
+	string2sign := fmt.Sprintf("%s\n%d\n%s\n%s",
+		algorithm,
+		timestamp,
+		credentialScope,
+		hashedCanonicalRequest)
+	fmt.Println(string2sign)
+
+	// step 3: sign string
+	secretDate := hmacsha256(date, "TC3"+secretKey)
+	secretService := hmacsha256(service, secretDate)
+	secretSigning := hmacsha256("tc3_request", secretService)
+	signature := hex.EncodeToString([]byte(hmacsha256(string2sign, secretSigning)))
+	fmt.Println(signature)
+
+	// step 4: build authorization
+	authorization := fmt.Sprintf("%s Credential=%s/%s, SignedHeaders=%s, Signature=%s",
+		algorithm,
+		secretId,
+		credentialScope,
+		signedHeaders,
+		signature)
+	fmt.Println(authorization)
+	// 序列化请求体
+	payloadBytes, err := json.Marshal(bodyMap)
+	if err != nil {
+		return nil, err
+	}
+	// 创建HTTP请求
+	req, err := http.NewRequest(httpRequestMethod, "https://"+host, bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	// 设置请求头
+	req.Header.Set("Authorization", authorization)
+	req.Header.Set("Content-Type", "application/json; charset=utf-8")
+	req.Header.Set("Host", host)
+	req.Header.Set("X-TC-Timestamp", fmt.Sprintf("%d", timestamp))
+	req.Header.Set("X-TC-Version", version)
+	req.Header.Set("X-TC-Region", region)
+
+	curl := fmt.Sprintf(`curl -X POST https://%s\
+	-H "Authorization: %s"\
+	-H "Content-Type: application/json; charset=utf-8"\
+	-H "Host: %s" -H "X-TC-Action: %s"\
+	-H "X-TC-Timestamp: %d"\
+	-H "X-TC-Version: %s"\
+	-H "X-TC-Region: %s"\
+	-d '%s'`, host, authorization, host, action, timestamp, version, region, payload)
+	fmt.Println(curl)
+
+	return nil, nil
+}
+
+func sha256hex(s string) string {
+	b := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(b[:])
+}
+
+func hmacsha256(s, key string) string {
+	hashed := hmac.New(sha256.New, []byte(key))
+	hashed.Write([]byte(s))
+	return string(hashed.Sum(nil))
 }
