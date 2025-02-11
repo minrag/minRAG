@@ -7,8 +7,8 @@ It uses FTS5 to implement BM25 full-text search and Vec for vector search. It ha
 ## Supported Platforms
 migRAG implements the OpenAI standard protocol, so all platforms compatible with OpenAI can be used. Since there is no unified standard for reranker, the base_url in the component parameters needs to be filled with the complete path.  
 
-The default AI platform is Gitee AI, which offers 100 free calls per day.  
-- For the AI platform base_url in the registration or settings page, fill in https://ai.gitee.com/v1.
+The default AI platform is [Gitee AI](https://ai.gitee.com), which offers 100 free calls per day.  
+- For the AI platform base_url in the registration or settings page, fill in https://ai.gitee.com/v1
 - For the AI platform api_key in the registration or settings page, fill in a free or paid token.
 - OpenAITextEmbedder defaults to using the bge-m3 model.
 - GiteeDocumentChunkReranker component parameters: {"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}.
@@ -22,7 +22,7 @@ Support for Tencent Cloud LKE Knowledge Engine:
 - OpenAIChatGenerator connects via OpenAI SDK, with component parameters configured as {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}.  
 
 Support for Baidu Qianfan platform:  
-- For the AI platform base_url in the registration or settings page, fill in https://qianfan.baidubce.com/v2.
+- For the AI platform base_url in the registration or settings page, fill in https://qianfan.baidubce.com/v2
 - For the AI platform api_key in the registration or settings page, fill in a permanently valid API Key.
 - OpenAITextEmbedder and OpenAIDocumentEmbedder default to using the bge-large-zh model with 1024 dimensions.
 - DocumentChunkReranker component parameters: {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}.
