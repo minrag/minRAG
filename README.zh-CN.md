@@ -17,7 +17,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - AI平台api_key  填写 SecretKey ,或在组件参数配置{"SecretKey":"xxx"}
 - LKETextEmbedder 默认使用 lke-text-embedding-v1 模型  
 - LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
-- OpenAIChatGenerator 建议配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx"}  
+- OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
  
 
 
