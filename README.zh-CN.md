@@ -1,5 +1,5 @@
 ## 介绍  
-minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.        
+minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,支持Gitee AI、百度千帆、腾讯云LKE等AI平台,无需安装,双击启动.        
   
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
 MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline等组件,支持流水线设置和扩展. 
@@ -9,30 +9,25 @@ MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumen
 因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径    
 
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
-- AI平台base_url 填写 https://ai.gitee.com/v1
-- AI平台api_key  填写 免费或者付费的token
+- 注册或设置页面的AI平台base_url 填写 https://ai.gitee.com/v1
+- 注册或设置页面的AI平台api_key  填写 免费或者付费的token
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
 - GiteeDocumentChunkReranker 组件参数 {"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}  
 - OpenAIChatGenerator 建议使用 DeepSeek-V3 模型  
 
 支持腾讯云LKE知识引擎:
-- AI平台base_url 填写 SecretId  ,或在组件参数配置{"SecretId":"xxx"}
-- AI平台api_key  填写 SecretKey ,或在组件参数配置{"SecretKey":"xxx"}
+- 注册或设置页面的AI平台base_url 填写 SecretId  ,或在组件参数配置{"SecretId":"xxx"}
+- 注册或设置页面的AI平台api_key  填写 SecretKey ,或在组件参数配置{"SecretKey":"xxx"}
 - LKETextEmbedder和LKEDocumentEmbedder 默认使用 lke-text-embedding-v1 模型  
 - LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
 - OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
 
 支持百度千帆平台
-- AI平台base_url 填写 https://qianfan.baidubce.com/v2
-- AI平台api_key  填写 永久有效API Key
+- 注册或设置页面的AI平台base_url 填写 https://qianfan.baidubce.com/v2
+- 注册或设置页面的AI平台api_key  填写 永久有效API Key
 - OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 bge-large-zh 模型,1024维度  
 - DocumentChunkReranker 组件参数 {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}  
 - OpenAIChatGenerator 建议使用 deepseek-v3 模型 
-
-
-
- 
-
 
 
 ## 开发环境  
