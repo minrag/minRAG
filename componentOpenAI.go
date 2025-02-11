@@ -782,6 +782,9 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
+	if topK > len(documentChunks) {
+		topK = len(documentChunks)
+	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
 	}

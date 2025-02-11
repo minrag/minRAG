@@ -384,6 +384,9 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
+	if topK > len(documentChunks) {
+		topK = len(documentChunks)
+	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
 	}
