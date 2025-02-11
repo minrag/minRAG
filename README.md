@@ -1,14 +1,32 @@
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
 ## Introduction  
-minRAG is a RAG system that starts from scratch, aiming for ultimate simplicity and power, with no more than 10,000 lines of code, no installation required, and double-click to launch.  
-    
-It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter,DocumentSplitter,OpenAIDocumentEmbedder,SQLiteVecDocumentStore,OpenAITextEmbedder,VecEmbeddingRetriever,FtsKeywordRetriever,DocumentChunkReranker,PromptBuilder,OpenAIChatMemory,OpenAIChatGenerator,ChatMessageLogStore and Pipeline, supporting pipeline settings and extensions.  
+minRAG is a RAG system built from scratch, pursuing extreme simplicity and power, with no more than 10,000 lines of code. It supports AI platforms such as OpenAI, Gitee AI, Baidu Qianfan, and Tencent Cloud LKE, and can be launched with a double-click without installation.  
 
-The default AI platform is [Gitee AI](https://ai.gitee.com), with 100 free daily call credits.
-- OpenAITextEmbedder uses the bge-m3 model by default.
-- DocumentChunkReranker uses the bge-reranker-v2-m3 model by default.
-- OpenAIChatGenerator uses the DeepSeek-V3 model by default.
+It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter, DocumentSplitter, OpenAIDocumentEmbedder, SQLiteVecDocumentStore, OpenAITextEmbedder, VecEmbeddingRetriever, FtsKeywordRetriever, DocumentChunkReranker, PromptBuilder, OpenAIChatMemory, OpenAIChatGenerator, ChatMessageLogStore, and Pipeline, supporting pipeline settings and extensions.
 
+## Supported Platforms
+migRAG implements the OpenAI standard protocol, so all platforms compatible with OpenAI can be used. Since there is no unified standard for reranker, the base_url in the component parameters needs to be filled with the complete path.  
+
+The default AI platform is Gitee AI, which offers 100 free calls per day.  
+- For the AI platform base_url in the registration or settings page, fill in https://ai.gitee.com/v1.
+- For the AI platform api_key in the registration or settings page, fill in a free or paid token.
+- OpenAITextEmbedder defaults to using the bge-m3 model.
+- GiteeDocumentChunkReranker component parameters: {"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}.
+- OpenAIChatGenerator is recommended to use the DeepSeek-V3 model.
+
+Support for Tencent Cloud LKE Knowledge Engine:    
+- For the AI platform base_url in the registration or settings page, fill in SecretId, or configure in component parameters {"SecretId":"xxx"}.
+- For the AI platform api_key in the registration or settings page, fill in SecretKey, or configure in component parameters {"SecretKey":"xxx"}.
+- LKETextEmbedder and LKEDocumentEmbedder default to using the lke-text-embedding-v1 model.
+- LKEDocumentChunkReranker defaults to using the lke-reranker-base model.
+- OpenAIChatGenerator connects via OpenAI SDK, with component parameters configured as {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}.  
+
+Support for Baidu Qianfan platform:  
+- For the AI platform base_url in the registration or settings page, fill in https://qianfan.baidubce.com/v2.
+- For the AI platform api_key in the registration or settings page, fill in a permanently valid API Key.
+- OpenAITextEmbedder and OpenAIDocumentEmbedder default to using the bge-large-zh model with 1024 dimensions.
+- DocumentChunkReranker component parameters: {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}.
+OpenAIChatGenerator is recommended to use the deepseek-v3 model.  
 
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
