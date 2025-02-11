@@ -49,22 +49,23 @@ const (
 
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
-	"Pipeline":                 &Pipeline{},
-	"ChatMessageLogStore":      &ChatMessageLogStore{},
-	"OpenAIChatGenerator":      &OpenAIChatGenerator{},
-	"OpenAIChatMemory":         &OpenAIChatMemory{},
-	"PromptBuilder":            &PromptBuilder{},
-	"DocumentChunkReranker":    &DocumentChunkReranker{},
-	"LKEDocumentChunkReranker": &LKEDocumentChunkReranker{},
-	"FtsKeywordRetriever":      &FtsKeywordRetriever{},
-	"VecEmbeddingRetriever":    &VecEmbeddingRetriever{},
-	"OpenAITextEmbedder":       &OpenAITextEmbedder{},
-	"LKETextEmbedder":          &LKETextEmbedder{},
-	"SQLiteVecDocumentStore":   &SQLiteVecDocumentStore{},
-	"OpenAIDocumentEmbedder":   &OpenAIDocumentEmbedder{},
-	"LKEDocumentEmbedder":      &LKEDocumentEmbedder{},
-	"DocumentSplitter":         &DocumentSplitter{},
-	"MarkdownConverter":        &MarkdownConverter{},
+	"Pipeline":                     &Pipeline{},
+	"ChatMessageLogStore":          &ChatMessageLogStore{},
+	"OpenAIChatGenerator":          &OpenAIChatGenerator{},
+	"OpenAIChatMemory":             &OpenAIChatMemory{},
+	"PromptBuilder":                &PromptBuilder{},
+	"DocumentChunkReranker":        &DocumentChunkReranker{},
+	"QianFanDocumentChunkReranker": &QianFanDocumentChunkReranker{},
+	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
+	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
+	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
+	"OpenAITextEmbedder":           &OpenAITextEmbedder{},
+	"LKETextEmbedder":              &LKETextEmbedder{},
+	"SQLiteVecDocumentStore":       &SQLiteVecDocumentStore{},
+	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
+	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
+	"DocumentSplitter":             &DocumentSplitter{},
+	"MarkdownConverter":            &MarkdownConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -303,7 +304,7 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		bodyMap := make(map[string]interface{}, 0)
-		bodyMap["input"] = documentChunks[i].Markdown
+		bodyMap["input"] = []string{documentChunks[i].Markdown}
 		bodyMap["model"] = component.Model
 		bodyMap["encoding_format"] = "float"
 		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
@@ -463,8 +464,9 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 	if !has {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+	query := queryObj.(string)
 	bodyMap := make(map[string]interface{}, 0)
-	bodyMap["input"] = queryObj.(string)
+	bodyMap["input"] = []string{query}
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
 	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)

@@ -8,6 +8,8 @@ MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumen
 **migRAG实现了OpenAI的标准协议,所有兼容OpenAI的平台都可以使用.** 
 
 AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
+- AI平台base_url 填写 https://ai.gitee.com/v1
+- AI平台api_key  填写 免费或者付费的token
 - OpenAITextEmbedder 默认使用 bge-m3 模型  
 - DocumentChunkReranker 默认使用 bge-reranker-v2-m3 模型
 - OpenAIChatGenerator 默认使用 DeepSeek-V3 模型    
@@ -18,6 +20,12 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - LKETextEmbedder 默认使用 lke-text-embedding-v1 模型  
 - LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
 - OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
+
+支持百度千帆平台
+- AI平台base_url 填写 https://qianfan.baidubce.com/v2
+- AI平台api_key  填写 永久有效API Key
+- QianFanDocumentChunkReranker 默认使用 bce-reranker-base 模型
+
  
 
 

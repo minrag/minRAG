@@ -63,7 +63,7 @@ type LKEDocumentEmbedder struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"Model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -187,7 +187,7 @@ type LKETextEmbedder struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"Model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -289,7 +289,7 @@ type LKEDocumentChunkReranker struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"Model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
