@@ -55,7 +55,7 @@ func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Contex
 		component.APIKey = config.AIAPIkey
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.BasePath
+		component.BaseURL = config.AIBaseURL
 	}
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
@@ -100,6 +100,9 @@ func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input ma
 	}
 
 	documentChunks := dcs.([]DocumentChunk)
+	if topK > len(documentChunks) {
+		topK = len(documentChunks)
+	}
 	if len(documentChunks) < 1 { //没有文档,不需要重排
 		return nil
 	}

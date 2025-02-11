@@ -24,6 +24,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 支持百度千帆平台
 - AI平台base_url 填写 https://qianfan.baidubce.com/v2
 - AI平台api_key  填写 永久有效API Key
+- Embedder 默认使用 bge-large-zh 模型,1024维度  
 - QianFanDocumentChunkReranker 默认使用 bce-reranker-base 模型
 
  
