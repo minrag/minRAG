@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // 腾讯云大模型知识引擎LKE https://cloud.tencent.com/product/lke ,适配Embedding和Reranker模型
+// 使用OpenAI SDK 接入方式: https://console.cloud.tencent.com/lkeap
 package main
 
 import (
