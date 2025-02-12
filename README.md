@@ -1,32 +1,48 @@
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
-## Introduction  
-minRAG is a RAG system built from scratch, pursuing extreme simplicity and power, with no more than 10,000 lines of code. It supports AI platforms such as OpenAI, Gitee AI, Baidu Qianfan, and Tencent Cloud LKE, and can be launched with a double-click without installation.  
 
-It uses FTS5 to implement BM25 full-text search and Vec for vector search. It has implemented components such as MarkdownConverter, DocumentSplitter, OpenAIDocumentEmbedder, SQLiteVecDocumentStore, OpenAITextEmbedder, VecEmbeddingRetriever, FtsKeywordRetriever, DocumentChunkReranker, PromptBuilder, OpenAIChatMemory, OpenAIChatGenerator, ChatMessageLogStore, and Pipeline, supporting pipeline settings and extensions.
+## RAG Has Never Been So Easy      
+minRAG is a RAG system built from scratch, pursuing extreme simplicity and power, with no more than 10,000 lines of code. It supports AI platforms such as OpenAI, Gitee AI, Baidu Qianfan, Tencent Cloud LKE, Alibaba Cloud BaiLian, and ByteDance Volcano Engine. No installation is required; just double-click to start.    
+It uses FTS5 for BM25 full-text search and Vec for vector retrieval. It implements components such as MarkdownConverter, DocumentSplitter, OpenAIDocumentEmbedder, SQLiteVecDocumentStore, OpenAITextEmbedder, VecEmbeddingRetriever, FtsKeywordRetriever, DocumentChunkReranker, PromptBuilder, OpenAIChatMemory, OpenAIChatGenerator, ChatMessageLogStore, Pipeline, etc., supporting pipeline setup and extension.  
 
-## Supported Platforms
-migRAG implements the OpenAI standard protocol, so all platforms compatible with OpenAI can be used. Since there is no unified standard for reranker, the base_url in the component parameters needs to be filled with the complete path.  
+## Supported AI PlatformsSince       
+reranker does not have a unified standard, the `base_url` in the component parameters must be filled in with the complete path.  
 
-The default AI platform is [Gitee AI](https://ai.gitee.com), which offers 100 free calls per day.  
-- For the AI platform base_url in the registration or settings page, fill in https://ai.gitee.com/v1
-- For the AI platform api_key in the registration or settings page, fill in a free or paid token.
-- OpenAITextEmbedder defaults to using the bge-m3 model.
-- GiteeDocumentChunkReranker component parameters: {"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}.
-- OpenAIChatGenerator is recommended to use the DeepSeek-V3 model.
+### OpenAI    
+**minRAG implements the standard specifications of OpenAI, and all platforms compatible with OpenAI can be used.**  
 
-Support for Tencent Cloud LKE Knowledge Engine:    
-- For the AI platform base_url in the registration or settings page, fill in SecretId, or configure in component parameters {"SecretId":"xxx"}.
-- For the AI platform api_key in the registration or settings page, fill in SecretKey, or configure in component parameters {"SecretKey":"xxx"}.
-- LKETextEmbedder and LKEDocumentEmbedder default to using the lke-text-embedding-v1 model.
-- LKEDocumentChunkReranker defaults to using the lke-reranker-base model.
-- OpenAIChatGenerator connects via OpenAI SDK, with component parameters configured as {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}.  
+### Gitee AI (Default)  
+The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100 free calls per day.  
+- On the registration or settings page, fill in `base_url` for the AI platform as `https://ai.gitee.com/v1`.  
+- On the registration or settings page, fill in `api_key` with a free or paid token.    
+- `OpenAITextEmbedder` defaults to using the `bge-m3` model.  
+- The component parameter for `GiteeDocumentChunkReranker` is `{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}`.  
+- `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3` model.### Tencent Cloud LKE Knowledge Engine- On the registration or settings page, fill in `base_url` for the AI platform as `SecretId`, or configure it in the component parameters as `{"SecretId":"xxx"}`.  
+- On the registration or settings page, fill in `api_key` as `SecretKey`, or configure it in the component parameters as `{"SecretKey":"xxx"}`.
+- `LKETextEmbedder` and `LKEDocumentEmbedder` default to using the `lke-text-embedding-v1` model.  
+- `LKEDocumentChunkReranker` defaults to using the `lke-reranker-base` model.  
+- `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}`.  
+- Remember to modify the components in the pipeline.  
 
-Support for Baidu Qianfan platform:  
-- For the AI platform base_url in the registration or settings page, fill in https://qianfan.baidubce.com/v2
-- For the AI platform api_key in the registration or settings page, fill in a permanently valid API Key.
-- OpenAITextEmbedder and OpenAIDocumentEmbedder default to using the bge-large-zh model with 1024 dimensions.
-- DocumentChunkReranker component parameters: {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}.
-OpenAIChatGenerator is recommended to use the deepseek-v3 model.  
+### Baidu QianFan  
+- On the registration or settings page, fill in `base_url` for the AI platform as `https://qianfan.baidubce.com/v2`.  
+- On the registration or settings page, fill in `api_key` with a permanently valid API Key.  
+- `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `bge-large-zh` model, with 1024 dimensions.  
+- The component parameter configuration for `DocumentChunkReranker` is `{"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}`.  
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.  
+- Remember to modify the components in the pipeline.  
+
+### Alibaba Cloud BaiLian
+- On the registration or settings page, fill in `base_url` for the AI platform as `https://dashscope.aliyuncs.com/compatible-mode/v1`.
+- On the registration or settings page, fill in `api_key` with the applied API KEY.
+- `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
+- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank","top_n":5,"score":0.1}`.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
+- Remember to modify the components in the pipeline.### ByteDance Volcano Engine- On the registration or settings page, fill in `base_url` for the AI platform as `https://ark.cn-beijing.volces.com/api/v3`.
+- On the registration or settings page, fill in `api_key` with the applied API KEY.  
+- `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` are recommended to use the `doubao-embedding` model, compatible with 1024 dimensions.
+- Volcano Engine does not currently have a Reranker model, so it is recommended to use Reranker models from other platforms or remove it.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
+- Remember to modify the components in the pipeline.
 
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
