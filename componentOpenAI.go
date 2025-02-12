@@ -1032,17 +1032,14 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 	return nil
 }
 func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
-	var messages []ChatMessage
+	messages := make([]ChatMessage, 0)
 	ms, has := input["messages"]
-	if !has {
+	if !has { //没有消息列表,就根据用户的query构建一个
 		queryObj, hasQuery := input["query"]
 		if !hasQuery {
 			err := errors.New(funcT("input['messages'] cannot be empty"))
 			input[errorKey] = err
 			return err
-		}
-		if messages == nil {
-			messages = make([]ChatMessage, 0)
 		}
 		cm := ChatMessage{Role: "user", Content: queryObj.(string)}
 		messages = append(messages, cm)
