@@ -8,7 +8,7 @@ MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumen
 **migRAG实现了OpenAI的标准协议,所有兼容OpenAI的平台都可以使用.**     
 因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径    
 
-AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调用额度
+AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调用
 - 注册或设置页面的AI平台base_url 填写 https://ai.gitee.com/v1
 - 注册或设置页面的AI平台api_key  填写 免费或者付费的token
 - OpenAITextEmbedder 默认使用 bge-m3 模型  

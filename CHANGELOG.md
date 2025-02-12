@@ -1,3 +1,6 @@
+v0.0.3
+- 完善注释,文档
+
 v0.0.2
 - 增强windows系统的兼容性
 - 组件默认初始化DefaultHeaders
