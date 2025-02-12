@@ -37,7 +37,10 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
 - The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank","top_n":5,"score":0.1}`.
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
-- Remember to modify the components in the pipeline.### ByteDance Volcano Engine- On the registration or settings page, fill in `base_url` for the AI platform as `https://ark.cn-beijing.volces.com/api/v3`.
+- Remember to modify the components in the pipeline.  
+
+### ByteDance Volcano Engine  
+- On the registration or settings page, fill in `base_url` for the AI platform as `https://ark.cn-beijing.volces.com/api/v3`.  
 - On the registration or settings page, fill in `api_key` with the applied API KEY.  
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` are recommended to use the `doubao-embedding` model, compatible with 1024 dimensions.
 - Volcano Engine does not currently have a Reranker model, so it is recommended to use Reranker models from other platforms or remove it.
