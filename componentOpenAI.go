@@ -1034,13 +1034,21 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
 	var messages []ChatMessage
 	ms, has := input["messages"]
-
 	if !has {
-		err := errors.New(funcT("input['messages'] cannot be empty"))
-		input[errorKey] = err
-		return err
+		queryObj, hasQuery := input["query"]
+		if !hasQuery {
+			err := errors.New(funcT("input['messages'] cannot be empty"))
+			input[errorKey] = err
+			return err
+		}
+		if messages == nil {
+			messages = make([]ChatMessage, 0)
+		}
+		cm := ChatMessage{Role: "user", Content: queryObj.(string)}
+		messages = append(messages, cm)
+	} else {
+		messages = ms.([]ChatMessage)
 	}
-	messages = ms.([]ChatMessage)
 	bodyMap := make(map[string]interface{})
 	bodyMap["messages"] = messages
 	bodyMap["model"] = component.Model

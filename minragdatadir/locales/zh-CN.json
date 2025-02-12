@@ -10,8 +10,9 @@
   "Please enter the base_url path of the AI platform":"请输入AI平台base_url路径",
   "api_key for the AI platform":"AI平台api_key",
   "Please enter the api_key of the AI platform":"请输入AI平台api_key",
-  "The AI platform defaults to using Gitee AI, with 100 free calls per day":"AI平台默认使用Gitee AI,每天100次免费调用",
+  "Gitee AI with 100 free calls per day":"Gitee AI每天100次免费调用",
   "Go to register":"去注册",
+  "It also supports Tencent Cloud LKE and Baidu Qianfan":"也支持腾讯云LKE和百度千帆",
   "Knowledge Base": "知识库",
   "Agent": "智能体",
   "Tools":"工具函数",
@@ -205,4 +206,5 @@
   "Current Chat":"当前会话",
   "Send":"发送",
   "Send a message to minRAG":"给 minRAG 发送消息"
+
 }
