@@ -92,7 +92,7 @@ func checkSQLiteStatus() bool {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("vec_version:" + vecVersion)
+	//fmt.Println("vec_version:" + vecVersion)
 	isInit := pathExist(datadir + "minrag.db")
 	if !isInit { //需要初始化数据库
 		return isInit
