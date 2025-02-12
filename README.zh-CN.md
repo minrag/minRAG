@@ -44,10 +44,10 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 ### 字节火山引擎
 - 注册或设置页面的AI平台```base_url``` 填写 https://ark.cn-beijing.volces.com/api/v3
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
-- ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 向量化模型的推理接入点的ID,模型需要兼容1024维度 
-- ```DocumentChunkReranker``` 火山引擎暂时没有Reranker  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3```模型 推理接入点的ID  
-- 记得修改流水线中的组件,并去掉```DocumentChunkReranker```模型
+- ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 建议使用```doubao-embedding```模型,兼容1024维度 
+- ```DocumentChunkReranker``` 火山引擎暂时没有Reranker模型,建议使用其他平台的Reranker模型或者去掉  
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3```模型  
+- 记得修改流水线中的组件
 
 
 
