@@ -141,7 +141,7 @@ func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}
 func (component *Pipeline) runProcess(ctx context.Context, input map[string]interface{}, componentName string) error {
 	pipelineComponent, has := componentMap[componentName]
 	if !has {
-		return errors.New(fmt.Sprintf(funcT("The %s component of the pipeline does not exist"), componentName))
+		return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), componentName)
 	}
 	err := pipelineComponent.Run(ctx, input)
 	if err != nil {
