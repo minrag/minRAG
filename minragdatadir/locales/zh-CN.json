@@ -11,7 +11,7 @@
   "api_key for the AI platform":"AI平台api_key",
   "Please enter the api_key of the AI platform":"请输入AI平台api_key",
   "Supports":"支持",
-  "Tencent Cloud LKE,Baidu QianFan,Aliyun BaiLian,ByteDance ARK":"腾讯云LKE、百度千帆、阿里云百炼、字节火山引擎",
+  "Tencent Cloud LKE,Baidu QianFan,Aliyun BaiLian,ByteDance ARK":"腾讯云LKE、百度千帆、阿里云百炼、火山引擎",
   "Knowledge Base": "知识库",
   "Agent": "智能体",
   "Tools":"工具函数",

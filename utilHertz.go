@@ -291,22 +291,6 @@ func pathExist(path string) bool {
 	return false
 }
 
-// findThemeTemplate 从数据库查询模板文件
-func findThemeTemplate(ctx context.Context, tableName string, urlPathParam string) (string, error) {
-	finder := zorm.NewSelectFinder(tableName, "templateFile").Append(" WHERE id=?", urlPathParam)
-	templatePath := ""
-	has, err := zorm.QueryRow(ctx, finder, &templatePath)
-	if err != nil {
-		FuncLogError(ctx, err)
-		return "", err
-
-	}
-	if !has {
-		return "", err
-	}
-	return templatePath, err
-}
-
 // getTheme 根据Cookie和User-Agent获取配置的 theme
 func getTheme(c *app.RequestContext) (string, render.HTMLRender) {
 	//优先cookie,其次请求头

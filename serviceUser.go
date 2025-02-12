@@ -44,13 +44,3 @@ func findUserId(ctx context.Context, account string, password string) (string, e
 	_, err := zorm.QueryRow(ctx, finder, &userId)
 	return userId, err
 }
-
-// findUserAddress 查询用户区块链Address
-func findUserAddress(ctx context.Context) (string, string, string, error) {
-	finder := zorm.NewSelectFinder(tableUserName, "id,chainType,chainAddress")
-	userMap, err := zorm.QueryRowMap(ctx, finder)
-	if len(userMap) < 1 || userMap["id"] == nil || userMap["chainType"] == nil || userMap["chainAddress"] == nil { //没有数据
-		return "", "", "", err
-	}
-	return userMap["id"].(string), userMap["chainType"].(string), userMap["chainAddress"].(string), err
-}

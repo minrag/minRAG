@@ -507,7 +507,7 @@ func funcMaxSortNo(tableName string) int {
 // funcComponentType 获取组件类型
 func funcComponentType() []string {
 	cts := make([]string, 0)
-	for k, _ := range componentTypeMap {
+	for k := range componentTypeMap {
 		cts = append(cts, k)
 	}
 	sort.Strings(cts)

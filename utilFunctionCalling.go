@@ -26,7 +26,7 @@ var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 func init() {
 	fcWeather := FCWeather{}
-	fc, err := fcWeather.Initialization(nil, get_weather_json)
+	fc, err := fcWeather.Initialization(context.TODO(), get_weather_json)
 	if err == nil {
 		functionCallingMap["get_weather"] = fc
 	}

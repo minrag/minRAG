@@ -37,7 +37,6 @@ import (
 
 // onlyOnce控制并发
 // var onlyOnce = make(chan struct{}, 1)
-var searchDataLock = &sync.Mutex{}
 var genStaticHtmlLock = &sync.Mutex{}
 
 // genStaticFile 生成全站静态文件和gzip文件,包括静态的html和search-data.json
