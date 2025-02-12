@@ -23,11 +23,21 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
 - 记得替换流水线中的组件
 
+
 支持百度千帆平台
 - 注册或设置页面的AI平台base_url 填写 https://qianfan.baidubce.com/v2
 - 注册或设置页面的AI平台api_key  填写 永久有效API Key
 - OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 bge-large-zh 模型,1024维度  
-- DocumentChunkReranker 组件参数 {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}  
+- DocumentChunkReranker 组件参数 {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}  
+- OpenAIChatGenerator 建议使用 deepseek-v3 模型 
+- 记得替换流水线中的组件
+
+
+支持阿里云百炼平台  
+- 注册或设置页面的AI平台base_url 填写 https://dashscope.aliyuncs.com/compatible-mode/v1
+- 注册或设置页面的AI平台api_key  填写 申请的API KEY
+- OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 text-embedding-v3 模型,1024维度 
+- DocumentChunkReranker 组件参数 {"model":"gte-rerank","return_documents":true,"top_n":5,"score":0.1}  
 - OpenAIChatGenerator 建议使用 deepseek-v3 模型 
 - 记得替换流水线中的组件
 
