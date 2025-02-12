@@ -5,9 +5,10 @@ minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万�
 MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline等组件,支持流水线设置和扩展. 
 
 ## 支持的AI平台
+因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径   
+
 ### OpenAI
-**migRAG实现了OpenAI的标准协议,所有兼容OpenAI的平台都可以使用.**     
-因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径    
+**migRAG实现了OpenAI的标准规范,所有兼容OpenAI的平台都可以使用.**     
 
 ### Gitee AI(默认)
 AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调用
