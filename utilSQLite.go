@@ -128,15 +128,6 @@ func tableExist(tableName string) bool {
 	return count > 0
 }
 
-// updateTable 更新表数据
-func updateTable(ctx context.Context, newMap zorm.IEntityMap) error {
-	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		_, err := zorm.UpdateEntityMap(ctx, newMap)
-		return nil, err
-	})
-	return err
-}
-
 // deleteById 根据Id删除数据
 func deleteById(ctx context.Context, tableName string, id string) error {
 	finder := zorm.NewDeleteFinder(tableName).Append(" WHERE id=?", id)

@@ -63,7 +63,7 @@ func TestDocumentSplitter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := input["documentChunks"]
+	ds := input["documentChunks"]
 	documentChunks := ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -81,7 +81,7 @@ func TestFtsKeywordRetriever(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := input["documentChunks"]
+	ds := input["documentChunks"]
 	documentChunks := ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -103,7 +103,7 @@ func TestDocumentChunkReranker(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ds, _ := input["documentChunks"]
+	ds := input["documentChunks"]
 	documentChunks = ds.([]DocumentChunk)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -128,10 +128,10 @@ func TestPromptBuilder(t *testing.T) {
 	fmt.Println(input["prompt"])
 
 	openAIChatMemory := componentMap["OpenAIChatMemory"]
-	err = openAIChatMemory.Run(ctx, input)
+	openAIChatMemory.Run(ctx, input)
 
 	openAIChatGenerator := componentMap["OpenAIChatGenerator"]
-	err = openAIChatGenerator.Run(ctx, input)
+	openAIChatGenerator.Run(ctx, input)
 	choice := input["choice"]
 	fmt.Println(choice)
 }

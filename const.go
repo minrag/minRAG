@@ -69,9 +69,6 @@ const (
 	// 静态化文件目录,网站生成的静态html
 	staticHtmlDir = datadir + "statichtml/"
 
-	// 数据默认的创建用户
-	createUser = "system"
-
 	tokenUserId = "userId"
 
 	letters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

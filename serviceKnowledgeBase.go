@@ -24,14 +24,6 @@ import (
 	"gitee.com/chunanyong/zorm"
 )
 
-// findAllKnowledgeBase 查找所有的知识库
-func findAllKnowledgeBase(ctx context.Context) ([]KnowledgeBase, error) {
-	finder := zorm.NewSelectFinder(tableKnowledgeBaseName)
-	categories := make([]KnowledgeBase, 0)
-	err := zorm.Query(ctx, finder, &categories, nil)
-	return categories, err
-}
-
 // validateIDExists 校验ID是否已经存在
 func validateIDExists(ctx context.Context, id string) bool {
 	id = funcTrimSuffixSlash(id)
