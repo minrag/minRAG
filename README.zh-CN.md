@@ -1,4 +1,4 @@
-<font size=5> RAG 从未如此简单 </font>  
+## RAG 从未如此简单 
 
 ## 介绍  
 minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,支持OpenAI、Gitee AI、百度千帆、腾讯云LKE等AI平台,无需安装,双击启动.        
