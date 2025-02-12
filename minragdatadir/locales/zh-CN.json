@@ -12,7 +12,7 @@
   "Please enter the api_key of the AI platform":"请输入AI平台api_key",
   "Gitee AI with 100 free calls per day":"Gitee AI每天100次免费调用",
   "Go to register":"去注册",
-  "It also supports Tencent Cloud LKE , Baidu QianFan , Aliyun BaiLian":"支持腾讯云LKE,百度千帆,阿里云百炼",
+  "It also supports Tencent Cloud LKE,Baidu QianFan,Aliyun BaiLian,ByteDance ARK":"也支持腾讯云LKE,百度千帆,阿里云百炼,字节火山引擎",
   "Knowledge Base": "知识库",
   "Agent": "智能体",
   "Tools":"工具函数",
