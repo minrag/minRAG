@@ -1,3 +1,5 @@
+<font size=5> RAG 从未如此简单 </font>  
+
 ## 介绍  
 minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,支持OpenAI、Gitee AI、百度千帆、腾讯云LKE等AI平台,无需安装,双击启动.        
   
@@ -21,6 +23,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - LKETextEmbedder和LKEDocumentEmbedder 默认使用 lke-text-embedding-v1 模型  
 - LKEDocumentChunkReranker 默认使用 lke-reranker-base 模型
 - OpenAIChatGenerator [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 {"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}  
+- 记得替换流水线中的组件
 
 支持百度千帆平台
 - 注册或设置页面的AI平台base_url 填写 https://qianfan.baidubce.com/v2
@@ -28,6 +31,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),每日有100次的免费调�
 - OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 bge-large-zh 模型,1024维度  
 - DocumentChunkReranker 组件参数 {"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base"}  
 - OpenAIChatGenerator 建议使用 deepseek-v3 模型 
+- 记得替换流水线中的组件
 
 
 ## 开发环境  
