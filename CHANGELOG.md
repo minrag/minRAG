@@ -1,4 +1,5 @@
 v0.0.3
+- 支持阿里云百炼平台,新增BaiLianDocumentChunkReranker组件
 - 完善注释,文档
 
 v0.0.2

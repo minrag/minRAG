@@ -37,7 +37,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台base_url 填写 https://dashscope.aliyuncs.com/compatible-mode/v1
 - 注册或设置页面的AI平台api_key  填写 申请的API KEY
 - OpenAITextEmbedder和OpenAIDocumentEmbedder 默认使用 text-embedding-v3 模型,1024维度 
-- DocumentChunkReranker 组件参数 {"model":"gte-rerank","return_documents":true,"top_n":5,"score":0.1}  
+- DocumentChunkReranker 组件参数 {"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank","return_documents":true,"top_n":5,"score":0.1}  
 - OpenAIChatGenerator 建议使用 deepseek-v3 模型 
 - 记得替换流水线中的组件
 
