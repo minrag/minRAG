@@ -3,7 +3,7 @@ module gitee.com/minrag/minrag
 go 1.24
 
 require (
-	gitee.com/chunanyong/zorm v1.7.7
+	gitee.com/chunanyong/zorm v1.7.8
 	github.com/cloudwego/hertz v0.9.5
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mojocn/base64Captcha v1.3.8
