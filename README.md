@@ -1,4 +1,4 @@
-<img src="minragdatadir/public/minrag-logo.png" />    
+<img src="minragdatadir/public/minrag-logo.png" height="150px" />    
 
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
 
