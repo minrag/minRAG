@@ -1,0 +1,19 @@
+<svg width="468" height="168" xmlns="http://www.w3.org/2000/svg" version="1.0" enable-background="new 0 0 200 200" xml:space="preserve" class="style-removed" preserveAspectRatio="none" data-parent="shape_SIISy1bXEW">
+ <defs>
+  <linearGradient id="SVGID_1_" x1="0.11911" y1="1.056545" x2="0.759864" y2="0.106516">
+   <stop offset="0" stop-color="#2F318B"/>
+   <stop offset="1" stop-color="#00A2E9"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <title>background</title>
+  <rect x="-1" y="-1" width="470" height="170" id="canvas_background" fill="none"/>
+ </g>
+ <g>
+  <title>Layer 1</title>
+  <g id="_2591115837536">
+   <path fill-rule="evenodd" clip-rule="evenodd" fill="url(#SVGID_1_)" d="m155.66282,116.44801c-0.4,1.2 -0.8,2.4 -1.3,3.5c-18.8,47.3 -64.6,58.4 -97.5,36.5c-32.6,-21.7 -38.8,-80 -17,-113.2c10.1,-15.4 23.1,-28.6 38.5,-35.8c41.4,-19.4 82.9,4.7 88.6,56c-5.7,-22.7 -34,-46.8 -71.6,-32.5c-39.2,14.9 -52.4,73.6 -21.5,90.1c16.1,6.7 31.8,-2.4 38.9,-20.4c3,-7.5 3.4,-15.3 1.8,-22.4c4.6,1.7 9.3,4.1 13.9,6.6l-1,13.2l10.1,5.7c0.9,-5.5 1,-9.5 0.8,-12.9c3.3,2.1 7.6,4.7 10.7,7c0.3,4.2 0.5,8.5 -0.7,13.8l7.3,4.8l0,0zm-5,-31.4l10.9,6.2l-1,13.4l-10.6,-6.1l0.7,-13.5zm-22.5,-16.5l10.9,6.2l-1,14l-10.9,-6.2l1,-14l0,0z" stroke-width="0" id="svg_1"/>
+  </g>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="68" id="svg_4" y="107.600008" x="184.499991" stroke-width="0" stroke="#000" fill="#000000">minRAG</text>
+ </g>
+</svg>

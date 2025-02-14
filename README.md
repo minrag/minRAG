@@ -1,3 +1,5 @@
+<img src="minragdatadir/public/minrag-logo.png" />    
+
 <a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
 
 ## RAG Has Never Been So Easy      
