@@ -7,7 +7,7 @@ body {
     overflow-y: auto; /* 当内容超出视口时显示滚动条 */
     background-color: #f4f4f4;
 }
-h1,h2,h3,h4,h5,p,div,ul,ol,li {
+h1,h2,h3,h4,h5,p,ul,ol,li {
     display: inline-block; /* 或者使用 inline-block */
     margin: 2px; /* 移除上下间距 */
     padding: 0; /* 移除内边距 */
@@ -42,13 +42,14 @@ h1,h2,h3,h4,h5,p,div,ul,ol,li {
 
 .chat-messages {
     flex: 1;
-    padding: 10px 10px;
+    /*padding: 15px;*/
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 15px;
     font-size: 14px;
     overflow:visible;
+    padding-bottom: 220px; /* 根据输入框高度调整该值 */
 }
 
 .message {
@@ -104,8 +105,10 @@ h1,h2,h3,h4,h5,p,div,ul,ol,li {
     position: fixed;  /* 固定定位 */
     bottom: 20px;     /* 距离底部20px */
     left: 50%;        /* 向右偏移50% */
+   /* margin: 2px;  移除上下间距 */
     transform: translateX(-50%); /* 只水平偏移自身宽度的50%，实现水平居中 */
-    width: 61.8%; /* 宽度为视口的80% */
+    box-sizing: border-box; /* 确保宽度包含边框和内边距 */
+    width: 61.8%; /* 与 body 宽度一致 */
    /* max-width: 600px;  最大宽度限制 */
     background: #fff;
     border: 1px solid #ddd;
