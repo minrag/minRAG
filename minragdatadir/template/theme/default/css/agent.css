@@ -74,6 +74,8 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     margin-right: auto; /* 确保靠左对齐 */
     /*display: flex;*/
     align-items: center; /* 内容垂直居中 */
+    width: fit-content;
+    max-width: 100%;
     word-wrap: break-word; /* 长单词或 URL 自动换行 */
     overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
     white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
@@ -97,8 +99,11 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     font-size: 14px;
     align-items: center; /* 内容垂直居中 */
     width: fit-content;
-    max-width: 90%;
+    max-width: 100%;
     margin-left: auto; /* 确保靠右对齐 */
+    word-wrap: break-word; /* 长单词或 URL 自动换行 */
+    overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
+    white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
 }
 /* 包裹输入框的容器 */
 .copyright,.footer,.input-container {
@@ -143,7 +148,7 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     color: #000000;
     bottom: 0px;
     border:0px;
-    align-content: center;
+    align-items: center; /* 内容垂直居中 */
     text-align: center;
     background-color: #f4f4f4;
     font-size: 12px;

@@ -31,7 +31,7 @@
             </div>
             <div class="footer">
                 <div class="input-container">
-                    <textarea id="input-box" placeholder='Ctrl + Enter {{T "Send a message to minRAG"}}'></textarea>
+                    <textarea id="input-box" placeholder='{{T "Send a message to minRAG"}}'></textarea>
                     <button id="send-button">{{T "Send"}}</button>
                 </div>
                 <div class="copyright">内容由 <a href="https://gitee.com/minrag/minrag" target="_blank">minRAG</a> 调用 AI 大模型生成，请仔细甄别</div>
@@ -84,8 +84,10 @@ $(document).ready(function() {
         sendMessage();
     });
     $('#input-box').keydown(function(event) {
-        if (event.ctrlKey && event.key === 'Enter') {
+        if (event.key === 'Enter') {
             sendMessage();
+           // 阻止默认行为（避免换行或提交表单）
+           event.preventDefault();
         }
     });
 });
@@ -174,8 +176,6 @@ async function fetchSSE(aiMessageId,messageText) {
                 document.getElementById(aiMessageId).innerHTML=textDataHtml
             }
 
-
-
         }
             
         
@@ -183,8 +183,6 @@ async function fetchSSE(aiMessageId,messageText) {
         console.error('Fetch stream failed:', error);
     }
 }
-
-
 
 function sendMessage() {
     const messageText = $('#input-box').val().trim();
@@ -201,7 +199,6 @@ function sendMessage() {
     $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
 
     fetchSSE(aiMessageId,messageText)
-  
 }
 </script>
 
