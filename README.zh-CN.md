@@ -53,9 +53,9 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 记得修改流水线中的组件
 
 ## 界面预览
-<img src="minragdatadir/public/demo.png" height="300px" />    
+<img src="minragdatadir/public/demo.png" width="600px" />    
 
-<img src="minragdatadir/public/index.png" height="300px" />    
+<img src="minragdatadir/public/index.png" width="600px" />    
 
 ## 开发环境  
 ### fts5
