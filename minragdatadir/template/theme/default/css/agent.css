@@ -101,14 +101,14 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     margin-left: auto; /* 确保靠右对齐 */
 }
 /* 包裹输入框的容器 */
-.input-container {
+.copyright,.footer,.input-container {
     position: fixed;  /* 固定定位 */
-    bottom: 0px;     /* 距离底部20px */
+    bottom: 20px;     /* 距离底部20px */
     left: 50%;        /* 向右偏移50% */
    /* margin: 2px;  移除上下间距 */
     transform: translateX(-50%); /* 只水平偏移自身宽度的50%，实现水平居中 */
     box-sizing: border-box; /* 确保宽度包含边框和内边距 */
-    width: 61.8%; /* 与 body 宽度一致 */
+    width: 100%; /* 与 body 宽度一致 */
    /* max-width: 600px;  最大宽度限制 */
     background: #fff;
     border: 1px solid #ddd;
@@ -130,6 +130,23 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
 }
 #input-box:focus {
     outline: none; /* 去掉默认的选中边框 */
+}
+.footer{
+    height: 170px;
+    width: 61.8%;
+    bottom: 0px;     /* 距离底部20px */
+    background-color: #f4f4f4;
+    border:0px;
+} 
+.copyright{
+    height: 20px;
+    color: #000000;
+    bottom: 0px;
+    border:0px;
+    align-content: center;
+    text-align: center;
+    background-color: #f4f4f4;
+    font-size: 12px;
 }
 
 /* 发送按钮样式 */
