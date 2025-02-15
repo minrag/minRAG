@@ -29,9 +29,12 @@
             <div class="chat-messages">
                 <div class="message ai-message"><p>{{$agent.Welcome}}</p></div>
             </div>
-            <div class="input-container">
-                <textarea id="input-box" placeholder='Ctrl + Enter {{T "Send a message to minRAG"}}'></textarea>
-                <button id="send-button">{{T "Send"}}</button>
+            <div class="footer">
+                <div class="input-container">
+                    <textarea id="input-box" placeholder='Ctrl + Enter {{T "Send a message to minRAG"}}'></textarea>
+                    <button id="send-button">{{T "Send"}}</button>
+                </div>
+                <div class="copyright">内容由 <a href="https://gitee.com/minrag/minrag" target="_blank">minRAG</a> 调用 AI 大模型生成，请仔细甄别</div>
             </div>
         </div>
     </div>
