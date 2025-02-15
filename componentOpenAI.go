@@ -984,6 +984,7 @@ type Choice struct {
 type ChatMessage struct {
 	Role       string     `json:"role,omitempty"`
 	Content    string     `json:"content,omitempty"`
+	Type       string     `json:"type,omitempty"` //thinking 思维链,text文本
 	ToolCallID string     `json:"tool_call_id,omitempty"`
 	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
 }

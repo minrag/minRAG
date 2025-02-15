@@ -6,7 +6,7 @@ body {
     width: 70%;
     background-color: #f4f4f4;
 }
-p,div,ol,li {
+h1,h2,h3,h4,h5,p,div,ul,ol,li {
     display: inline-block; /* 或者使用 inline-block */
     margin: 2px; /* 移除上下间距 */
     padding: 0; /* 移除内边距 */
@@ -46,29 +46,42 @@ p,div,ol,li {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    font-size: 14px;
 }
 
 .message {
+    display: flex;
+    flex-direction: column; /* 垂直排列子元素 */
     margin-bottom: 10px;
     padding: 10px;
     word-wrap: break-word;
     position: relative;
+    font-size: 14px;
 }
 
 /* AI消息样式 */
-.ai-message {
+.ai-message-think,.ai-message {
     align-self: flex-start;
     background: white;
     color: #000000;
     border-radius: 15px;
     max-width: 90%;
     position: relative;
+    font-size: 14px;
     margin-right: auto; /* 确保靠左对齐 */
     /*display: flex;*/
     align-items: center; /* 内容垂直居中 */
     word-wrap: break-word; /* 长单词或 URL 自动换行 */
     overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
     white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
+}
+
+.ai-message-think {
+    color: #8b8b8b;
+    font-size: 14px;
+    border-left: 2px solid #8b8b8b; /* 添加蓝色左侧边框，宽度为2px */
+    padding-left: 5px; /* 添加一些内边距，使内容不紧贴边框 */
+    border-radius: 0px;
 }
 
 
@@ -78,6 +91,7 @@ p,div,ol,li {
     color: #000000;
     align-self: flex-end;
     border-radius: 15px;
+    font-size: 14px;
     align-items: center; /* 内容垂直居中 */
     width: fit-content;
     max-width: 90%;
@@ -95,6 +109,7 @@ p,div,ol,li {
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 10px;
+    font-size: 14px;
     overflow: hidden;
     box-shadow: 0 4px 8px #4166d5(0, 0, 0, 0.1); /* 添加阴影效果 */
 }
@@ -105,7 +120,7 @@ p,div,ol,li {
     height: 100px;
     border: none;
     padding: 15px;
-    font-size: 16px;
+    font-size: 14px;
     resize: none;
     box-sizing: border-box;
 }
