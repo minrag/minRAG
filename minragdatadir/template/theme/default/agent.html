@@ -29,9 +29,9 @@
             <div class="chat-messages">
                 <div class="message ai-message"><p>{{$agent.Welcome}}</p></div>
             </div>
-            <div class="chat-input">
-                <input type="text" id="chat-input" placeholder='{{T "Send a message to minRAG"}}' />
-                <button id="send-btn">{{T "Send"}}</button>
+            <div class="input-container">
+                <textarea id="input-box" placeholder='{{T "Send a message to minRAG"}}'></textarea>
+                <button id="send-button">{{T "Send"}}</button>
             </div>
         </div>
     </div>
@@ -77,10 +77,10 @@ if(!!oldRoomID){
 }
 
 $(document).ready(function() {
-    $('#send-btn').click(function() {
+    $('#send-button').click(function() {
         sendMessage();
     });
-    $('#chat-input').keypress(function(e) {
+    $('#input-box').keypress(function(e) {
         if (e.which == 13) { // Enter key
             sendMessage();
         }
@@ -159,13 +159,13 @@ async function fetchSSE(aiMessageId,messageText) {
 
 
 function sendMessage() {
-    const messageText = $('#chat-input').val().trim();
+    const messageText = $('#input-box').val().trim();
     if (!!!messageText) {
         return
     }
     const userMessage = $('<div class="message user-message"></div>').text(messageText);
     $('.chat-messages').append(userMessage);
-    $('#chat-input').val('');
+    $('#input-box').val('');
 
     const aiMessageId=new Date().getTime()+"_aiMessage"
     const aiMessage = $('<div class="message ai-message" id="'+aiMessageId+'"></div><input type="hidden" id="'+aiMessageId+'_markdown">');
