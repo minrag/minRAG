@@ -30,7 +30,7 @@
                 <div class="message ai-message"><p>{{$agent.Welcome}}</p></div>
             </div>
             <div class="input-container">
-                <textarea id="input-box" placeholder='{{T "Send a message to minRAG"}}'></textarea>
+                <textarea id="input-box" placeholder='Ctrl + Enter {{T "Send a message to minRAG"}}'></textarea>
                 <button id="send-button">{{T "Send"}}</button>
             </div>
         </div>
@@ -80,8 +80,8 @@ $(document).ready(function() {
     $('#send-button').click(function() {
         sendMessage();
     });
-    $('#input-box').keypress(function(e) {
-        if (e.which == 13) { // Enter key
+    $('#input-box').keydown(function(event) {
+        if (event.ctrlKey && event.key === 'Enter') {
             sendMessage();
         }
     });
