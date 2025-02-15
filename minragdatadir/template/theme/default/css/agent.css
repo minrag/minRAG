@@ -3,7 +3,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0 auto;
     padding: 0;
-    width: 70%;
+    width: 61.8%;
     overflow-y: auto; /* 当内容超出视口时显示滚动条 */
     background-color: #f4f4f4;
 }
@@ -54,8 +54,9 @@ h1,h2,h3,h4,h5,p,div,ul,ol,li {
 .message {
     display: flex;
     flex-direction: column; /* 垂直排列子元素 */
-    margin-bottom: 10px;
+    /*margin-bottom: 10px;*/
     padding: 10px;
+    max-width: 100%;
     word-wrap: break-word;
     position: relative;
     font-size: 14px;
@@ -100,26 +101,24 @@ h1,h2,h3,h4,h5,p,div,ul,ol,li {
 }
 /* 包裹输入框的容器 */
 .input-container {
-    position: fixed;  /* 关键：固定定位 */
-    bottom: 0;        /* 贴紧视口底部 */
-    left: 0;          /* 横向铺满 */
-    left: 50%; /* 向右偏移50% */
-    transform: translate(-50%, -50%); /* 向左和向上偏移自身宽度和高度的50% */
-    width: 80%; /* 宽度为视口的80% */
-    max-width: 600px; /* 最大宽度限制 */
+    position: fixed;  /* 固定定位 */
+    bottom: 20px;     /* 距离底部20px */
+    left: 50%;        /* 向右偏移50% */
+    transform: translateX(-50%); /* 只水平偏移自身宽度的50%，实现水平居中 */
+    width: 61.8%; /* 宽度为视口的80% */
+   /* max-width: 600px;  最大宽度限制 */
     background: #fff;
     border: 1px solid #ddd;
     border-radius: 10px;
     font-size: 14px;
     overflow: hidden;
     box-shadow: 0 4px 8px #4166d5(0, 0, 0, 0.1); /* 添加阴影效果 */
-    z-index: 1000;    /* 确保在其他内容上方 */
 }
 
 /* 输入框样式 */
 #input-box {
     width: 100%;
-    height: 100px;
+    height: 150px;
     border: none;
     padding: 15px;
     font-size: 14px;
