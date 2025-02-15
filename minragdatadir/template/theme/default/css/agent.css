@@ -3,58 +3,29 @@ body {
     font-family: Arial, sans-serif;
     margin: 0 auto;
     padding: 0;
-    width: 90%;
+    width: 70%;
     background-color: #f4f4f4;
 }
-p {
-    margin: 0px;
+p,div,ol,li {
+    display: inline-block; /* 或者使用 inline-block */
+    margin: 2px; /* 移除上下间距 */
+    padding: 0; /* 移除内边距 */
 }
 
 .chat-container {
     display: flex;
+    background-color: #f4f4f4;
     height: 100vh;
     border-radius: 5px;
     overflow-y: auto;
-}
-
-.history-panel {
-    width: 200px;
-    color: #000000;
-    padding: 10px;
-    margin-right:5px ;
-    background-color: #f9f9f9;
-    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    /*border-right: 1px solid #ddd;*/
-}
-
-.history-header {
-    font-size: 18px;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 10px;
-}
-
-.history-list {
-    overflow-y: auto;
-    height: calc(100vh - 50px);
-}
-
-.history-item {
-    padding: 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    margin-bottom: 5px;
-}
-
-.history-item:hover {
-    background-color: #eff6ff;
+    font-size: 14px;
 }
 
 .chat-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background-color: white;
+    
 }
 
 .chat-header {
@@ -66,14 +37,12 @@ p {
     position: sticky; /* 固定位置 */
     top: 0; /* 粘性定位的顶部偏移 */
     z-index: 10; /* 确保在最上层 */
-    background-color: white; /* 防止背景透明导致文字不可见 */
 }
 
 .chat-messages {
     flex: 1;
     padding: 10px 10px;
     overflow-y: auto;
-    background-color: #f9f9f9;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -95,7 +64,7 @@ p {
     max-width: 90%;
     position: relative;
     margin-right: auto; /* 确保靠左对齐 */
-    display: flex;
+    /*display: flex;*/
     align-items: center; /* 内容垂直居中 */
     word-wrap: break-word; /* 长单词或 URL 自动换行 */
     overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
@@ -119,7 +88,6 @@ p {
     display: flex;
     padding: 10px;
     /*border-top: 1px solid #ddd;*/
-    background-color: white;
     position: sticky; /* 固定位置 */
     bottom: 0; /* 粘性定位的底部偏移 */
     z-index: 10; /* 确保在最上层 */

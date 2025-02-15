@@ -23,15 +23,7 @@
 
 <body>
     <div class="chat-container">
-        <!-- 左侧历史聊天记录 -->
-        <div class="history-panel">
-            <div class="history-header">{{T "Chat History"}}</div>
-            <div class="history-list">
-                <div class="history-item">{{T "Current Chat"}}</div>
-            </div>
-        </div>
-
-        <!-- 右侧聊天对话框 -->
+        <!-- 聊天对话框 -->
         <div class="chat-panel">
             <div class="chat-header">{{$agent.Name}}</div>
             <div class="chat-messages">
@@ -127,24 +119,38 @@ async function fetchSSE(aiMessageId,messageText) {
             }
 
             const chunk = decoder.decode(value, { stream: true });
-            const lines=chunk.split("\n\n");
-            for (const line of lines) {
-                if (!line.startsWith('data: ')) {
-                    continue;
+            const blocks=chunk.split("\n\n\n\n");
+            for (let i = 0; i < blocks.length; i++) {
+                const block=blocks[i];
+                const lines=block.split("\n\n");
+                for(const line of lines){
+                    let prefix=""
+                    let data = line
+                    if (data.startsWith('\n')) {
+                        prefix='\n'
+                        data = line.substring(1);
+                    }
+                    if (data.startsWith('data: ')) {
+                        data = line.substring(6);
+                    }
+                    if(data=="[DONE]"){
+                    data=prefix
+                    }else{
+                        data=prefix+data
+                    }
+                    aiMarkdown=aiMarkdown+data;
                 }
-                const data = line.substring(6);
-                if(data=="[DONE]"){
-                    continue;
+                if(i>0){
+                    aiMarkdown=aiMarkdown+'\n\n';
                 }
-                aiMarkdown=aiMarkdown+data;
-                $("#"+aiMessageId+"_markdown").val(aiMarkdown)
-                let dataHtml = marked.parse(aiMarkdown);
-                // 移除 <p> 标签
-                //dataHtml = dataHtml.replace(/<p>([\s\S]*?)<\/p>/g, '$1');
-                document.getElementById(aiMessageId).innerHTML=dataHtml
+                
             }
-            
+            $("#"+aiMessageId+"_markdown").val(aiMarkdown)
+            let dataHtml = marked.parse(aiMarkdown);
+            document.getElementById(aiMessageId).innerHTML=dataHtml
         }
+            
+        
     } catch (error) {
         console.error('Fetch stream failed:', error);
     }
