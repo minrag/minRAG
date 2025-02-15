@@ -52,6 +52,11 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
 - Remember to modify the components in the pipeline.
 
+## UI Preview
+<img src="minragdatadir/public/demo.png" height="300px" />    
+
+<img src="minragdatadir/public/index.png" height="300px" />    
+
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
 
