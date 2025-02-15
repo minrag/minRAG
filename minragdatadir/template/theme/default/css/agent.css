@@ -138,10 +138,11 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
 }
 .footer{
     height: 170px;
-    width: 61.8%;
+    width: 62%;
     bottom: 0px;     /* 距离底部20px */
     background-color: #f4f4f4;
     border:0px;
+    border-radius: 0px;
 } 
 .copyright{
     height: 20px;
@@ -149,6 +150,7 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     bottom: 0px;
     border:0px;
     align-items: center; /* 内容垂直居中 */
+    align-content: center;
     text-align: center;
     background-color: #f4f4f4;
     font-size: 12px;
