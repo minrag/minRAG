@@ -88,7 +88,9 @@ $(document).ready(function() {
 });
 
 async function fetchSSE(aiMessageId,messageText) {
-    let aiMarkdown=""
+    let textMarkdown="";
+    let thinkMarkdown="";
+    let isThinking=false;
     try {
         const response = await fetch('{{basePath}}v1/chat/completions', {
             method: 'POST',
@@ -133,21 +135,44 @@ async function fetchSSE(aiMessageId,messageText) {
                     if (data.startsWith('data: ')) {
                         data = line.substring(6);
                     }
+                    //console.log("data:",data)
                     if(data=="[DONE]"){
                     data=prefix
                     }else{
+                        if(data.trim()=="<think>"){//思维链
+                            isThinking=true;
+                        }else if(data.trim()=="</think>"){
+                            isThinking=false
+                        }
                         data=prefix+data
                     }
-                    aiMarkdown=aiMarkdown+data;
+                    if (isThinking){//思维链
+                        thinkMarkdown=thinkMarkdown+data
+                    }else{
+                        textMarkdown=textMarkdown+data;
+                    }
+                    
                 }
                 if(i>0){
-                    aiMarkdown=aiMarkdown+'\n\n';
+                    if (isThinking){//思维链
+                        thinkMarkdown=thinkMarkdown+'\n\n';
+                    }else{
+                        textMarkdown=textMarkdown+'\n\n';
+                    }
                 }
                 
             }
-            $("#"+aiMessageId+"_markdown").val(aiMarkdown)
-            let dataHtml = marked.parse(aiMarkdown);
-            document.getElementById(aiMessageId).innerHTML=dataHtml
+            if (isThinking){//思维链
+                let thinkDataHtml = marked.parse(thinkMarkdown);
+                document.getElementById(aiMessageId+"_think").innerHTML=thinkDataHtml
+            }else{
+                $("#"+aiMessageId+"_markdown").val(textMarkdown)
+                let textDataHtml = marked.parse(textMarkdown);
+                document.getElementById(aiMessageId).innerHTML=textDataHtml
+            }
+
+
+
         }
             
         
@@ -168,7 +193,7 @@ function sendMessage() {
     $('#input-box').val('');
 
     const aiMessageId=new Date().getTime()+"_aiMessage"
-    const aiMessage = $('<div class="message ai-message" id="'+aiMessageId+'"></div><input type="hidden" id="'+aiMessageId+'_markdown">');
+    const aiMessage = $('<div class="message ai-message"><div class="ai-message-think" id="'+aiMessageId+'_think"></div><div id="'+aiMessageId+'"></div></div><input type="hidden" id="'+aiMessageId+'_markdown">');
     $('.chat-messages').append(aiMessage);
     $('.chat-messages').scrollTop($('.chat-messages')[0].scrollHeight);
 
