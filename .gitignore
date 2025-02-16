@@ -15,6 +15,7 @@ natsdata/
 *.db
 *.db.fail
 .vscode/
+.VSCodeCounter/
 
 *.swp
 
