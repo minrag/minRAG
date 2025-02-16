@@ -150,7 +150,7 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 
 点击 ```+添加组件``` 按钮,进入添加页面,可以选择已经支持的组件类型,设置ID和组件参数  
 <img src="image/017.png" width="600px">  
-其中```Pipeline```比较重要,参数格式是```{"start":"启动的组件ID","process":{"组件ID":"下一个组件ID"}},例如:
+其中```Pipeline```比较重要,参数格式是```{"start":"启动的组件ID","process":{"组件ID":"下一个组件ID"}}```,例如:
 ```json
 {
 	"start": "OpenAITextEmbedder",

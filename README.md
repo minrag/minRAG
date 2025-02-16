@@ -1,6 +1,6 @@
 <img src="minragdatadir/public/minrag-logo.png" height="150px" />    
 
-<a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> 
+<a href="./README.md">English</a> | <a href="./README.zh-CN.md">简体中文</a> | <a href="./minragdatadir/public/doc/index.md">Help</a>
 
 ## RAG Has Never Been So Easy      
 minRAG is a RAG system built from scratch, pursuing extreme simplicity and power, with no more than 10,000 lines of code. It supports AI platforms such as OpenAI, Gitee AI, Baidu Qianfan, Tencent Cloud LKE, Alibaba Cloud BaiLian, and ByteDance Volcano Engine. No installation is required; just double-click to start.    
