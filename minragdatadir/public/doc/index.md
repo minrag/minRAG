@@ -144,7 +144,8 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 - PromptBuilder: 构建Prompt提示词
 - OpenAIChatMemory: 记忆聊天消息上下文
 - OpenAIChatGenerator: 大模型LLM
-- ChatMessageLogStore: 保存聊天记录  
+- ChatMessageLogStore: 保存聊天记录
+
 <img src="image/016.png" width="600px">  
 
 点击 ```+添加组件``` 按钮,进入添加页面,可以选择已经支持的组件类型,设置ID和组件参数  
@@ -255,7 +256,7 @@ location / {
 
 ### 站点信息
 设置站点的基础内容信息,其中主题是读取```minragdatadir/template/theme```目录下的主题文件夹,更换主题之后,需要点击```刷新站点```功能,刷新前台界面. ```logo```是前台界面显示的logo,后台的logo固定为```minRAG```的logo,暂时不支持更改. 
-<img src="image/23.png" width="600px">  
+<img src="image/023.png" width="600px">  
 
 ## 主题模板
 主题模板的增删改查功能,管理主题中的自定义模板文件,修改内容和知识库时,可以应用自定义的模板文件.  
