@@ -1,4 +1,6 @@
-<img src="minragdatadir/public/minrag-logo.png" height="150px" />    
+<img src="minragdatadir/public/minrag-logo.png" height="150px" />  
+
+<a href="./README.zh-CN.md">简体中文</a> | <a href="./README.md">English</a> | <a href="./minragdatadir/public/doc/index.md">帮助文档</a>
 
 ## RAG 从未如此简单 
 minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.支持OpenAI、Gitee AI、百度千帆、腾讯云LKE、阿里云百炼、字节火山引擎等AI平台.        
