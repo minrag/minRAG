@@ -64,11 +64,43 @@
 {{template "admin/bodyend.html"}}
 
 
+
 <script>
+    var layer;
+    var $;
 	layui.use(function () {
 		//var table = layui.table;
-		var layer = layui.layer;
-        var $ = layui.jquery;
+		layer = layui.layer;
+        $ = layui.jquery;
 		
     })
+
+    
+	function deleteFunc(id, url) {
+		layer.confirm('{{T "Confirm deletion?"}}', {
+			icon: 3,
+			title: '{{T "Confirm"}}',
+			btn: ['{{T "Confirm"}}', '{{T "Cancel"}}'] //按钮
+		}, function () {
+			$.ajax({
+				type: 'post',
+				url: url,
+				data: { "id": id },
+				success: function (res) {
+					if (res.statusCode === 1) {
+						layer.msg('{{T "Delete successful"}}', function () {
+							location.reload();
+						});
+					}else{
+						var message='{{T "Delete failed!"}}';
+						if(!!res.message){
+							message=message+res.message
+						}
+						layer.msg(message);
+					}
+				}
+			});
+		});
+	}
+
 </script>
