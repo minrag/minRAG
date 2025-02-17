@@ -132,6 +132,7 @@
   "Search": "搜索",
   "Add Document": "新增文档",
   "Upload Document": "上传文档",
+  "By default, only text formats are supported. For other file types, you need to download and run Apache Tika":"默认只支持文本类型,其他类型需要下载运行tika",
   "Actions": "操作",
   "Unknown": "未知",
   "Edit": "编辑",
