@@ -195,10 +195,16 @@ func (component *TikaConverter) Initialization(ctx context.Context, input map[st
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
 	}
+	accept := component.DefaultHeaders["Accept"]
+	contentType := component.DefaultHeaders["Content-Type"]
 	//获取文本内容,没有html等其他标签
-	component.DefaultHeaders["Accept"] = "text/plain"
-	//上传文件
-	component.DefaultHeaders["Content-Type"] = "application/octet-stream"
+	if accept == "" {
+		component.DefaultHeaders["Accept"] = "text/plain"
+	}
+	//上传文件的默认类型
+	if contentType == "" {
+		component.DefaultHeaders["Content-Type"] = "application/octet-stream"
+	}
 
 	//使用tesseract OCR组件处理PDF里的图片
 	//component.DefaultHeaders["X-Tika-PDFextractInlineImages"] = "true"
