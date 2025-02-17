@@ -54,6 +54,24 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3```模型  
 - 记得修改流水线中的组件
 
+## tika集成
+默认minRAG只支持markdown和text等文本格式,可以使用```TikaConverter```组件调用```tika```服务解析文档内容,```TikaConverter```组件配置示例:
+```json
+{
+	"tikaURL": "http://localhost:9998/tika",
+	"defaultHeaders": {
+		"Content-Type": "application/octet-stream"
+	}
+}
+```
+启动 ```tika``` 的命令如下:
+```shell
+java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
+
+## 不输出日志
+#nohup java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998 >/dev/null 2>&1 &
+```
+
 ## 界面预览
 <img src="minragdatadir/public/demo.png" width="600px" />    
 
