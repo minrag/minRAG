@@ -78,6 +78,7 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 	if err != nil {
 		return resp, err
 	}
+	// 保留错误信息
 	//if resp.StatusCode >= 400 {
 	//	return nil, fmt.Errorf("HTTP error: %s", resp.Status)
 	//}
@@ -130,6 +131,7 @@ func httpUploadFile(client *http.Client, method string, url string, filePath str
 		return nil, err
 	}
 	defer resp.Body.Close()
+	// 保留错误信息
 	//if resp.StatusCode >= 400 {
 	//	return nil, fmt.Errorf("HTTP error: %s", resp.Status)
 	//}
@@ -138,9 +140,18 @@ func httpUploadFile(client *http.Client, method string, url string, filePath str
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 	if len(body) < 1 {
 		return nil, errors.New("body is empty")
 	}
+	// 保留错误信息
+	//if resp.StatusCode >= 400 {
+	//	return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	//}
 
+	// 检查状态码
+	if resp.StatusCode != http.StatusOK {
+		return nil, errors.New(string(body))
+	}
 	return body, nil
 }
