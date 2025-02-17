@@ -67,6 +67,7 @@ var componentTypeMap = map[string]IComponent{
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
 	"DocumentSplitter":             &DocumentSplitter{},
 	"MarkdownConverter":            &MarkdownConverter{},
+	"TikaConverter":                &TikaConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -169,6 +170,75 @@ func (component *Pipeline) runProcess(ctx context.Context, input map[string]inte
 	return nil
 }
 
+// TikaConverter 使用tika服务解析文档内容
+type TikaConverter struct {
+	FilePath       string            `json:"filePath,omitempty"`
+	TiKaURL        string            `json:"tikaURL,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	MaxRetries     int               `json:"maxRetries,omitempty"`
+	client         *http.Client      `json:"-"`
+}
+
+func (component *TikaConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Timeout == 0 {
+		component.Timeout = 180
+	}
+
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+	if component.TiKaURL == "" {
+		component.TiKaURL = "http://localhost:9998/tika"
+	}
+
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
+	}
+	//获取文本内容,没有html等其他标签
+	component.DefaultHeaders["Accept"] = "text/plain"
+	//上传文件
+	component.DefaultHeaders["Content-Type"] = "application/octet-stream"
+
+	//使用tesseract OCR组件处理PDF里的图片
+	//component.DefaultHeaders["X-Tika-PDFextractInlineImages"] = "true"
+	//OCR的字体
+	//component.DefaultHeaders["X-Tika-OCRLanguage"] = "chi_sim"
+
+	return nil
+}
+func (component *TikaConverter) Run(ctx context.Context, input map[string]interface{}) error {
+	document := &Document{}
+	documentObj, has := input["document"]
+	if has {
+		document = documentObj.(*Document)
+	}
+	filePath := component.FilePath
+	if filePath == "" {
+		filePath = document.FilePath
+	} else {
+		document.FilePath = filePath
+	}
+	if filePath == "" {
+		err := errors.New(funcT("The filePath of TikaConverter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+
+	if document.Markdown == "" {
+		markdownByte, err := httpUploadFile(component.client, "PUT", component.TiKaURL, datadir+filePath, component.DefaultHeaders)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.Markdown = string(markdownByte)
+		document.FileSize = len(markdownByte)
+	}
+	document.Status = 2
+	input["document"] = document
+	return nil
+}
+
 // MarkdownConverter markdown文件读取
 type MarkdownConverter struct {
 	FilePath string `json:"filePath,omitempty"`
@@ -196,7 +266,7 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	}
 
 	if document.Markdown == "" {
-		markdownByte, err := os.ReadFile(datadir + document.FilePath)
+		markdownByte, err := os.ReadFile(datadir + filePath)
 		if err != nil {
 			input[errorKey] = err
 			return err
