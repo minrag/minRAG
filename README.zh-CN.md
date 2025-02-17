@@ -66,14 +66,25 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 ```
 启动 ```tika``` 的命令如下:
 ```shell
+## tika 3.x 依赖 jdk11+
 java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 
 ## 不输出日志
 #nohup java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998 >/dev/null 2>&1 &
 ```
 
-或者下载[tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234) ```start.bat```启动tika
-
+或者下载[tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234)   ```start.bat```启动tika
+注意修改```indexPipeline```流水线的参数,把原来的```MarkdownConverter```替换为```TikaConverter```:
+```json
+{
+	"start": "TikaConverter",
+	"process": {
+		"TikaConverter": "DocumentSplitter",
+		"DocumentSplitter": "OpenAIDocumentEmbedder",
+		"OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+	}
+}
+```
 
 ## 界面预览
 <img src="minragdatadir/public/demo.png" width="600px" />    

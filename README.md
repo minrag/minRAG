@@ -58,7 +58,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 <img src="minragdatadir/public/index.png" width="600px" />    
 
 ## Tika Integration 
-By default, minRAG only supports text formats like markdown and plain text. You can use the ```TikaConverter``` component to invoke the ```tika``` service for parsing document contents. Example configuration for the ```TikaConverter``` component:
+By default, minRAG only supports text formats like Markdown and plain text. To parse document content, you can use the ```TikaConverter``` component to call the ```tika``` service. Example configuration for ```TikaConverter```:
 ```json
 {
 	"tikaURL": "http://localhost:9998/tika",
@@ -68,14 +68,28 @@ By default, minRAG only supports text formats like markdown and plain text. You 
 }
 ```
 
-Command to start ```tika```:  
+Start the ```tika``` service with this command:
 ```shell
+## Apache Tika 3.x requires JDK 11 or later
 java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 
-## Suppress logs
+## To disable logging
 #nohup java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998 >/dev/null 2>&1 &
 ```
 
+Alternatively, download [tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwDz36Ceww?pwd=1234) and use ```start.bat``` to launch Tika.
+
+Note: Modify the parameters in your ```indexPipeline``` workflow by replacing the original ```MarkdownConverter``` with ```TikaConverter```:
+```json
+{
+	"start": "TikaConverter",
+	"process": {
+		"TikaConverter": "DocumentSplitter",
+		"DocumentSplitter": "OpenAIDocumentEmbedder",
+		"OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+	}
+}
+```
 
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
