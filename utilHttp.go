@@ -130,6 +130,7 @@ func httpUploadFile(client *http.Client, method string, url string, filePath str
 	if err != nil {
 		return nil, err
 	}
+	// 关闭resp.Body
 	defer resp.Body.Close()
 	// 保留错误信息
 	//if resp.StatusCode >= 400 {
@@ -140,7 +141,7 @@ func httpUploadFile(client *http.Client, method string, url string, filePath str
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+
 	if len(body) < 1 {
 		return nil, errors.New("body is empty")
 	}
