@@ -191,6 +191,7 @@
   "Welcome":"欢迎语",
   "Pipeline":"流水线",
   "Please select a pipeline":"请选择流水线",
+  "The filePath of TikaConverter cannot be empty":"TikaConverter的filePath不能为空",
   "The filePath of MarkdownConverter cannot be empty":"MarkdownConverter的filePath不能为空",
   "The document of DocumentSplitter cannot be empty":"DocumentSplitter的document不能为空",
   "The document of SQLiteVecDocumentStore cannot be empty":"SQLiteVecDocumentStore的document不能为空",

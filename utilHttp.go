@@ -21,8 +21,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 )
 
 // httpPostJsonBody 使用Post发送Json请求
@@ -63,7 +65,9 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 	}
 
 	// 设置请求头
-	req.Header.Set("Authorization", "Bearer "+authorization)
+	if authorization != "" {
+		req.Header.Set("Authorization", "Bearer "+authorization)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	if len(header) > 0 {
 		for k, v := range header {
@@ -74,6 +78,9 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 	if err != nil {
 		return resp, err
 	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	}
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		bodyByte, _ := io.ReadAll(resp.Body)
@@ -81,4 +88,59 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 		return nil, errors.New(string(bodyByte))
 	}
 	return resp, err
+}
+
+// httpUploadFile http上传附件
+func httpUploadFile(client *http.Client, method string, url string, filePath string, header map[string]string) ([]byte, error) {
+	if client == nil {
+		return nil, errors.New("httpClient is nil")
+	}
+	if filePath == "" {
+		return nil, errors.New("filePath is empty")
+	}
+	if method == "" {
+		method = "POST"
+	}
+	// 打开文件
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// 创建请求体
+	bodyBuffer := &bytes.Buffer{}
+	if _, err := io.Copy(bodyBuffer, file); err != nil {
+		return nil, fmt.Errorf("read file error: %w", err)
+	}
+
+	// 创建请求
+	req, err := http.NewRequest(method, url, bodyBuffer)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(header) > 0 {
+		for k, v := range header {
+			req.Header.Set(k, v)
+		}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	}
+	// 读取响应体内容
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if len(body) < 1 {
+		return nil, errors.New("body is empty")
+	}
+
+	return body, nil
 }
