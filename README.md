@@ -57,6 +57,26 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 
 <img src="minragdatadir/public/index.png" width="600px" />    
 
+## Tika Integration 
+By default, minRAG only supports text formats like markdown and plain text. You can use the ```TikaConverter``` component to invoke the ```tika``` service for parsing document contents. Example configuration for the ```TikaConverter``` component:
+```json
+{
+	"tikaURL": "http://localhost:9998/tika",
+	"defaultHeaders": {
+		"Content-Type": "application/octet-stream"
+	}
+}
+```
+
+Command to start ```tika```:  
+```shell
+java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
+
+## Suppress logs
+#nohup java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998 >/dev/null 2>&1 &
+```
+
+
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
 
