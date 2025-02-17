@@ -78,9 +78,9 @@ func httpPostJsonResponse(client *http.Client, authorization string, url string,
 	if err != nil {
 		return resp, err
 	}
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
-	}
+	//if resp.StatusCode >= 400 {
+	//	return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	//}
 	// 检查状态码
 	if resp.StatusCode != http.StatusOK {
 		bodyByte, _ := io.ReadAll(resp.Body)
@@ -130,9 +130,9 @@ func httpUploadFile(client *http.Client, method string, url string, filePath str
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("HTTP error: %s", resp.Status)
-	}
+	//if resp.StatusCode >= 400 {
+	//	return nil, fmt.Errorf("HTTP error: %s", resp.Status)
+	//}
 	// 读取响应体内容
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
