@@ -140,26 +140,26 @@ async function fetchSSE(aiMessageId,messageText) {
                     if (data.startsWith('data: ')) {
                         data = line.substring(6);
                     }
-                    //console.log("data:",data)
-                    if(data=="[DONE]"){
-                    data=prefix
-                    }else{
-                        if(data.trim()=="<think>"){//思维链
-                            isThinking=true;
-                        }else if(data.trim()=="</think>"){
-                            isThinking=false
-                        }
-                        data=prefix+data
+                    const openaiResponse = JSON.parse(data);
+                    let content=openaiResponse.choices[0].message.content;
+                    let reasoningContent=openaiResponse.choices[0].message.reasoning_content;
+                   
+                    if(content=="[DONE]"){
+                        content=""
                     }
-                    if (isThinking){//思维链
-                        thinkMarkdown=thinkMarkdown+data
+                    if(reasoningContent=="[DONE]"){
+                        reasoningContent=""
+                    }
+                   
+                    if (!!reasoningContent){//思维链
+                        thinkMarkdown=thinkMarkdown+prefix+reasoningContent;
                     }else{
-                        textMarkdown=textMarkdown+data;
+                        textMarkdown=textMarkdown+prefix+content;
                     }
                     
                 }
                 if(i>0){
-                    if (isThinking){//思维链
+                    if (!!reasoningContent){//思维链
                         thinkMarkdown=thinkMarkdown+'\n\n';
                     }else{
                         textMarkdown=textMarkdown+'\n\n';
