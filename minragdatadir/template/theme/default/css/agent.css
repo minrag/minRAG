@@ -73,20 +73,24 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     font-size: 14px;
     margin-right: auto; /* 确保靠左对齐 */
     /*display: flex;*/
-    align-items: center; /* 内容垂直居中 */
+    /*align-items: center;  内容垂直居中 */
+    text-align: left;
     width: fit-content;
     max-width: 100%;
     word-wrap: break-word; /* 长单词或 URL 自动换行 */
     overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
     white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
 }
-
+.ai-message {
+    margin-top: 2px;
+}
 .ai-message-think {
     color: #8b8b8b;
     font-size: 14px;
     border-left: 2px solid #8b8b8b; /* 添加蓝色左侧边框，宽度为2px */
     padding-left: 5px; /* 添加一些内边距，使内容不紧贴边框 */
     border-radius: 0px;
+    margin-bottom: 2px;
 }
 
 
