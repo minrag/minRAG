@@ -8,8 +8,8 @@ body {
     background-color: #f4f4f4;
 }
 h1,h2,h3,h4,h5,p,ul,ol,li {
-    display: inline-block; /* 或者使用 inline-block */
-    margin: 2px; /* 移除上下间距 */
+    display: block; /* 或者使用 inline-block */
+    margin:  2px; /* 移除上下间距 */
     padding: 0; /* 移除内边距 */
 }
 
@@ -79,7 +79,7 @@ h1,h2,h3,h4,h5,p,ul,ol,li {
     max-width: 100%;
     word-wrap: break-word; /* 长单词或 URL 自动换行 */
     overflow-wrap: break-word; /* 新换行规则，适合现代浏览器 */
-    white-space: pre-wrap; /* 保留换行符，并允许长内容换行 */
+    /*white-space: pre-wrap;  保留换行符，并允许长内容换行 */
 }
 .ai-message {
     margin-top: 2px;

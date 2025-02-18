@@ -96,6 +96,7 @@ async function fetchSSE(aiMessageId,messageText) {
     let textMarkdown="";
     let thinkMarkdown="";
     let isThinking=false;
+    let isReasoning=false;
     try {
         const response = await fetch('{{basePath}}v1/chat/completions', {
             method: 'POST',
@@ -133,6 +134,7 @@ async function fetchSSE(aiMessageId,messageText) {
                 for(const line of lines){
                     let prefix=""
                     let data = line
+                    //console.log(data)
                     if (data.startsWith('\n')) {
                         prefix='\n'
                         data = line.substring(1);
@@ -149,18 +151,44 @@ async function fetchSSE(aiMessageId,messageText) {
                         if(data!=""){
                             const openaiResponse = JSON.parse(data);
                             content=openaiResponse.choices[0].delta.content;
+                            const type=openaiResponse.choices[0].delta.type
                             reasoningContent=openaiResponse.choices[0].delta.reasoning_content;
+                           
+                            if(!!reasoningContent){// reasoning_content 有值
+                                content=""
+                                isThinking=true;
+                                isReasoning=true;
+                            }else if (!!type){//兼容 type:"thinking" 的模式
+                                if (type.indexOf("think")>=0){
+                                    isThinking=true;
+                                    reasoningContent=content;
+                                }else{
+                                    isThinking=false;
+                                }
+                            }else if(content=="<think>"){// 兼容think标签的方式
+                                content=""
+                                reasoningContent="";
+                                isThinking=true;
+                            }else if(content=="</think>"){
+                                content=""
+                                reasoningContent="";
+                                isThinking=false;
+                            }
                         }
 
                         if(!!!content){
                             content=""
-                        }else{
-                            isThinking=false
                         }
                         if(!!!reasoningContent){
                             reasoningContent=""
-                        }else{
-                            isThinking=true
+                        }
+
+                        if (isThinking&&isReasoning&&content!=""){  //isReasoning模式,属于思维链,但是content有值,思维链已经结束
+                            isThinking=false
+                        }
+
+                        if (isThinking&&content!=""&&reasoningContent==""){// 思维链模式,但是content有值,reasoningContent无值
+                            reasoningContent=content;
                         }
                         
                         if (isThinking){//思维链
