@@ -177,7 +177,7 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v\n\n", errObj))
 			c.WriteString(msg)
 			c.Flush()
-			c.WriteString(warpOpenAIJsonMessage(stream, "[DONE]"))
+			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
 			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v", errObj))
