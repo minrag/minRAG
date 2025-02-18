@@ -1058,11 +1058,11 @@ type Choice struct {
 }
 
 type ChatMessage struct {
-	Role       string     `json:"role,omitempty"`
-	Content    string     `json:"content,omitempty"`
-	Type       string     `json:"type,omitempty"` //thinking 思维链,text文本
-	ToolCallID string     `json:"tool_call_id,omitempty"`
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+	Role             string     `json:"role,omitempty"`
+	Content          string     `json:"content,omitempty"`
+	ReasoningContent string     `json:"reasoning_content,omitempty"` //reasoning_content 思维链内容
+	ToolCallID       string     `json:"tool_call_id,omitempty"`
+	ToolCalls        []ToolCall `json:"tool_calls,omitempty"`
 }
 type ToolCall struct {
 	Id         string       `json:"id,omitempty"`
@@ -1176,10 +1176,12 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 		}
 		//获取第一个结果
 		choice := rs.Choices[0]
+		rsByte, _ := json.Marshal(rs)
+		rsStr := string(rsByte)
 		//没有函数调用,把模型返回的choice放入到input["choice"],并输出
 		if len(choice.Message.ToolCalls) == 0 {
 			input["choice"] = choice
-			c.WriteString(choice.Message.Content)
+			c.WriteString(rsStr)
 			c.Flush()
 			return nil
 		}
@@ -1235,6 +1237,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	//循环处理stream流输出
 	for {
 		line, err := reader.ReadString('\n')
+		fmt.Println(line)
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -1303,14 +1306,17 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 			}
 		}
 
+		rsByte, _ := json.Marshal(rs)
+		rsStr := string(rsByte)
+
 		// 不是函数调用,把返回的内容输出到页面
 		if c != nil && len(toolCalls) == 0 {
-			c.WriteString("data: " + rs.Choices[0].Delta.Content + "\n\n")
+			c.WriteString("data: " + rsStr + "\n\n")
 			c.Flush()
 		}
 		// 不是函数调用,把内容拼接起来
 		if len(toolCalls) == 0 {
-			message.WriteString(rs.Choices[0].Delta.Content)
+			message.WriteString(rsStr)
 		}
 	}
 	//没有函数调用,把模型返回的choice放入到input["choice"]
