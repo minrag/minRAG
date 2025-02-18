@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -171,13 +172,16 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	//choice := input["choice"]
 	errObj := input[errorKey]
 	if errObj != nil {
+
 		if stream {
-			c.WriteString(fmt.Sprintf("data: component run is error:%v\n\n", errObj))
+			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v\n\n", errObj))
+			c.WriteString(msg)
 			c.Flush()
-			c.WriteString("data: [DONE]\n\n")
+			c.WriteString(warpOpenAIJsonMessage(stream, "[DONE]"))
 			c.Flush()
 		} else {
-			c.WriteString(fmt.Sprintf("component run is error:%v", errObj))
+			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v", errObj))
+			c.WriteString(msg)
 			c.Flush()
 		}
 		c.Abort()
@@ -199,4 +203,29 @@ func warpRequestMap(c *app.RequestContext) map[string]interface{} {
 		data[userTypeKey] = 0
 	}
 	return data
+}
+
+// warpOpenAIJsonMessage 包装需要返回的OpenAI json 格式的信息
+func warpOpenAIJsonMessage(stream bool, content string) string {
+	rs := struct {
+		Choices []Choice `json:"choices,omitempty"`
+	}{Choices: make([]Choice, 1)}
+	if stream {
+		rs.Choices[0].Delta.Content = content
+	} else {
+		rs.Choices[0].Message.Content = content
+	}
+	//大模型返回的json对象,进行接受
+	data, err := json.Marshal(rs)
+	jsonStr := string(data)
+	if err != nil {
+		jsonStr = ""
+	}
+	if stream {
+		if jsonStr == "" {
+			jsonStr = "{}"
+		}
+		jsonStr = "data: " + jsonStr + "\n\n"
+	}
+	return jsonStr
 }

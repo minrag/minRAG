@@ -140,21 +140,36 @@ async function fetchSSE(aiMessageId,messageText) {
                     if (data.startsWith('data: ')) {
                         data = line.substring(6);
                     }
-                    const openaiResponse = JSON.parse(data);
-                    let content=openaiResponse.choices[0].message.content;
-                    let reasoningContent=openaiResponse.choices[0].message.reasoning_content;
-                   
-                    if(content=="[DONE]"){
-                        content=""
+                    if(data=="[DONE]"){
+                        data=""
                     }
-                    if(reasoningContent=="[DONE]"){
-                        reasoningContent=""
-                    }
-                   
-                    if (!!reasoningContent){//思维链
-                        thinkMarkdown=thinkMarkdown+prefix+reasoningContent;
-                    }else{
-                        textMarkdown=textMarkdown+prefix+content;
+                    try {
+                        let content=""
+                        let reasoningContent=""
+                        if(data!=""){
+                            const openaiResponse = JSON.parse(data);
+                            content=openaiResponse.choices[0].delta.content;
+                            reasoningContent=openaiResponse.choices[0].delta.reasoning_content;
+                        }
+
+                        if(!!!content){
+                            content=""
+                        }else{
+                            isThinking=false
+                        }
+                        if(!!!reasoningContent){
+                            reasoningContent=""
+                        }else{
+                            isThinking=true
+                        }
+                        
+                        if (isThinking){//思维链
+                            thinkMarkdown=thinkMarkdown+prefix+reasoningContent;
+                        }else{
+                            textMarkdown=textMarkdown+prefix+content;
+                        }
+                    }catch(err) {
+                            textMarkdown=textMarkdown+prefix+data;
                     }
                     
                 }
