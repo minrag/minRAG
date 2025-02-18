@@ -1237,7 +1237,6 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	//循环处理stream流输出
 	for {
 		line, err := reader.ReadString('\n')
-		fmt.Println(line)
 		if err != nil {
 			if err == io.EOF {
 				break
