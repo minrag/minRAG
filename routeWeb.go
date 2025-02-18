@@ -77,13 +77,14 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 
 	aByte := c.GetHeader("Authorization")
 	if len(aByte) < 1 {
+		errMsg := "Authorization is empty"
 		if stream {
-			c.WriteString("data: Authorization is empty\n\n")
+			c.WriteString(warpOpenAIJsonMessage(stream, errMsg))
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			c.WriteString("Authorization is empty")
+			c.WriteString(errMsg)
 			c.Flush()
 		}
 		c.Abort()
@@ -92,13 +93,14 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	authorization := string(aByte)
 	agentID := strings.TrimPrefix(authorization, "Bearer ")
 	if agentID == "" {
+		errMsg := "Authorization is empty"
 		if stream {
-			c.WriteString("data: Authorization is empty\n\n")
+			c.WriteString(warpOpenAIJsonMessage(stream, errMsg))
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			c.WriteString("Authorization is empty")
+			c.WriteString(errMsg)
 			c.Flush()
 		}
 		c.Abort()
@@ -108,24 +110,26 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	agentRequestBody := &AgentRequestBody{}
 	err := c.BindJSON(agentRequestBody)
 	if err != nil {
+		errMsg := fmt.Sprintf("body is error:%v", err)
 		if stream {
-			c.WriteString(fmt.Sprintf("data: body is error:%v\n\n", err))
+			c.WriteString(warpOpenAIJsonMessage(stream, errMsg))
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			c.WriteString(fmt.Sprintf("body is error:%v", err))
+			c.WriteString(errMsg)
 			c.Flush()
 		}
 	}
 	if len(agentRequestBody.Messages) < 1 {
+		errMsg := "messages is empty"
 		if stream {
-			c.WriteString("data: messages is empty\n\n")
+			c.WriteString(warpOpenAIJsonMessage(stream, errMsg))
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			c.WriteString("messages is empty")
+			c.WriteString(errMsg)
 			c.Flush()
 		}
 		c.Abort()
@@ -153,13 +157,14 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 
 	agent, err := findAgentByID(ctx, agentID)
 	if err != nil || agent.Id == "" {
+		errMsg := "agent is empty"
 		if stream {
-			c.WriteString("data: agent is empty\n\n")
+			c.WriteString(warpOpenAIJsonMessage(stream, errMsg))
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			c.WriteString("agent is empty")
+			c.WriteString(errMsg)
 			c.Flush()
 		}
 		c.Abort()
@@ -172,15 +177,15 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	//choice := input["choice"]
 	errObj := input[errorKey]
 	if errObj != nil {
-
+		errMsg := fmt.Sprintf("component run is error:%v", errObj)
 		if stream {
-			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v\n\n", errObj))
+			msg := warpOpenAIJsonMessage(stream, errMsg)
 			c.WriteString(msg)
 			c.Flush()
 			c.WriteString("data: [DONE]\n\n")
 			c.Flush()
 		} else {
-			msg := warpOpenAIJsonMessage(stream, fmt.Sprintf("component run is error:%v", errObj))
+			msg := warpOpenAIJsonMessage(stream, errMsg)
 			c.WriteString(msg)
 			c.Flush()
 		}
