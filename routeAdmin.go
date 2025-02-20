@@ -333,7 +333,7 @@ func funcUploadFilePath(c *app.RequestContext, baseDir string) (string, string, 
 	}
 	//服务器的目录,并创建目录
 	serverDirPath := datadir + baseDir + dirPath
-	err = os.MkdirAll(serverDirPath, 0600)
+	err = os.MkdirAll(serverDirPath, 0755) //目录需要是755权限,才能正常读取,上传的文件默认是644
 	if err != nil && !os.IsExist(err) {
 		return "", dirPath, err
 	}
