@@ -1,12 +1,11 @@
 <img src="minragdatadir/public/minrag-logo.png" height="150px" />  
 
-<a href="./README.zh-CN.md">简体中文</a> | <a href="./README.md">English</a> | <a href="./minragdatadir/public/doc/index.md">帮助文档</a>
+<a href="./README.zh-CN.md">简体中文</a> | <a href="./README.md">English</a> | <a href="./minragdatadir/public/doc/index.md">帮助文档</a>  
 
 ## RAG 从未如此简单 
-minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.支持OpenAI、Gitee AI、百度千帆、腾讯云LKE、阿里云百炼、字节火山引擎等AI平台.        
+minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.支持OpenAI、Gitee AI、百度千帆、腾讯云LKE、阿里云百炼、字节火山引擎等AI平台.          
   
-使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
-MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline等组件,支持流水线设置和扩展. 
+RAG入门教程: [<<十天手搓 minRAG, 操纵 DeepSeek 的幕后黑手>>](https://my.oschina.net/baobao/blog/17679781)  
 
 ## 支持的AI平台
 因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径   
