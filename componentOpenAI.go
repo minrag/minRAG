@@ -1316,7 +1316,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 		}
 		// 不是函数调用,把内容拼接起来
 		if len(toolCalls) == 0 {
-			message.WriteString(rsStr)
+			message.WriteString(rs.Choices[0].Delta.Content)
 		}
 	}
 	//没有函数调用,把模型返回的choice放入到input["choice"]
