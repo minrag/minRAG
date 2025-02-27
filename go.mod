@@ -8,6 +8,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/mojocn/base64Captcha v1.3.8
 	golang.org/x/crypto v0.35.0
+	golang.org/x/net v0.25.0
 )
 
 require (
