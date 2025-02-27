@@ -36,6 +36,7 @@ import (
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/cloudwego/hertz/pkg/app"
+	"golang.org/x/net/html"
 )
 
 const (
@@ -66,6 +67,7 @@ var componentTypeMap = map[string]IComponent{
 	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
 	"DocumentSplitter":             &DocumentSplitter{},
+	"HtmlCleaner":                  &HtmlCleaner{},
 	"MarkdownConverter":            &MarkdownConverter{},
 	"TikaConverter":                &TikaConverter{},
 }
@@ -282,6 +284,68 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	}
 	document.Status = 2
 	input["document"] = document
+	return nil
+}
+
+// HtmlCleaner 清理html标签
+type HtmlCleaner struct {
+}
+
+func (component *HtmlCleaner) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+func (component *HtmlCleaner) Run(ctx context.Context, input map[string]interface{}) error {
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	doc, err := html.Parse(bytes.NewReader([]byte(document.Markdown)))
+	if err != nil {
+		return err
+	}
+
+	var buf strings.Builder
+	var inScript, inStyle bool // 新增状态标记[1,3](@ref)
+
+	var extract func(*html.Node)
+	extract = func(n *html.Node) {
+		// 新增标签检测逻辑[6,7](@ref)
+		switch n.Type {
+		case html.ElementNode:
+			switch n.Data {
+			case "script":
+				inScript = true
+			case "style":
+				inStyle = true
+			}
+		case html.TextNode:
+			if !inScript && !inStyle { // 仅收集非脚本/样式内容[2,4](@ref)
+				buf.WriteString(strings.TrimSpace(n.Data) + " ")
+			}
+		}
+
+		// 递归处理子节点（跳过脚本/样式内容）[8](@ref)
+		if !inScript && !inStyle {
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				extract(c)
+			}
+		}
+
+		// 重置标签状态[9](@ref)
+		if n.Type == html.ElementNode {
+			switch n.Data {
+			case "script":
+				inScript = false
+			case "style":
+				inStyle = false
+			}
+		}
+	}
+
+	extract(doc)
+	document.Markdown = html.UnescapeString(buf.String())
 	return nil
 }
 

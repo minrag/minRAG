@@ -1,3 +1,7 @@
+v0.0.9 
+- 增加HtmlCleaner组件,清理html标签
+- 完善注释,文档
+
 v0.0.8 
 - 修复日志记录的bug,只记录文本内容
 - OpenAIChatMemory默认上下文长度为3
