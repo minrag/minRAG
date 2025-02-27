@@ -35,6 +35,7 @@ import (
 	"time"
 
 	"gitee.com/chunanyong/zorm"
+	"github.com/chromedp/chromedp"
 	"github.com/cloudwego/hertz/pkg/app"
 	"golang.org/x/net/html"
 )
@@ -68,6 +69,7 @@ var componentTypeMap = map[string]IComponent{
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
 	"DocumentSplitter":             &DocumentSplitter{},
 	"HtmlCleaner":                  &HtmlCleaner{},
+	"WebScraper":                   &WebScraper{},
 	"MarkdownConverter":            &MarkdownConverter{},
 	"TikaConverter":                &TikaConverter{},
 }
@@ -284,6 +286,52 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	}
 	document.Status = 2
 	input["document"] = document
+	return nil
+}
+
+// WebScraper 网络爬虫
+type WebScraper struct {
+	UserAgent string `json:"userAgent,omitempty"`
+	WebURL    string `json:"webURL,omitempty"`
+	//抓取的深度,默认1,也就是当前页面
+	Depth int `json:"depth,omitempty"`
+	// 需要抓取的xpath
+	Xpaths          []string `json:"xpaths,omitempty"`
+	Timeout         int      `json:"timeout,omitempty"`
+	chromedpOptions []chromedp.ExecAllocatorOption
+}
+
+func (component *WebScraper) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Timeout == 0 {
+		component.Timeout = 60
+	}
+	if component.Depth == 0 {
+		component.Depth = 1
+	}
+	if component.UserAgent == "" {
+		component.UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64)"
+	}
+	component.chromedpOptions = []chromedp.ExecAllocatorOption{
+		chromedp.Flag("headless", false), // debug使用 true
+		chromedp.UserAgent(component.UserAgent),
+		chromedp.Flag("blink-settings", "imagesEnabled=false"),
+	}
+	//初始化参数,先传一个空的数据
+	component.chromedpOptions = append(chromedp.DefaultExecAllocatorOptions[:], component.chromedpOptions...)
+	return nil
+}
+func (component *WebScraper) Run(ctx context.Context, input map[string]interface{}) error {
+	allocCtx, _ := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
+	chromeCtx, _ := chromedp.NewContext(allocCtx)
+	// 执行一个空task, 用提前创建Chrome实例
+	chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
+
+	//创建一个上下文,超时时间为60s
+	chromeCtx, cancel := context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
+	defer cancel()
+
+	//var htmlContent string
+
 	return nil
 }
 
