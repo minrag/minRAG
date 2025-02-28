@@ -355,9 +355,11 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 	chromeCtx, cancel = context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
 	defer cancel()
 
+	title := ""
 	hcs := make([]string, len(component.Selectors))
 	actions := make([]chromedp.Action, 0)
 	actions = append(actions, chromedp.Navigate(webURL))
+
 	// 双重等待机制
 	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
 	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
@@ -365,11 +367,14 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 		action := chromedp.OuterHTML(component.Selectors[i], &hcs[i], chromedp.ByQuery)
 		actions = append(actions, action)
 	}
+	// 获取网页的title,放到最后再执行
+	actions = append(actions, chromedp.Title(&title))
 	err := chromedp.Run(chromeCtx, actions...)
 	if err != nil {
 		return err
 	}
 	document.Markdown = strings.Join(hcs, ".")
+	document.Name = title
 	return nil
 }
 
