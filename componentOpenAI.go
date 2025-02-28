@@ -153,9 +153,9 @@ func (component *Pipeline) runProcess(ctx context.Context, input map[string]inte
 		input[errorKey] = err
 		return err
 	}
-	errObj, has := input[errorKey]
+	err, has = input[errorKey].(error)
 	if has {
-		return errObj.(error)
+		return err
 	}
 	_, has = input[endKey]
 	if has {
@@ -218,11 +218,13 @@ func (component *TikaConverter) Initialization(ctx context.Context, input map[st
 	return nil
 }
 func (component *TikaConverter) Run(ctx context.Context, input map[string]interface{}) error {
-	document := &Document{}
-	documentObj, has := input["document"]
-	if has {
-		document = documentObj.(*Document)
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of TikaConverter cannot be empty"))
+		input[errorKey] = err
+		return err
 	}
+
 	filePath := component.FilePath
 	if filePath == "" {
 		filePath = document.FilePath
@@ -258,10 +260,11 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 	return nil
 }
 func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
-	document := &Document{}
-	documentObj, has := input["document"]
-	if has {
-		document = documentObj.(*Document)
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
+		input[errorKey] = err
+		return err
 	}
 	filePath := component.FilePath
 	if filePath == "" {
@@ -295,8 +298,8 @@ type WebScraper struct {
 	WebURL    string `json:"webURL,omitempty"`
 	//抓取的深度,默认1,也就是当前页面
 	Depth int `json:"depth,omitempty"`
-	// 需要抓取的xpath
-	Xpaths          []string `json:"xpaths,omitempty"`
+	// 需要抓取的 selector
+	Selectors       []string `json:"selectors,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
 	chromedpOptions []chromedp.ExecAllocatorOption
 }
@@ -311,8 +314,12 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	if component.UserAgent == "" {
 		component.UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64)"
 	}
+	if len(component.Selectors) < 1 {
+		component.Selectors = []string{"html"}
+	}
+
 	component.chromedpOptions = []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", false), // debug使用 true
+		chromedp.Flag("headless", true), // debug使用 false
 		chromedp.UserAgent(component.UserAgent),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
 	}
@@ -321,17 +328,48 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	return nil
 }
 func (component *WebScraper) Run(ctx context.Context, input map[string]interface{}) error {
-	allocCtx, _ := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
-	chromeCtx, _ := chromedp.NewContext(allocCtx)
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of WebScraper cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	webURL, has := input["webScraper_webURL"].(string)
+	if webURL == "" || (!has) {
+		webURL = component.WebURL
+	}
+	if webURL == "" {
+		err := errors.New(funcT("The webScraper_webURL of WebScraper cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
+	defer cancel()
+	chromeCtx, cancel := chromedp.NewContext(allocCtx)
+	defer cancel()
 	// 执行一个空task, 用提前创建Chrome实例
-	chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
+	//chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
 
 	//创建一个上下文,超时时间为60s
-	chromeCtx, cancel := context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
+	chromeCtx, cancel = context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
 	defer cancel()
 
-	//var htmlContent string
-
+	hcs := make([]string, len(component.Selectors))
+	actions := make([]chromedp.Action, 0)
+	actions = append(actions, chromedp.Navigate(webURL))
+	// 双重等待机制
+	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
+	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
+	for i := 0; i < len(component.Selectors); i++ {
+		action := chromedp.OuterHTML(component.Selectors[i], &hcs[i], chromedp.ByQuery)
+		actions = append(actions, action)
+	}
+	err := chromedp.Run(chromeCtx, actions...)
+	if err != nil {
+		return err
+	}
+	document.Markdown = strings.Join(hcs, ".")
 	return nil
 }
 
@@ -484,11 +522,10 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 	return nil
 }
 func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	documentChunksObj, has := input["documentChunks"]
+	documentChunks, has := input["documentChunks"].([]DocumentChunk)
 	if !has {
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
 	}
-	documentChunks := documentChunksObj.([]DocumentChunk)
 
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
@@ -548,25 +585,15 @@ func (component *SQLiteVecDocumentStore) Initialization(ctx context.Context, inp
 	return nil
 }
 func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[string]interface{}) error {
-	documentObj, has := input["document"]
+	document, has := input["document"].(*Document)
 	if !has {
 		err := errors.New(funcT("The document of SQLiteVecDocumentStore cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
-	document := documentObj.(*Document)
 
-	documentChunksObj, has := input["documentChunks"]
-	var documentChunks []DocumentChunk
-	if has {
-		documentChunks = documentChunksObj.([]DocumentChunk)
-	}
-
-	var vecDocumentChunks []VecDocumentChunk
-	vecDocumentChunksObj, has := input["vecDocumentChunks"]
-	if has {
-		vecDocumentChunks = vecDocumentChunksObj.([]VecDocumentChunk)
-	}
+	documentChunks := input["documentChunks"].([]DocumentChunk)
+	vecDocumentChunks := input["vecDocumentChunks"].([]VecDocumentChunk)
 
 	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		//先删除,重新插入
@@ -649,11 +676,10 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	return nil
 }
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	queryObj, has := input["query"]
+	query, has := input["query"].(string)
 	if !has {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
-	query := queryObj.(string)
 	bodyMap := make(map[string]interface{}, 0)
 	bodyMap["input"] = []string{query}
 	bodyMap["model"] = component.Model
@@ -931,40 +957,29 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
 	topN := 0
 	var score float32 = 0.0
-	dcs, has := input["documentChunks"]
-	if !has || dcs == nil {
+	documentChunks, has := input["documentChunks"].([]DocumentChunk)
+	if !has || documentChunks == nil {
 		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
-	queryObj, has := input["query"]
-	if !has {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-	query := queryObj.(string)
-	if query == "" {
+	query, has := input["query"].(string)
+	if !has || query == "" {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 
-	tId, has := input["topN"]
-	if has {
-		topN = tId.(int)
-	}
+	topN = input["topN"].(int)
 	if topN == 0 {
 		topN = component.TopN
 	}
 	if topN == 0 {
 		topN = 5
 	}
-	disId, has := input["score"]
-	if has {
-		score = disId.(float32)
-	}
+	score = input["score"].(float32)
+
 	if score <= 0 {
 		score = component.Score
 	}
-
-	documentChunks := dcs.([]DocumentChunk)
 	if topN > len(documentChunks) {
 		topN = len(documentChunks)
 	}
@@ -1131,11 +1146,8 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]int
 		}
 	}
 
-	roomIDObj, has := input["roomID"]
-	roomID := ""
-	if has && roomIDObj != nil {
-		roomID = roomIDObj.(string)
-	}
+	roomID, has := input["roomID"].(string)
+
 	messageLogs := make([]MessageLog, 0)
 	if roomID != "" && component.MemoryLength > 0 {
 		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE roomID=? order by createTime desc", roomID)
@@ -1226,13 +1238,13 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	messages := make([]ChatMessage, 0)
 	ms, has := input["messages"]
 	if !has { //没有消息列表,就根据用户的query构建一个
-		queryObj, hasQuery := input["query"]
+		query, hasQuery := input["query"].(string)
 		if !hasQuery {
 			err := errors.New(funcT("input['messages'] cannot be empty"))
 			input[errorKey] = err
 			return err
 		}
-		cm := ChatMessage{Role: "user", Content: queryObj.(string)}
+		cm := ChatMessage{Role: "user", Content: query}
 		messages = append(messages, cm)
 	} else {
 		messages = ms.([]ChatMessage)
@@ -1249,11 +1261,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 		bodyMap["tools"] = tools
 	}
 
-	var c *app.RequestContext
-	cObj, has := input["c"]
-	if has {
-		c = cObj.(*app.RequestContext)
-	}
+	c := input["c"].(*app.RequestContext)
 
 	url := component.BaseURL + "/chat/completions"
 	stream := true
@@ -1474,40 +1482,30 @@ func (component *ChatMessageLogStore) Initialization(ctx context.Context, input 
 }
 
 func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]interface{}) error {
-	cObj, has := input["c"]
-	if !has || cObj == nil {
+	c, has := input["c"].(*app.RequestContext)
+	if !has || c == nil {
 		return errors.New(`input["c"] is nil`)
 	}
-	c := cObj.(*app.RequestContext)
 
-	roomIDObj, has := input["roomID"]
-	if !has || roomIDObj == nil {
+	roomID, has := input["roomID"].(string)
+	if !has || roomID == "" {
 		return errors.New(`input["roomID"] is nil`)
 	}
-	roomID := roomIDObj.(string)
-
-	agentIDObj, has := input["agentID"]
-	if !has || agentIDObj == nil {
+	agentID, has := input["agentID"].(string)
+	if !has || agentID == "" {
 		return errors.New(`input["agentID"] is nil`)
 	}
-	agentID := agentIDObj.(string)
 
-	queryObj, has := input["query"]
-	if !has || queryObj == nil {
+	query, has := input["query"].(string)
+	if !has || query == "" {
 		return errors.New(`input["query"] is nil`)
 	}
-	query := queryObj.(string)
-
 	agent, err := findAgentByID(ctx, agentID)
 	if err != nil {
 		return err
 	}
 
-	choice := Choice{}
-	choiceObj, has := input["choice"]
-	if has && choiceObj != nil {
-		choice = choiceObj.(Choice)
-	}
+	choice := input["choice"].(Choice)
 
 	jwttoken := string(c.Cookie(config.JwttokenKey))
 	userId, _ := userIdByToken(jwttoken)

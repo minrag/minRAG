@@ -1,4 +1,5 @@
 v0.0.9 
+- 增加WebScraper组件,实现网络爬虫
 - 增加HtmlCleaner组件,清理html标签
 - 完善注释,文档
 
