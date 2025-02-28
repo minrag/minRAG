@@ -298,8 +298,8 @@ type WebScraper struct {
 	WebURL    string `json:"webURL,omitempty"`
 	//抓取的深度,默认1,也就是当前页面
 	Depth int `json:"depth,omitempty"`
-	// 需要抓取的 selector
-	Selectors       []string `json:"selectors,omitempty"`
+	// 需要抓取的 querySelector
+	QuerySelector   []string `json:"querySelector,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
 	chromedpOptions []chromedp.ExecAllocatorOption
 }
@@ -314,8 +314,8 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	if component.UserAgent == "" {
 		component.UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64)"
 	}
-	if len(component.Selectors) < 1 {
-		component.Selectors = []string{"html"}
+	if len(component.QuerySelector) < 1 {
+		component.QuerySelector = []string{"html"}
 	}
 
 	component.chromedpOptions = []chromedp.ExecAllocatorOption{
@@ -334,6 +334,18 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 		input[errorKey] = err
 		return err
 	}
+	documents, err := component.FetchPage(ctx, input)
+	if err != nil || len(documents) < 1 {
+		input[errorKey] = err
+		return err
+	}
+	document.Markdown = documents[0].Markdown
+	document.Name = documents[0].Name
+	return nil
+}
+
+// FetchPage 抓取网页,方便后期扩展为递归
+func (component *WebScraper) FetchPage(ctx context.Context, input map[string]interface{}) ([]Document, error) {
 	webURL, has := input["webScraper_webURL"].(string)
 	if webURL == "" || (!has) {
 		webURL = component.WebURL
@@ -341,8 +353,11 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 	if webURL == "" {
 		err := errors.New(funcT("The webScraper_webURL of WebScraper cannot be empty"))
 		input[errorKey] = err
-		return err
+		return nil, err
 	}
+
+	documents := make([]Document, 0)
+	document := Document{}
 
 	allocCtx, cancel := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
 	defer cancel()
@@ -356,26 +371,27 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 	defer cancel()
 
 	title := ""
-	hcs := make([]string, len(component.Selectors))
+	hcs := make([]string, len(component.QuerySelector))
 	actions := make([]chromedp.Action, 0)
 	actions = append(actions, chromedp.Navigate(webURL))
 
 	// 双重等待机制
 	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
 	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
-	for i := 0; i < len(component.Selectors); i++ {
-		action := chromedp.OuterHTML(component.Selectors[i], &hcs[i], chromedp.ByQuery)
+	for i := 0; i < len(component.QuerySelector); i++ {
+		action := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery)
 		actions = append(actions, action)
 	}
 	// 获取网页的title,放到最后再执行
 	actions = append(actions, chromedp.Title(&title))
 	err := chromedp.Run(chromeCtx, actions...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	document.Markdown = strings.Join(hcs, ".")
 	document.Name = title
-	return nil
+	documents = append(documents, document)
+	return documents, nil
 }
 
 // HtmlCleaner 清理html标签
