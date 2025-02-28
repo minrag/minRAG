@@ -135,6 +135,10 @@ func init() {
 
 	//ajax POST执行更新语句
 	adminGroup.POST("/updatesql", funcUpdateSQL)
+
+	//ajax POST 抓取网页
+	adminGroup.POST("/webscraper", funcWebScraper)
+
 }
 
 // funcAdminInstallPre 跳转到安装界面
@@ -833,35 +837,7 @@ func funcSaveDocument(ctx context.Context, c *app.RequestContext) {
 		FuncLogError(ctx, err)
 		return
 	}
-	now := time.Now().Format("2006-01-02 15:04:05")
-	// 构建ID
-	entity.Id = entity.KnowledgeBaseID + entity.Id
-	has := validateIDExists(ctx, entity.Id)
-	if has {
-		c.JSON(http.StatusConflict, ResponseData{StatusCode: 0, Message: funcT("URL path is duplicated, please modify the path identifier")})
-		c.Abort() // 终止后续调用
-		return
-	}
-	if entity.CreateTime == "" {
-		entity.CreateTime = now
-	}
-	if entity.UpdateTime == "" {
-		entity.UpdateTime = now
-	}
-
-	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
-	zorm.QueryRow(ctx, f, entity)
-
-	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		return zorm.Insert(ctx, entity)
-	})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
-		c.Abort() // 终止后续调用
-		FuncLogError(ctx, err)
-		return
-	}
-	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
+	commonSaveDocument(ctx, c, entity)
 }
 
 func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
@@ -984,6 +960,51 @@ func funcUpdateSQL(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Message: fmt.Sprintf(funcT("Updated %d records"), count)})
+}
+
+// funcWebScraper 抓取网页
+func funcWebScraper(ctx context.Context, c *app.RequestContext) {
+	entity := &Document{}
+	err := c.Bind(entity)
+	if err != nil || entity.Id == "" || entity.KnowledgeBaseID == "" {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	commonSaveDocument(ctx, c, entity)
+}
+
+func commonSaveDocument(ctx context.Context, c *app.RequestContext, entity *Document) {
+	now := time.Now().Format("2006-01-02 15:04:05")
+	// 构建ID
+	entity.Id = entity.KnowledgeBaseID + entity.Id
+	has := validateIDExists(ctx, entity.Id)
+	if has {
+		c.JSON(http.StatusConflict, ResponseData{StatusCode: 0, Message: funcT("URL path is duplicated, please modify the path identifier")})
+		c.Abort() // 终止后续调用
+		return
+	}
+	if entity.CreateTime == "" {
+		entity.CreateTime = now
+	}
+	if entity.UpdateTime == "" {
+		entity.UpdateTime = now
+	}
+
+	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
+	zorm.QueryRow(ctx, f, entity)
+
+	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Insert(ctx, entity)
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
 }
 
 // permissionHandler 权限拦截器
