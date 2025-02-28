@@ -52,7 +52,7 @@
 							&nbsp;&nbsp;&nbsp;&nbsp;
 						  </div>
 						<div class="layui-input-block">
-							<button type="button" id="button-upload-document" class="layui-btn layui-bg-blue"><i class="layui-icon layui-icon-upload"></i> {{T "Upload Document"}}</button>&nbsp; &nbsp;<a style="cursor: pointer;" href="https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234" target="_blank">{{T "By default, only text files are supported. For additional document formats, you need to download and run Tika"}}</a>
+							<button type="button" onclick="showWebScraperDiv();" class="layui-btn layui-bg-blue">{{T "Web Scraper"}}</button>&nbsp;<button type="button" id="button-upload-document" class="layui-btn layui-bg-blue"><i class="layui-icon layui-icon-upload"></i> {{T "Upload Document"}}</button>&nbsp; &nbsp;<a style="cursor: pointer;" href="https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234" target="_blank">{{T "By default, only text files are supported. For additional document formats, you need to download and run Tika"}}</a>
 						</div>
 					</div>
 				</form>
@@ -108,6 +108,32 @@
 
   </div>
 {{template "admin/bodyend.html"}}
+
+
+<!-- 弹出层内容（默认隐藏） -->
+<div id="div-web-scraper" style="display: none; padding: 20px;">
+	<form id="minrag-form-web-scraper" class="layui-form" action="{{basePath}}admin/webscraper" method="post">
+		<div class="layui-form-item">
+			<label class="layui-form-label">{{T "Web URL"}}</label>
+			<div class="layui-input-block">
+			  <input type="text" name="webURL" lay-verify="required|url" placeholder='{{T "Please enter the web URL"}}' autocomplete="off" class="layui-input">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<label class="layui-form-label">{{T "Query Selector"}}</label>
+			<div class="layui-input-block">
+			  <textarea name="querySelector" placeholder='{{T "Query selectors, one per line"}}' class="layui-textarea"></textarea>
+			</div>
+		</div>
+
+		<div class="layui-form-item">
+			<div class="layui-input-block">
+			  <button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-web-scraper">提交保存</button>
+			</div>
+		</div>
+	</form>
+</div>
 
 <script>
 	var layer;
@@ -232,6 +258,35 @@
 		});
 
 
+		// 爬虫抓取网页
+		form.on('submit(minrag-form-ajax-web-scraper)', function(data){
+			var field = data.field; // 获取表单字段值
+			const form = document.getElementById('minrag-form-web-scraper');
+			$.ajax({
+				url:form.action,
+				type:form.method,
+				contentType: "application/json;charset=utf-8",
+				dataType:"json",
+				data:JSON.stringify(field),
+				error: function (result) {
+					layer.msg('{{T "Update error!"}}'+result.responseJSON.message);
+				},
+				success: function (result) {
+					if (result.statusCode == 1) {
+						layer.msg('{{T "Fetch Web Successful"}}', { 
+							time: 2000, // 2秒后自动关闭
+							end: function() { 
+								location.reload(); // 刷新当前页
+							}
+						});
+					} else {
+						layer.msg('{{T "Update failed!"}}');
+					}
+				}
+			});
+		    return false; // 阻止默认 form 跳转
+		});
+
 
 	});
 
@@ -301,6 +356,16 @@
 		// 为每个顶级节点构建树
 		roots.forEach(root => buildHierarchy(root));
 		return roots;
+	}
+
+	function showWebScraperDiv(){
+		layer.open({
+			type: 1, // 类型为自定义内容
+			title: '{{T "Web Scraper"}}', // 标题
+			area: ['500px', '320px'], // 宽高（可选）
+			content: $('#div-web-scraper') // 直接捕获 DOM 元素
+			// 或者 content: '<div>动态内容</div>'（直接写 HTML）
+		});
 	}
 
 </script>
