@@ -964,15 +964,19 @@ func funcUpdateSQL(ctx context.Context, c *app.RequestContext) {
 
 // funcWebScraper 抓取网页
 func funcWebScraper(ctx context.Context, c *app.RequestContext) {
-	entity := &Document{}
-	err := c.Bind(entity)
-	if err != nil || entity.Id == "" || entity.KnowledgeBaseID == "" {
+	webScraper := &WebScraper{}
+	err := c.Bind(webScraper)
+	if err != nil || webScraper.KnowledgeBaseID == "" {
 		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
 		c.Abort() // 终止后续调用
 		FuncLogError(ctx, err)
 		return
 	}
-	commonSaveDocument(ctx, c, entity)
+	document := &Document{}
+	document.Id = sha256hex(webScraper.WebURL)
+	document.KnowledgeBaseID = webScraper.KnowledgeBaseID
+
+	commonSaveDocument(ctx, c, document)
 }
 
 func commonSaveDocument(ctx context.Context, c *app.RequestContext, entity *Document) {
