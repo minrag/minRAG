@@ -300,6 +300,7 @@ type WebScraper struct {
 	Depth int `json:"depth,omitempty"`
 	// 需要抓取的 querySelector
 	QuerySelector   []string `json:"querySelector,omitempty"`
+	KnowledgeBaseID string   `json:"knowledgeBaseID,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
 	chromedpOptions []chromedp.ExecAllocatorOption
 }

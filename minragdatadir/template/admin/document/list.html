@@ -128,6 +128,13 @@
 		</div>
 
 		<div class="layui-form-item">
+			<label class="layui-form-label">{{T "Depth"}}</label>
+			<div class="layui-input-block">
+				<input type="number" name="depth" lay-verify="required" lay-reqtext='{{T "Please fill in the Depth number"}}' autocomplete="off" class="layui-input" value="1">
+			</div>
+		</div>
+
+		<div class="layui-form-item">
 			<div class="layui-input-block">
 			  <button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-web-scraper">提交保存</button>
 			</div>
@@ -140,6 +147,7 @@
 	var $;
 	layui.use(function () {
 		//var table = layui.table;
+		var form = layui.form;
 		layer = layui.layer;
 		$ = layui.jquery;
 		var upload = layui.upload;
@@ -261,6 +269,13 @@
 		// 爬虫抓取网页
 		form.on('submit(minrag-form-ajax-web-scraper)', function(data){
 			var field = data.field; // 获取表单字段值
+			field.querySelector=field.querySelector.split("\n");
+			const knowledgeBaseId=$('#knowledgeBaseId').val();
+			if(knowledgeBaseId==""){
+				layer.msg('{{T "Please first select the knowledge base from the left menu"}}');
+				return false;
+			}
+			field.knowledgeBaseId=knowledgeBaseId;
 			const form = document.getElementById('minrag-form-web-scraper');
 			$.ajax({
 				url:form.action,
@@ -362,7 +377,7 @@
 		layer.open({
 			type: 1, // 类型为自定义内容
 			title: '{{T "Web Scraper"}}', // 标题
-			area: ['500px', '320px'], // 宽高（可选）
+			area: ['500px', '365px'], // 宽高（可选）
 			content: $('#div-web-scraper') // 直接捕获 DOM 元素
 			// 或者 content: '<div>动态内容</div>'（直接写 HTML）
 		});
