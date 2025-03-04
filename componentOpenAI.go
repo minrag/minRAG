@@ -231,7 +231,7 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 	} else {
 		document.FilePath = filePath
 	}
-	if filePath == "" {
+	if filePath == "" && document.Markdown == "" {
 		err := errors.New(funcT("The filePath of TikaConverter cannot be empty"))
 		input[errorKey] = err
 		return err
