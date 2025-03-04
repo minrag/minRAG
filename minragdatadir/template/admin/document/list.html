@@ -269,7 +269,11 @@
 		// 爬虫抓取网页
 		form.on('submit(minrag-form-ajax-web-scraper)', function(data){
 			var field = data.field; // 获取表单字段值
-			field.querySelector=field.querySelector.split("\n");
+			if(field.querySelector!=""){
+				field.querySelector=field.querySelector.split("\n");
+			}else{
+				field.querySelector=[]
+			}
 			const knowledgeBaseId=$('#knowledgeBaseId').val();
 			if(knowledgeBaseId==""){
 				layer.msg('{{T "Please first select the knowledge base from the left menu"}}');

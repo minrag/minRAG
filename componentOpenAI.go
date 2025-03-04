@@ -315,6 +315,15 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	if component.UserAgent == "" {
 		component.UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64)"
 	}
+
+	qs := make([]string, 0)
+	for i := 0; i < len(component.QuerySelector); i++ {
+		if component.QuerySelector[i] == "" {
+			continue
+		}
+		qs = append(qs, component.QuerySelector[i])
+	}
+	component.QuerySelector = qs
 	if len(component.QuerySelector) < 1 {
 		component.QuerySelector = []string{"html"}
 	}
@@ -335,18 +344,16 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 		input[errorKey] = err
 		return err
 	}
-	documents, _, err := component.FetchPage(ctx, input)
-	if err != nil || len(documents) < 1 {
+	_, err := component.FetchPage(ctx, document, input)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	document.Markdown = documents[0].Markdown
-	document.Name = documents[0].Name
 	return nil
 }
 
 // FetchPage 抓取网页,方便后期扩展为递归
-func (component *WebScraper) FetchPage(ctx context.Context, input map[string]interface{}) ([]Document, []string, error) {
+func (component *WebScraper) FetchPage(ctx context.Context, document *Document, input map[string]interface{}) ([]string, error) {
 	webURL, has := input["webScraper_webURL"].(string)
 	if webURL == "" || (!has) {
 		webURL = component.WebURL
@@ -354,11 +361,8 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 	if webURL == "" {
 		err := errors.New(funcT("The webScraper_webURL of WebScraper cannot be empty"))
 		input[errorKey] = err
-		return nil, nil, err
+		return nil, err
 	}
-
-	documents := make([]Document, 0)
-	document := Document{}
 
 	allocCtx, cancel := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
 	defer cancel()
@@ -382,9 +386,6 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
 	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
 	for i := 0; i < qsLen; i++ {
-		if component.QuerySelector[i] == "" { //为空不处理
-			continue
-		}
 		action := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery)
 		actions = append(actions, action)
 		if component.Depth > 1 {
@@ -397,11 +398,10 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 	actions = append(actions, chromedp.Title(&title))
 	err := chromedp.Run(chromeCtx, actions...)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	document.Markdown = strings.Join(hcs, ".")
 	document.Name = title
-	documents = append(documents, document)
 	herf := make([]string, 0)
 	if component.Depth > 0 {
 		for i := 0; i < len(hrefs); i++ {
@@ -409,7 +409,7 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 		}
 	}
 
-	return documents, herf, nil
+	return herf, nil
 }
 
 // HtmlCleaner 清理html标签

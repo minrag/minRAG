@@ -1005,23 +1005,36 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 	webScraperHrefs[""] = true
 	now := time.Now().Format("2006-01-02 15:04:05")
 	go func() {
+		// 递归抓取网页
 		recursiveScraper(ctx, &webScraperDocuments, &webScraperHrefs, webScraper)
+		input := make(map[string]interface{}, 0)
 		for i := 0; i < len(webScraperDocuments); i++ {
 			doc := webScraperDocuments[i]
 			if doc.Id == "" {
 				continue
 			}
+			input["document"] = &doc
+			//清洗html标签
+			hc := &HtmlCleaner{}
+			hc.Initialization(ctx, input)
+			err := hc.Run(ctx, input)
+			if err != nil {
+				continue
+			}
 			doc.CreateTime = now
 			doc.UpdateTime = now
 			f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", doc.KnowledgeBaseID)
-			zorm.QueryRow(ctx, f, doc)
-			_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+			zorm.QueryRow(ctx, f, &doc)
+			_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 				zorm.Delete(ctx, &doc) //先删除
 				return zorm.Insert(ctx, &doc)
 			})
 			if err != nil {
 				FuncLogError(ctx, err)
 			}
+
+			// 文档分块,分析处理
+			//updateDocumentChunk(ctx, &doc)
 		}
 	}()
 
@@ -1036,17 +1049,18 @@ func recursiveScraper(ctx context.Context, documents *[]Document, webScraperHref
 	document := &Document{}
 	document.Id = webScraper.KnowledgeBaseID + sha256hex(webScraper.WebURL)
 	document.KnowledgeBaseID = webScraper.KnowledgeBaseID
+	document.Status = 2
 	input := make(map[string]interface{}, 0)
 	input["document"] = document
 	err := webScraper.Initialization(ctx, input)
 	if err != nil {
 		return err
 	}
-	docs, herfs, err := webScraper.FetchPage(ctx, input)
+	herfs, err := webScraper.FetchPage(ctx, document, input)
 	if err != nil {
 		return err
 	}
-	*documents = append(*documents, docs...)
+	*documents = append(*documents, *document)
 	(*webScraperHrefs)[webScraper.WebURL] = true
 	for i := 0; i < len(herfs); i++ {
 		if herfs[i] == "" {
