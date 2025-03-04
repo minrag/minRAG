@@ -272,7 +272,7 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	} else {
 		document.FilePath = filePath
 	}
-	if filePath == "" {
+	if filePath == "" && document.Markdown == "" {
 		err := errors.New(funcT("The filePath of MarkdownConverter cannot be empty"))
 		input[errorKey] = err
 		return err
