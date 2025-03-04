@@ -276,6 +276,7 @@
 				return false;
 			}
 			field.knowledgeBaseId=knowledgeBaseId;
+			field.depth=field.depth-0;
 			const form = document.getElementById('minrag-form-web-scraper');
 			$.ajax({
 				url:form.action,
@@ -288,7 +289,7 @@
 				},
 				success: function (result) {
 					if (result.statusCode == 1) {
-						layer.msg('{{T "Fetch Web Successful"}}', { 
+						layer.msg('{{T "The webpage is being crawled, please wait a moment"}}', { 
 							time: 2000, // 2秒后自动关闭
 							end: function() { 
 								location.reload(); // 刷新当前页

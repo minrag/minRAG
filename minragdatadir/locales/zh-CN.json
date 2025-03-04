@@ -138,7 +138,7 @@
   "Please enter the web URL":"请输入网址",
   "Query Selector":"查询选择器",
   "Query selectors, one per line":"查询选择器,一行一个",
-  "Fetch Web Successful":"网页抓取成功",
+  "The webpage is being crawled, please wait a moment":"网页正在抓取,请稍后",
   "Depth":"深度",
   "Actions": "操作",
   "Unknown": "未知",

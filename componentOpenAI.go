@@ -335,7 +335,7 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 		input[errorKey] = err
 		return err
 	}
-	documents, err := component.FetchPage(ctx, input)
+	documents, _, err := component.FetchPage(ctx, input)
 	if err != nil || len(documents) < 1 {
 		input[errorKey] = err
 		return err
@@ -346,7 +346,7 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 }
 
 // FetchPage 抓取网页,方便后期扩展为递归
-func (component *WebScraper) FetchPage(ctx context.Context, input map[string]interface{}) ([]Document, error) {
+func (component *WebScraper) FetchPage(ctx context.Context, input map[string]interface{}) ([]Document, []string, error) {
 	webURL, has := input["webScraper_webURL"].(string)
 	if webURL == "" || (!has) {
 		webURL = component.WebURL
@@ -354,7 +354,7 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 	if webURL == "" {
 		err := errors.New(funcT("The webScraper_webURL of WebScraper cannot be empty"))
 		input[errorKey] = err
-		return nil, err
+		return nil, nil, err
 	}
 
 	documents := make([]Document, 0)
@@ -372,27 +372,44 @@ func (component *WebScraper) FetchPage(ctx context.Context, input map[string]int
 	defer cancel()
 
 	title := ""
-	hcs := make([]string, len(component.QuerySelector))
+	qsLen := len(component.QuerySelector)
+	hcs := make([]string, qsLen)
+	hrefs := make([][]string, qsLen)
 	actions := make([]chromedp.Action, 0)
 	actions = append(actions, chromedp.Navigate(webURL))
 
 	// 双重等待机制
 	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
 	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
-	for i := 0; i < len(component.QuerySelector); i++ {
+	for i := 0; i < qsLen; i++ {
+		if component.QuerySelector[i] == "" { //为空不处理
+			continue
+		}
 		action := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery)
 		actions = append(actions, action)
+		if component.Depth > 1 {
+			hrefAction := chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i])
+			actions = append(actions, hrefAction)
+		}
+
 	}
 	// 获取网页的title,放到最后再执行
 	actions = append(actions, chromedp.Title(&title))
 	err := chromedp.Run(chromeCtx, actions...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	document.Markdown = strings.Join(hcs, ".")
 	document.Name = title
 	documents = append(documents, document)
-	return documents, nil
+	herf := make([]string, 0)
+	if component.Depth > 0 {
+		for i := 0; i < len(hrefs); i++ {
+			herf = append(herf, hrefs[i]...)
+		}
+	}
+
+	return documents, herf, nil
 }
 
 // HtmlCleaner 清理html标签
