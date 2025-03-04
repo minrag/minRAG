@@ -837,7 +837,35 @@ func funcSaveDocument(ctx context.Context, c *app.RequestContext) {
 		FuncLogError(ctx, err)
 		return
 	}
-	commonSaveDocument(ctx, c, entity)
+	now := time.Now().Format("2006-01-02 15:04:05")
+	// 构建ID
+	entity.Id = entity.KnowledgeBaseID + entity.Id
+	has := validateIDExists(ctx, entity.Id)
+	if has {
+		c.JSON(http.StatusConflict, ResponseData{StatusCode: 0, Message: funcT("URL path is duplicated, please modify the path identifier")})
+		c.Abort() // 终止后续调用
+		return
+	}
+	if entity.CreateTime == "" {
+		entity.CreateTime = now
+	}
+	if entity.UpdateTime == "" {
+		entity.UpdateTime = now
+	}
+
+	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
+	zorm.QueryRow(ctx, f, entity)
+
+	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+		return zorm.Insert(ctx, entity)
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
+		c.Abort() // 终止后续调用
+		FuncLogError(ctx, err)
+		return
+	}
+	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
 }
 
 func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
@@ -972,43 +1000,68 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 		FuncLogError(ctx, err)
 		return
 	}
-	document := &Document{}
-	document.Id = sha256hex(webScraper.WebURL)
-	document.KnowledgeBaseID = webScraper.KnowledgeBaseID
+	webScraperDocuments := make([]Document, 0)
+	webScraperHrefs := make(map[string]bool, 0)
+	webScraperHrefs[""] = true
+	now := time.Now().Format("2006-01-02 15:04:05")
+	go func() {
+		recursiveScraper(ctx, &webScraperDocuments, &webScraperHrefs, webScraper)
+		for i := 0; i < len(webScraperDocuments); i++ {
+			doc := webScraperDocuments[i]
+			if doc.Id == "" {
+				continue
+			}
+			doc.CreateTime = now
+			doc.UpdateTime = now
+			f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", doc.KnowledgeBaseID)
+			zorm.QueryRow(ctx, f, doc)
+			_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
+				zorm.Delete(ctx, &doc) //先删除
+				return zorm.Insert(ctx, &doc)
+			})
+			if err != nil {
+				FuncLogError(ctx, err)
+			}
+		}
+	}()
 
-	commonSaveDocument(ctx, c, document)
+	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, Message: funcT("Saved successfully!")})
 }
 
-func commonSaveDocument(ctx context.Context, c *app.RequestContext, entity *Document) {
-	now := time.Now().Format("2006-01-02 15:04:05")
-	// 构建ID
-	entity.Id = entity.KnowledgeBaseID + entity.Id
-	has := validateIDExists(ctx, entity.Id)
-	if has {
-		c.JSON(http.StatusConflict, ResponseData{StatusCode: 0, Message: funcT("URL path is duplicated, please modify the path identifier")})
-		c.Abort() // 终止后续调用
-		return
+// recursiveScraper 递归爬取网页
+func recursiveScraper(ctx context.Context, documents *[]Document, webScraperHrefs *map[string]bool, webScraper *WebScraper) error {
+	if (*webScraperHrefs)[webScraper.WebURL] { //已经处理过了
+		return nil
 	}
-	if entity.CreateTime == "" {
-		entity.CreateTime = now
-	}
-	if entity.UpdateTime == "" {
-		entity.UpdateTime = now
-	}
-
-	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
-	zorm.QueryRow(ctx, f, entity)
-
-	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		return zorm.Insert(ctx, entity)
-	})
+	document := &Document{}
+	document.Id = webScraper.KnowledgeBaseID + sha256hex(webScraper.WebURL)
+	document.KnowledgeBaseID = webScraper.KnowledgeBaseID
+	input := make(map[string]interface{}, 0)
+	input["document"] = document
+	err := webScraper.Initialization(ctx, input)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("Failed to save data")})
-		c.Abort() // 终止后续调用
-		FuncLogError(ctx, err)
-		return
+		return err
 	}
-	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
+	docs, herfs, err := webScraper.FetchPage(ctx, input)
+	if err != nil {
+		return err
+	}
+	*documents = append(*documents, docs...)
+	(*webScraperHrefs)[webScraper.WebURL] = true
+	for i := 0; i < len(herfs); i++ {
+		if herfs[i] == "" {
+			continue
+		}
+		ws := &WebScraper{}
+		ws.WebURL = herfs[i]
+		ws.Depth = webScraper.Depth - 1
+		ws.KnowledgeBaseID = webScraper.KnowledgeBaseID
+		ws.UserAgent = webScraper.UserAgent
+		ws.QuerySelector = webScraper.QuerySelector
+		recursiveScraper(ctx, documents, webScraperHrefs, ws)
+	}
+
+	return nil
 }
 
 // permissionHandler 权限拦截器
