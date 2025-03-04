@@ -1034,7 +1034,7 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 			}
 
 			// 文档分块,分析处理
-			//updateDocumentChunk(ctx, &doc)
+			updateDocumentChunk(ctx, &doc)
 		}
 	}()
 
