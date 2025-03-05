@@ -332,6 +332,9 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 		chromedp.Flag("headless", true), // debug使用 false
 		chromedp.UserAgent(component.UserAgent),
 		chromedp.Flag("blink-settings", "imagesEnabled=false"),
+		chromedp.Flag("ignore-certificate-errors", true), // 忽略SSL证书错误[1](@ref)
+		chromedp.Flag("disable-web-security", true),      // 禁用同源策略限制[1](@ref)
+		chromedp.Flag("disable-hang-monitor", true),      // 禁用页面无响应检测[1](@ref)
 	}
 	//初始化参数,先传一个空的数据
 	component.chromedpOptions = append(chromedp.DefaultExecAllocatorOptions[:], component.chromedpOptions...)
@@ -379,24 +382,31 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	qsLen := len(component.QuerySelector)
 	hcs := make([]string, qsLen)
 	hrefs := make([][]string, qsLen)
-	actions := make([]chromedp.Action, 0)
-	actions = append(actions, chromedp.Navigate(webURL))
 
 	// 双重等待机制
-	actions = append(actions, chromedp.WaitReady("body", chromedp.ByQuery)) // 等待body标签存在
-	actions = append(actions, chromedp.Sleep(2*time.Second))                // 容错性等待
-	for i := 0; i < qsLen; i++ {
-		action := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery)
-		actions = append(actions, action)
-		if component.Depth > 1 {
-			hrefAction := chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i])
-			actions = append(actions, hrefAction)
-		}
+	bodyReady := chromedp.WaitReady("body", chromedp.ByQuery) // 等待body标签存在
+	sleepReady := chromedp.Sleep(2 * time.Second)             // 容错性等待
 
-	}
+	// 自定义处理逻辑,忽略页面错误
+	actionFunc := chromedp.ActionFunc(func(ctx context.Context) error {
+		for i := 0; i < qsLen; i++ {
+			//获取网页的内容,chromedp.AtLeast(0)立即执行,不要等待
+			err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery, chromedp.AtLeast(0)).Do(ctx)
+			if err != nil {
+				continue
+			}
+			// 获取页面的超链接
+			if component.Depth > 1 {
+				chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i]).Do(ctx)
+			}
+
+		}
+		return nil
+	})
 	// 获取网页的title,放到最后再执行
-	actions = append(actions, chromedp.Title(&title))
-	err := chromedp.Run(chromeCtx, actions...)
+	titleAction := chromedp.Title(&title)
+	//执行动作
+	err := chromedp.Run(chromeCtx, chromedp.Navigate(webURL), bodyReady, sleepReady, actionFunc, titleAction)
 	if err != nil {
 		return nil, err
 	}

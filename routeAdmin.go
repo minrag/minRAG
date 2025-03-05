@@ -1001,18 +1001,21 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	webScraperDocuments := make([]Document, 0)
-	webScraperHrefs := make(map[string]bool, 0)
-	webScraperHrefs[""] = true
+	webScraperHrefMap := make(map[string]bool, 0)
+	webScraperHrefMap[""] = true
 	now := time.Now().Format("2006-01-02 15:04:05")
 	go func() {
 		// 递归抓取网页
-		recursiveScraper(ctx, &webScraperDocuments, &webScraperHrefs, webScraper)
-		input := make(map[string]interface{}, 0)
+		recursiveScraper(ctx, &webScraperDocuments, &webScraperHrefMap, webScraper)
+		maxSortNo := funcMaxSortNo(tableDocumentName)
+		//循环处理所有的网页
 		for i := 0; i < len(webScraperDocuments); i++ {
 			doc := webScraperDocuments[i]
 			if doc.Id == "" {
 				continue
 			}
+			doc.SortNo = maxSortNo + i
+			input := make(map[string]interface{}, 0)
 			input["document"] = &doc
 			//清洗html标签
 			hc := &HtmlCleaner{}
