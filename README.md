@@ -272,3 +272,10 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | aiMessage        | string      | AI's Response       | No   |    -  |
 | userID           | string      | User ID             | No   |    -  |
 | createTime       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
+
+## Copyright and Software Copyright Description
+* The software copyright registration number of this minRAG is 2025SR0616004
+* The software copyright of this minRAG is owned by us, and secondary software copyright applications are prohibited. Infringement will be prosecuted
+* The copyright of programs developed by developers using minRAG belongs to the developers
+* Please retain the copyright without any other restrictions. That is to say, you must include the original license agreement statement in your distribution, whether you distribute it in binary or source code form
+* The open-source version is released under the AGPL-3.0 open-source license and is provided for free use, but it is not allowed to release and sell modified and derivative code as closed-source commercial software!
