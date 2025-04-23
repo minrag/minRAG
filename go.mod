@@ -6,7 +6,7 @@ require (
 	gitee.com/chunanyong/zorm v1.7.8
 	github.com/chromedp/chromedp v0.13.6
 	github.com/cloudwego/hertz v0.9.7
-	github.com/mattn/go-sqlite3 v1.14.27
+	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/mojocn/base64Captcha v1.3.8
 	golang.org/x/crypto v0.37.0
 	golang.org/x/net v0.39.0
