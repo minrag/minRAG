@@ -8,8 +8,8 @@ require (
 	github.com/cloudwego/hertz v0.9.7
 	github.com/mattn/go-sqlite3 v1.14.28
 	github.com/mojocn/base64Captcha v1.3.8
-	golang.org/x/crypto v0.37.0
-	golang.org/x/net v0.39.0
+	golang.org/x/crypto v0.38.0
+	golang.org/x/net v0.40.0
 )
 
 require (
@@ -35,6 +35,6 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/image v0.23.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 )
