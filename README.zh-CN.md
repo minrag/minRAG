@@ -277,7 +277,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | pipelineID  | string      | 流水线ID     | 否      |    -    |
 | knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
 | userID      | string      | 用户ID       | 否      |    -    |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05 |
 
 ### 消息日志(表名:message_log)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
@@ -290,8 +290,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | userMessage | string      | 用户的消息    | 否      |    -    |
 | aiMessage   | string      | AI回复的消息 | 否      |    -    |
 | userID      | string      | 用户ID       | 否      |    -    |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 
-15:04:05    |
+| createTime  | string      | 创建时间     | -       | 2006-01-02 15:04:05 |
 
 
 ## 版权软著说明
