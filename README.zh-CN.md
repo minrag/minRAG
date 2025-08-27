@@ -19,7 +19,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 免费或者付费的token
 - ```OpenAITextEmbedder``` 默认使用 ```bge-m3``` 模型  
 - ```GiteeDocumentChunkReranker``` 组件参数 ```{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}```  
-- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3``` 模型  
+- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3_1``` 模型  
 
 ### 腾讯云LKE知识引擎
 - 注册或设置页面的AI平台```base_url``` 填写 ```SecretId```  ,或在组件参数配置```{"SecretId":"xxx"}```
