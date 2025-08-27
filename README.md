@@ -18,7 +18,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with a free or paid token.    
 - `OpenAITextEmbedder` defaults to using the `bge-m3` model.  
 - The component parameter for `GiteeDocumentChunkReranker` is `{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}`.  
-- `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3` model.  
+- `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3_1` model.  
 
 ### Tencent Cloud LKE Knowledge Engine
 - On the registration or settings page, fill in `base_url` for the AI platform as `SecretId`, or configure it in the component parameters as `{"SecretId":"xxx"}`.    
