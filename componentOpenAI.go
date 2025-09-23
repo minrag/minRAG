@@ -296,13 +296,13 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 type WebScraper struct {
 	UserAgent string `json:"userAgent,omitempty"`
 	WebURL    string `json:"webURL,omitempty"`
-	//抓取的深度,默认1,也就是当前页面
+	// Depth 抓取的深度,默认1,也就是当前页面
 	Depth int `json:"depth,omitempty"`
-	// 需要抓取的 querySelector
+	// QuerySelector 需要抓取的 querySelector
 	QuerySelector   []string `json:"querySelector,omitempty"`
 	KnowledgeBaseID string   `json:"knowledgeBaseID,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
-	//远程的chrome地址
+	// RemoteChromeAddress 远程的chrome地址,例如 "ws://10.0.0.131:9222/"
 	RemoteChromeAddress string `json:"remoteChromeAddress,omitempty"`
 	chromedpOptions     []chromedp.ExecAllocatorOption
 }
@@ -342,7 +342,7 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	//初始化参数,先传一个空的数据
 	component.chromedpOptions = append(chromedp.DefaultExecAllocatorOptions[:], component.chromedpOptions...)
 
-	component.RemoteChromeAddress = "ws://10.0.0.131:9222/"
+	//component.RemoteChromeAddress = "ws://10.0.0.131:9222/"
 
 	return nil
 }
