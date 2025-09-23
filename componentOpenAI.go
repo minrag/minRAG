@@ -302,7 +302,9 @@ type WebScraper struct {
 	QuerySelector   []string `json:"querySelector,omitempty"`
 	KnowledgeBaseID string   `json:"knowledgeBaseID,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
-	chromedpOptions []chromedp.ExecAllocatorOption
+	//远程的chrome地址
+	RemoteChromeAddress string `json:"remoteChromeAddress,omitempty"`
+	chromedpOptions     []chromedp.ExecAllocatorOption
 }
 
 func (component *WebScraper) Initialization(ctx context.Context, input map[string]interface{}) error {
@@ -336,8 +338,12 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 		chromedp.Flag("disable-web-security", true),      // 禁用同源策略限制[1](@ref)
 		chromedp.Flag("disable-hang-monitor", true),      // 禁用页面无响应检测[1](@ref)
 	}
+
 	//初始化参数,先传一个空的数据
 	component.chromedpOptions = append(chromedp.DefaultExecAllocatorOptions[:], component.chromedpOptions...)
+
+	component.RemoteChromeAddress = "ws://10.0.0.131:9222/"
+
 	return nil
 }
 func (component *WebScraper) Run(ctx context.Context, input map[string]interface{}) error {
@@ -367,9 +373,16 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 		return nil, err
 	}
 
-	allocCtx, cancel := chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
+	var allocatorContext context.Context
+	var cancel context.CancelFunc
+
+	if component.RemoteChromeAddress != "" {
+		allocatorContext, cancel = chromedp.NewRemoteAllocator(ctx, component.RemoteChromeAddress)
+	} else {
+		allocatorContext, cancel = chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
+	}
 	defer cancel()
-	chromeCtx, cancel := chromedp.NewContext(allocCtx)
+	chromeCtx, cancel := chromedp.NewContext(allocatorContext)
 	defer cancel()
 	// 执行一个空task, 用提前创建Chrome实例
 	//chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
