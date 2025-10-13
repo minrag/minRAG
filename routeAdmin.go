@@ -251,7 +251,7 @@ func funcAdminLogin(ctx context.Context, c *app.RequestContext) {
 func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 	err := loadTemplate()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
@@ -267,7 +267,7 @@ func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 func funcUploadFile(ctx context.Context, c *app.RequestContext) {
 	filePath, _, err := funcUploadFilePath(c, "upload/")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
@@ -278,13 +278,13 @@ func funcUploadFile(ctx context.Context, c *app.RequestContext) {
 func funcUploadDocument(ctx context.Context, c *app.RequestContext) {
 	filePath, knowledgeBaseId, err := funcUploadFilePath(c, "upload/")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
 	knowledgeBaseName, err := findKnowledgeBaseNameById(ctx, knowledgeBaseId)
 	if err != nil || knowledgeBaseName == "" {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
@@ -352,20 +352,20 @@ func funcUploadFilePath(c *app.RequestContext, baseDir string) (string, string, 
 func funcUploadTheme(ctx context.Context, c *app.RequestContext) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
 	ext := filepath.Ext(fileHeader.Filename)
 	if ext != ".zip" { //不是zip
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
 	path := themeDir + fileHeader.Filename
 	err = c.SaveUploadedFile(fileHeader, path)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
@@ -375,7 +375,7 @@ func funcUploadTheme(ctx context.Context, c *app.RequestContext) {
 	//解压压缩包
 	err = unzip(path, themeDir)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, ERR: err})
+		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: err.Error()})
 		c.Abort() // 终止后续调用
 		return
 	}
@@ -515,7 +515,9 @@ func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 
 	responseData.UrlPathParam = urlPathParam
 	responseData.Data = list
-	responseData.ERR = err
+	if err != nil {
+		responseData.Message = err.Error()
+	}
 	listFile := "admin/" + urlPathParam + "/list.html"
 
 	filePath := c.Query("file")
@@ -527,7 +529,7 @@ func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 	filePath = filepath.ToSlash(filePath)
 	fileDocument, err := os.ReadFile(themeDir + filePath)
 	if err != nil {
-		responseData.ERR = err
+		responseData.Message = err.Error()
 		cHtmlAdmin(c, http.StatusOK, listFile, responseData)
 		return
 	}
@@ -550,7 +552,9 @@ func funcComponentList(ctx context.Context, c *app.RequestContext) {
 	var responseData ResponseData
 	responseData.UrlPathParam = urlPathParam
 	responseData.Data = list
-	responseData.ERR = err
+	if err != nil {
+		responseData.Message = err.Error()
+	}
 	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
 }
 
@@ -567,7 +571,9 @@ func funcAgentList(ctx context.Context, c *app.RequestContext) {
 	var responseData ResponseData
 	responseData.UrlPathParam = urlPathParam
 	responseData.Data = list
-	responseData.ERR = err
+	if err != nil {
+		responseData.Message = err.Error()
+	}
 	cHtmlAdmin(c, http.StatusOK, listFile, responseData)
 }
 

@@ -197,7 +197,7 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 	sql = strings.TrimSpace(sql)
 	if sql == "" || strings.Contains(sql, ";") {
 		err := errors.New(funcT("SQL statement error"))
-		responseData.ERR = err
+		responseData.Message = err.Error()
 		responseData.StatusCode = 0
 		return responseData, err
 	}
@@ -257,10 +257,12 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 		zorm.Query(ctx, finder, &data, page)
 		responseData.Data = data
 	case "": // 对象为空查询map
-		responseData.Data, responseData.ERR = zorm.QueryMap(ctx, finder, page)
+		data, err := zorm.QueryMap(ctx, finder, page)
+		responseData.Data = data
+		responseData.Message = err.Error()
 	default:
 		err := errors.New(urlPathParam + funcT("Table does not exist!"))
-		responseData.ERR = err
+		responseData.Message = err.Error()
 		responseData.StatusCode = 0
 		return responseData, err
 	}
