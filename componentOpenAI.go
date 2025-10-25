@@ -35,6 +35,8 @@ import (
 	"time"
 
 	"gitee.com/chunanyong/zorm"
+	"github.com/chromedp/cdproto/emulation"
+	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/cloudwego/hertz/pkg/app"
 	"golang.org/x/net/html"
@@ -302,10 +304,12 @@ type WebScraper struct {
 	QuerySelector   []string `json:"querySelector,omitempty"`
 	KnowledgeBaseID string   `json:"knowledgeBaseID,omitempty"`
 	Timeout         int      `json:"timeout,omitempty"`
-	// RemoteChromeAddress 远程的chrome地址,例如 "ws://10.0.0.131:9222/"
+	// RemoteChromeAddress 远程的chrome地址,例如 "ws://10.0.0.131:9222/",建议使用 chromedp/headless-shell 镜像
 	RemoteChromeAddress string `json:"remoteChromeAddress,omitempty"`
 	chromedpOptions     []chromedp.ExecAllocatorOption
 }
+
+var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0"
 
 func (component *WebScraper) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.Timeout == 0 {
@@ -315,7 +319,7 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 		component.Depth = 1
 	}
 	if component.UserAgent == "" {
-		component.UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64)"
+		component.UserAgent = userAgent
 	}
 
 	qs := make([]string, 0)
@@ -331,12 +335,19 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	}
 
 	component.chromedpOptions = []chromedp.ExecAllocatorOption{
-		chromedp.Flag("headless", true), // debug使用 false
-		chromedp.UserAgent(component.UserAgent),
-		chromedp.Flag("blink-settings", "imagesEnabled=false"),
-		chromedp.Flag("ignore-certificate-errors", true), // 忽略SSL证书错误[1](@ref)
-		chromedp.Flag("disable-web-security", true),      // 禁用同源策略限制[1](@ref)
-		chromedp.Flag("disable-hang-monitor", true),      // 禁用页面无响应检测[1](@ref)
+		chromedp.Flag("headless", true),             // debug使用 false
+		chromedp.Flag("disable-hang-monitor", true), // 禁用页面无响应检测
+
+		// 核心:禁用自动化指示器
+		chromedp.Flag("enable-automation", false),
+		chromedp.Flag("useAutomationExtension", false),
+		chromedp.Flag("disable-blink-features", "AutomationControlled"),
+		// 辅助:增强伪装
+		chromedp.UserAgent(userAgent),
+		chromedp.Flag("disable-web-security", false),
+		chromedp.Flag("ignore-certificate-errors", false),
+		// 随机化窗口大小,避免所有实例千篇一律
+		chromedp.WindowSize(1920, 1080),
 	}
 
 	//初始化参数,先传一个空的数据
@@ -396,30 +407,47 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	hcs := make([]string, qsLen)
 	hrefs := make([][]string, qsLen)
 
-	// 双重等待机制
-	bodyReady := chromedp.WaitReady("body", chromedp.ByQuery) // 等待body标签存在
-	sleepReady := chromedp.Sleep(2 * time.Second)             // 容错性等待
-
-	// 自定义处理逻辑,忽略页面错误
-	actionFunc := chromedp.ActionFunc(func(ctx context.Context) error {
-		for i := 0; i < qsLen; i++ {
-			//获取网页的内容,chromedp.AtLeast(0)立即执行,不要等待
-			err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery, chromedp.AtLeast(0)).Do(ctx)
-			if err != nil {
-				continue
-			}
-			// 获取页面的超链接
-			if component.Depth > 1 {
-				chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i]).Do(ctx)
-			}
-
-		}
-		return nil
-	})
-	// 获取网页的title,放到最后再执行
-	titleAction := chromedp.Title(&title)
 	//执行动作
-	err := chromedp.Run(chromeCtx, chromedp.Navigate(webURL), bodyReady, sleepReady, actionFunc, titleAction)
+	err := chromedp.Run(chromeCtx, chromedp.Tasks{
+		// 启用网络事件监听,这是关键一步
+		network.Enable(),
+
+		// 覆盖 navigator.userAgent 等
+		emulation.SetUserAgentOverride(userAgent),
+		// 可同时设置额外请求头
+		network.SetExtraHTTPHeaders(network.Headers{"Accept-Language": "zh-CN,zh;q=0.9", "User-Agent": userAgent}),
+
+		//指定分辨率的窗口
+		emulation.SetDeviceMetricsOverride(1920, 1080, 1.0, false).
+			WithScreenOrientation(&emulation.ScreenOrientation{
+				Type:  emulation.OrientationTypePortraitPrimary,
+				Angle: 0,
+			}),
+
+		chromedp.Navigate(webURL),
+		// 双重等待机制
+		chromedp.WaitReady("body", chromedp.ByQuery), // 等待body标签存在
+		chromedp.Sleep(2 * time.Second),              // 容错性等待
+
+		// 自定义处理逻辑,忽略页面错误
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			for i := 0; i < qsLen; i++ {
+				//获取网页的内容,chromedp.AtLeast(0)立即执行,不要等待
+				err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery, chromedp.AtLeast(0)).Do(ctx)
+				if err != nil {
+					continue
+				}
+				// 获取页面的超链接
+				if component.Depth > 1 {
+					chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i]).Do(ctx)
+				}
+
+			}
+			return nil
+		}),
+		// 获取网页的title,放到最后再执行
+		chromedp.Title(&title),
+	})
 	if err != nil {
 		return nil, err
 	}
