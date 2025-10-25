@@ -133,7 +133,7 @@
   "Add Document": "新增文档",
   "Web Scraper":"网页爬虫",
   "Upload Document": "上传文档",
-  "By default, only text files are supported. For additional document formats, you need to download and run Tika":"默认只支持文本类型,更多文档类型需要下载运行tika",
+  "By default, only text types are supported. For more document types, please use markitdown.":"默认只支持文本类型,更多文档类型请使用markitdown",
   "Web URL":"网址",
   "Please enter the web URL":"请输入网址",
   "Query Selector":"查询选择器",
