@@ -73,6 +73,7 @@ var componentTypeMap = map[string]IComponent{
 	"HtmlCleaner":                  &HtmlCleaner{},
 	"WebScraper":                   &WebScraper{},
 	"MarkdownConverter":            &MarkdownConverter{},
+	"MarkitdownConverter":          &MarkitdownConverter{},
 	"TikaConverter":                &TikaConverter{},
 }
 
@@ -247,6 +248,81 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 		}
 		document.Markdown = string(markdownByte)
 		document.FileSize = len(markdownByte)
+	}
+	document.Status = 2
+	input["document"] = document
+	return nil
+}
+
+// MarkitdownConverter 调用markitdown解析文档
+type MarkitdownConverter struct {
+	Markitdown      string `json:"markitdown,omitempty"`
+	MarkdownFileDir string `json:"markdownFileDir,omitempty"`
+	FilePath        string `json:"filePath,omitempty"`
+}
+
+func (component *MarkitdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+
+	defaultExecFile := datadir + "markitdown/markitdown"
+	if pathExist(defaultExecFile) {
+		component.Markitdown = defaultExecFile
+	}
+	if component.MarkdownFileDir == "" {
+		component.MarkdownFileDir = datadir + "upload/markitdown/markdown"
+	}
+	if !pathExist(component.MarkdownFileDir) {
+		os.MkdirAll(component.MarkdownFileDir, 0755)
+	}
+
+	return nil
+}
+func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
+	if component.Markitdown == "" {
+		err := errors.New(funcT("The Markitdown of MarkitdownConverter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	filePath := component.FilePath
+	if filePath == "" {
+		filePath = document.FilePath
+	} else {
+		document.FilePath = filePath
+	}
+	if filePath == "" && document.Markdown == "" {
+		err := errors.New(funcT("The filePath of MarkitdownConverter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+
+	if document.Markdown == "" {
+		uploadFilePath := datadir + filePath
+		markdownFilePath := component.MarkdownFileDir + "/" + FuncGenerateStringID() + ".md"
+		// 获取上传的文件信息
+		fileInfo, err := os.Stat(uploadFilePath)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.FileSize = int(fileInfo.Size())
+		cmd := component.Markitdown + " " + uploadFilePath + " -o " + markdownFilePath
+		_, err = ExecCMD(cmd, time.Second*60)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		markdownByte, err := os.ReadFile(markdownFilePath)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.Markdown = string(markdownByte)
+		//document.FileSize = len(markdownByte)
 	}
 	document.Status = 2
 	input["document"] = document
@@ -1236,7 +1312,7 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]int
 		}
 	}
 
-	roomID, has := input["roomID"].(string)
+	roomID, _ := input["roomID"].(string)
 
 	messageLogs := make([]MessageLog, 0)
 	if roomID != "" && component.MemoryLength > 0 {
