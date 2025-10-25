@@ -53,6 +53,26 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3```模型  
 - 记得修改流水线中的组件
 
+## markitdown集成(推荐)
+使用 https://gitee.com/minrag/markitdown 解析文档,将编译的```markitdown```放到 ```minragdatadir```目录下,注意配置```markitdown```的```config.json```中的图片解析模型.```MarkitdownConverter```组件配置示例:
+```json
+{
+	"markitdown":"minragdatadir/markitdown/markitdown",
+	"markdownDir":"minragdatadir/upload/markitdown/markdown"
+}
+```
+注意修改```indexPipeline```流水线的参数,把原来的```MarkdownConverter```替换为```MarkitdownConverter```:
+```json
+{
+	"start": "MarkitdownConverter",
+	"process": {
+		"MarkitdownConverter": "DocumentSplitter",
+		"DocumentSplitter": "OpenAIDocumentEmbedder",
+		"OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+	}
+}
+```
+
 ## tika集成
 默认minRAG只支持markdown和text等文本格式,可以使用```TikaConverter```组件调用```tika```服务解析文档内容,```TikaConverter```组件配置示例:
 ```json
