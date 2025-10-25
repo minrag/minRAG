@@ -20,7 +20,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
 	"runtime"
 	"time"
@@ -38,12 +37,6 @@ func ExecCMD(command string, timeout time.Duration) (string, error) {
 	} else {
 		cmd = exec.CommandContext(ctx, "sh", "-c", command)
 	}
-	cmd.Env = append(os.Environ(),
-		"LANG=zh_CN.UTF-8",
-		"LC_ALL=zh_CN.UTF-8",
-		"PYTHONIOENCODING=utf-8",
-	)
-
 	output, err := cmd.CombinedOutput()
 	if ctx.Err() == context.DeadlineExceeded {
 		return "", fmt.Errorf("ExecCMD timeout")
