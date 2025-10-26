@@ -60,7 +60,8 @@ func TestWebSearch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println(document)
+	webSerachDocuments := input["webSerachDocuments"].([]Document)
+	fmt.Println(webSerachDocuments)
 	fmt.Println("-------------------")
 
 }

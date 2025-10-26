@@ -32,6 +32,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"text/template"
 	"time"
 
@@ -57,7 +58,6 @@ var componentTypeMap = map[string]IComponent{
 	"ChatMessageLogStore":          &ChatMessageLogStore{},
 	"OpenAIChatGenerator":          &OpenAIChatGenerator{},
 	"OpenAIChatMemory":             &OpenAIChatMemory{},
-	"WebSearch":                    &WebSearch{},
 	"PromptBuilder":                &PromptBuilder{},
 	"DocumentChunkReranker":        &DocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
@@ -67,6 +67,7 @@ var componentTypeMap = map[string]IComponent{
 	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
 	"OpenAITextEmbedder":           &OpenAITextEmbedder{},
 	"LKETextEmbedder":              &LKETextEmbedder{},
+	"WebSearch":                    &WebSearch{},
 	"SQLiteVecDocumentStore":       &SQLiteVecDocumentStore{},
 	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
@@ -511,7 +512,7 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 				//获取网页的内容,chromedp.AtLeast(0)立即执行,不要等待
 				//err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQueryAll, chromedp.AtLeast(0)).Do(ctx)
 				outerHTMLs := make([]string, 0)
-				err := chromedp.Evaluate(fmt.Sprintf(`Array.from(document.querySelectorAll('%s')).map(el => el.outerHTML)`, component.QuerySelector[i]), &outerHTMLs).Do(ctx)
+				err := chromedp.Evaluate(fmt.Sprintf(`Array.from(document.querySelectorAll('%s')).map(el => el.innerText)`, component.QuerySelector[i]), &outerHTMLs).Do(ctx)
 				if err != nil {
 					continue
 				}
@@ -532,16 +533,14 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	document.Markdown = strings.Join(hcs, ".")
 	document.Name = title
 	hrefSlice := make([]string, 0)
-	if component.Depth > 0 {
-		for i := 0; i < len(hrefs); i++ {
-			for _, v := range hrefs[i] {
-				if slices.Contains(hrefSlice, v) {
-					continue
-				}
-				hrefSlice = append(hrefSlice, v)
+	for i := 0; i < len(hrefs); i++ {
+		for _, v := range hrefs[i] {
+			if slices.Contains(hrefSlice, v) {
+				continue
 			}
-
+			hrefSlice = append(hrefSlice, v)
 		}
+
 	}
 
 	return hrefSlice, nil
@@ -1230,10 +1229,17 @@ func sortDocumentChunksScore(documentChunks []DocumentChunk, topN int, score flo
 // WebSearch 联网搜索,基于网络爬虫扩展
 type WebSearch struct {
 	WebScraper
+	// TopN 检索前几个链接,默认3
+	TopN int `json:"top_n,omitempty"`
 }
 
 func (component *WebSearch) Initialization(ctx context.Context, input map[string]interface{}) error {
-	component.Depth = 2
+	if component.TopN == 0 {
+		component.TopN = 3
+	}
+	if component.Depth == 0 {
+		component.Depth = 2
+	}
 	if component.WebURL == "" { //默认使用bing搜索
 		component.WebURL = "https://www.bing.com/search?q="
 		component.QuerySelector = []string{"li.b_algo div.b_tpcn"}
@@ -1256,8 +1262,38 @@ func (component *WebSearch) Run(ctx context.Context, input map[string]interface{
 	if len(hrefSlice) < 1 {
 		return nil
 	}
-	fmt.Println(hrefSlice)
+	tokN := component.TopN
+	if len(hrefSlice) < tokN {
+		tokN = len(hrefSlice)
+	}
+	hrefWS := &WebSearch{}
+	hrefWS.WebScraper.Depth = 1
+	hrefWS.WebScraper.QuerySelector = []string{"body"}
+	hrefWS.WebScraper.Initialization(ctx, nil)
+	webSerachDocuments := make([]Document, 0)
+	// 使用WaitGroup和Mutex的基本异步方案
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	for j := 0; j < tokN; j++ {
+		wg.Add(1)
+		go func(href string) {
+			defer wg.Done()
+			document := &Document{}
+			document.Id = href
+			hrefInput := make(map[string]interface{}, 0)
+			hrefInput["document"] = document
+			hrefInput["webScraper_webURL"] = href
+			hrefWS.WebScraper.FetchPage(ctx, document, hrefInput)
+			if document.Markdown != "" {
+				mu.Lock()
+				webSerachDocuments = append(webSerachDocuments, *document)
+				mu.Unlock()
+			}
+		}(hrefSlice[j])
 
+	}
+	wg.Wait() // 等待所有goroutine完成
+	input["webSerachDocuments"] = webSerachDocuments
 	return nil
 }
 
