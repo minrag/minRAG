@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,7 +37,6 @@ import (
 
 	"gitee.com/chunanyong/zorm"
 	"github.com/chromedp/cdproto/emulation"
-	"github.com/chromedp/cdproto/network"
 	"github.com/chromedp/chromedp"
 	"github.com/cloudwego/hertz/pkg/app"
 	"golang.org/x/net/html"
@@ -57,6 +57,7 @@ var componentTypeMap = map[string]IComponent{
 	"ChatMessageLogStore":          &ChatMessageLogStore{},
 	"OpenAIChatGenerator":          &OpenAIChatGenerator{},
 	"OpenAIChatMemory":             &OpenAIChatMemory{},
+	"WebSearch":                    &WebSearch{},
 	"PromptBuilder":                &PromptBuilder{},
 	"DocumentChunkReranker":        &DocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
@@ -461,22 +462,22 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	}
 
 	var allocatorContext context.Context
-	var cancel context.CancelFunc
+	var cancel1 context.CancelFunc
 
 	if component.RemoteChromeAddress != "" {
-		allocatorContext, cancel = chromedp.NewRemoteAllocator(ctx, component.RemoteChromeAddress)
+		allocatorContext, cancel1 = chromedp.NewRemoteAllocator(ctx, component.RemoteChromeAddress)
 	} else {
-		allocatorContext, cancel = chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
+		allocatorContext, cancel1 = chromedp.NewExecAllocator(ctx, component.chromedpOptions...)
 	}
-	defer cancel()
-	chromeCtx, cancel := chromedp.NewContext(allocatorContext)
-	defer cancel()
+	defer cancel1()
+	chromeCtx, cancel2 := chromedp.NewContext(allocatorContext)
+	defer cancel2()
 	// 执行一个空task, 用提前创建Chrome实例
 	//chromedp.Run(chromeCtx, make([]chromedp.Action, 0, 1)...)
 
 	//创建一个上下文,超时时间为60s
-	chromeCtx, cancel = context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
-	defer cancel()
+	chromeCtx, cancel3 := context.WithTimeout(chromeCtx, time.Duration(component.Timeout)*time.Second)
+	defer cancel3()
 
 	title := ""
 	qsLen := len(component.QuerySelector)
@@ -486,14 +487,13 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	//执行动作
 	err := chromedp.Run(chromeCtx, chromedp.Tasks{
 		// 启用网络事件监听,这是关键一步
-		network.Enable(),
+		//network.Enable(),
+		// 可同时设置额外请求头
+		//network.SetExtraHTTPHeaders(network.Headers{"Accept-Language": "zh-CN,zh;q=0.9", "User-Agent": userAgent}),
 
 		// 覆盖 navigator.userAgent 等
 		emulation.SetUserAgentOverride(userAgent),
-		// 可同时设置额外请求头
-		network.SetExtraHTTPHeaders(network.Headers{"Accept-Language": "zh-CN,zh;q=0.9", "User-Agent": userAgent}),
-
-		//指定分辨率的窗口
+		// 指定分辨率的窗口
 		emulation.SetDeviceMetricsOverride(1920, 1080, 1.0, false).
 			WithScreenOrientation(&emulation.ScreenOrientation{
 				Type:  emulation.OrientationTypePortraitPrimary,
@@ -502,22 +502,24 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 
 		chromedp.Navigate(webURL),
 		// 双重等待机制
-		chromedp.WaitReady("body", chromedp.ByQuery), // 等待body标签存在
-		chromedp.Sleep(2 * time.Second),              // 容错性等待
+		chromedp.WaitReady("body", chromedp.BySearch), // 等待body标签存在
+		chromedp.Sleep(2 * time.Second),               // 容错性等待
 
 		// 自定义处理逻辑,忽略页面错误
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			for i := 0; i < qsLen; i++ {
 				//获取网页的内容,chromedp.AtLeast(0)立即执行,不要等待
-				err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQuery, chromedp.AtLeast(0)).Do(ctx)
+				//err := chromedp.OuterHTML(component.QuerySelector[i], &hcs[i], chromedp.ByQueryAll, chromedp.AtLeast(0)).Do(ctx)
+				outerHTMLs := make([]string, 0)
+				err := chromedp.Evaluate(fmt.Sprintf(`Array.from(document.querySelectorAll('%s')).map(el => el.outerHTML)`, component.QuerySelector[i]), &outerHTMLs).Do(ctx)
 				if err != nil {
 					continue
 				}
+				hcs = append(hcs, outerHTMLs...)
 				// 获取页面的超链接
 				if component.Depth > 1 {
-					chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelector('%s').querySelectorAll('a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i]).Do(ctx)
+					chromedp.Evaluate(fmt.Sprintf("Array.from(document.querySelectorAll('%s a')).map(a => a.href)", component.QuerySelector[i]), &hrefs[i]).Do(ctx)
 				}
-
 			}
 			return nil
 		}),
@@ -529,14 +531,20 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	}
 	document.Markdown = strings.Join(hcs, ".")
 	document.Name = title
-	herf := make([]string, 0)
+	hrefSlice := make([]string, 0)
 	if component.Depth > 0 {
 		for i := 0; i < len(hrefs); i++ {
-			herf = append(herf, hrefs[i]...)
+			for _, v := range hrefs[i] {
+				if slices.Contains(hrefSlice, v) {
+					continue
+				}
+				hrefSlice = append(hrefSlice, v)
+			}
+
 		}
 	}
 
-	return herf, nil
+	return hrefSlice, nil
 }
 
 // HtmlCleaner 清理html标签
@@ -1217,6 +1225,40 @@ func sortDocumentChunksScore(documentChunks []DocumentChunk, topN int, score flo
 		resultDCS = append(resultDCS, documentChunk)
 	}
 	return resultDCS
+}
+
+// WebSearch 联网搜索,基于网络爬虫扩展
+type WebSearch struct {
+	WebScraper
+}
+
+func (component *WebSearch) Initialization(ctx context.Context, input map[string]interface{}) error {
+	component.Depth = 2
+	if component.WebURL == "" { //默认使用bing搜索
+		component.WebURL = "https://www.bing.com/search?q="
+		component.QuerySelector = []string{"li.b_algo div.b_tpcn"}
+	}
+	err := component.WebScraper.Initialization(ctx, input)
+	return err
+}
+
+func (component *WebSearch) Run(ctx context.Context, input map[string]interface{}) error {
+	query, has := input["query"].(string)
+	if !has {
+		return errors.New(funcT("input['query'] cannot be empty"))
+	}
+	webURL := component.WebURL + query
+	document := &Document{}
+	input1 := make(map[string]interface{}, 0)
+	input1["document"] = document
+	input1["webScraper_webURL"] = webURL
+	hrefSlice, _ := component.FetchPage(ctx, document, input1)
+	if len(hrefSlice) < 1 {
+		return nil
+	}
+	fmt.Println(hrefSlice)
+
+	return nil
 }
 
 // PromptBuilder 使用模板构建Prompt提示词
