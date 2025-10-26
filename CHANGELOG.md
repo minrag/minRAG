@@ -1,4 +1,6 @@
 v0.1.1
+- 增加联网搜索组件
+- 兼容[markitdown](https://gitee.com/minrag/markitdown)文档处理
 - json无法序列化error类型,使用Message返回错误信息
 - 完善注释,文档
 
