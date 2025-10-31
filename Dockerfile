@@ -28,6 +28,22 @@ RUN rm -rf /app/minragdatadir/dict && \
    
 ### 这里可以增加编译 [markitdown](https://gitee.com/minrag/markitdown)  
 
+
+# 构建markitdown
+FROM python:3.12.12 AS markitdown
+
+# 设置工作目录
+WORKDIR /app
+RUN apt install git -y && \
+git clone https://gitee.com/minrag/markitdown.git && \
+cd /app/markitdown && \
+pip install PyInstaller && \
+## 安装依赖
+pip install -e 'packages/markitdown[all]' && \
+## 编译打包
+python3 build.py
+
+
 # 运行阶段
 FROM alpine:3.22.2
 
@@ -38,11 +54,12 @@ RUN apk add --no-cache libgcc libstdc++ sqlite-libs
 # 设置工作目录
 WORKDIR /app
 
-RUN mkdir -p ./minragdatadir
+RUN mkdir -p ./minragdatadir/markitdown
 
 # 复制编译产物
 COPY --from=builder /app/minrag .
 COPY --from=builder /app/minragdatadir ./minragdatadir/
+COPY --from=markitdown /app/markitdown/dist/markitdown ./minragdatadir/markitdown/
 
 # 暴露端口
 EXPOSE 738
