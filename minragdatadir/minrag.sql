@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS component (
 		status            INT NOT NULL
 	 ) strict ;
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,1,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"tikaURL":"http://localhost:9998/tika"}','TikaConverter','TikaConverter');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,2,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"markitdown":"minragdatadir/markitdown/markitdown","markdownFileDir":"minragdatadir/upload/markitdown/markdown"}','MarkitdownConverter','MarkitdownConverter');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,2,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-VL-30B-A3B-Instruct","prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息","markitdown":"minragdatadir/markitdown/markitdown","markdownFileDir":"minragdatadir/upload/markitdown/markdown"}','MarkitdownConverter','MarkitdownConverter');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','MarkdownConverter','MarkdownConverter');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,4,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','WebScraper','WebScraper');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,5,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','HtmlCleaner','HtmlCleaner');

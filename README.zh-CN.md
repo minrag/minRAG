@@ -54,9 +54,11 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 记得修改流水线中的组件
 
 ## markitdown集成(推荐)
-使用 https://gitee.com/minrag/markitdown 解析文档,将编译的```markitdown```放到 ```minragdatadir```目录下,注意配置```markitdown```的```config.json```中的图片解析模型.```MarkitdownConverter```组件配置示例:
+使用 [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) 解析文档,使用```python build.py```编译的```dist/markitdown```放到 ```minragdatadir```目录下,```MarkitdownConverter```组件配置示例:
 ```json
 {
+	"model":"Qwen3-VL-30B-A3B-Instruct",
+    "prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息",
 	"markitdown":"minragdatadir/markitdown/markitdown",
 	"markdownDir":"minragdatadir/upload/markitdown/markdown"
 }

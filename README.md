@@ -57,6 +57,28 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 
 <img src="minragdatadir/public/index.png" width="600px" />    
 
+## Markitdown Integration (Recommended)
+Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkitdownConverter``` component:
+```json
+{
+	"model":"Qwen3-VL-30B-A3B-Instruct",
+    "prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息",
+	"markitdown":"minragdatadir/markitdown/markitdown",
+	"markdownDir":"minragdatadir/upload/markitdown/markdown"
+}
+```   
+Note to modify the parameters of the ```indexPipeline``` workflow, replacing the original ```MarkdownConverter``` with ```MarkitdownConverter```:  
+```json
+{
+	"start": "MarkitdownConverter",
+	"process": {
+		"MarkitdownConverter": "DocumentSplitter",
+		"DocumentSplitter": "OpenAIDocumentEmbedder",
+		"OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+	}
+}
+```
+
 ## Tika Integration 
 By default, minRAG only supports text formats like Markdown and plain text. To parse document content, you can use the ```TikaConverter``` component to call the ```tika``` service. Example configuration for ```TikaConverter```:
 ```json
