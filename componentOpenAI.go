@@ -1673,9 +1673,10 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 			return err
 		}
 		if len(rs.Choices) < 1 {
-			err := errors.New("httpPostJsonResponse choices is empty")
-			input[errorKey] = err
-			return err
+			//err := errors.New("httpPostJsonResponse choices is empty")
+			//input[errorKey] = err
+			//return err
+			continue
 		}
 		//FinishReason结束符
 		if rs.Choices[0].FinishReason != "" {
