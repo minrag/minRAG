@@ -259,11 +259,13 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 // MarkitdownConverter 调用markitdown解析文档
 type MarkitdownConverter struct {
 	APIKey          string `json:"api_key,omitempty"`
-	Model           string `json:"model,omitempty"`
+	Model           string `json:"model,omitempty"` //理解图片的模型
 	BaseURL         string `json:"base_url,omitempty"`
-	Prompt          string `json:"prompt,omitempty"`
-	Markitdown      string `json:"markitdown,omitempty"`
-	MarkdownFileDir string `json:"markdownFileDir,omitempty"`
+	Prompt          string `json:"prompt,omitempty"`          //理解文档中图片的提示词
+	Markitdown      string `json:"markitdown,omitempty"`      // markdown的命令路径
+	MarkdownFileDir string `json:"markdownFileDir,omitempty"` // 生成的markdown文件目录
+	ImageFileDir    string `json:"imageFileDir,omitempty"`    // 图片存放的目录
+	ImageURLDir     string `json:"imageURLDir,omitempty"`     // URL的前缀目录
 	FilePath        string `json:"filePath,omitempty"`
 }
 
@@ -278,14 +280,25 @@ func (component *MarkitdownConverter) Initialization(ctx context.Context, input 
 		component.Prompt = "准确提取图片内容,直接描述图片,不要有引导语之类的无关信息"
 	}
 	defaultExecFile := datadir + "markitdown/markitdown"
-	if pathExist(defaultExecFile) {
+	if component.Markitdown == "" && pathExist(defaultExecFile) {
 		component.Markitdown = defaultExecFile
 	}
+
 	if component.MarkdownFileDir == "" {
 		component.MarkdownFileDir = datadir + "upload/markitdown/markdown"
 	}
 	if !pathExist(component.MarkdownFileDir) {
 		os.MkdirAll(component.MarkdownFileDir, 0755)
+	}
+	defaultImageFileDir := datadir + "upload/markitdown/images"
+	if component.ImageFileDir == "" {
+		component.ImageFileDir = defaultImageFileDir
+	}
+	if !pathExist(component.ImageFileDir) {
+		os.MkdirAll(component.ImageFileDir, 0755)
+	}
+	if component.ImageURLDir == "" {
+		component.ImageURLDir = "/upload/markitdown/images"
 	}
 
 	return nil
@@ -330,6 +343,8 @@ func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]
 		envs = append(envs, "markitdown_base_url="+component.BaseURL)
 		envs = append(envs, "markitdown_model="+component.Model)
 		envs = append(envs, "markitdown_prompt="+component.Prompt)
+		envs = append(envs, "markitdown_imageFileDir="+component.ImageFileDir)
+		envs = append(envs, "markitdown_imageURLDir="+component.ImageURLDir)
 		_, err = ExecCMD(cmd, envs, time.Second*60)
 		if err != nil {
 			input[errorKey] = err
