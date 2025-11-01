@@ -74,9 +74,9 @@ var componentTypeMap = map[string]IComponent{
 	"DocumentSplitter":             &DocumentSplitter{},
 	"HtmlCleaner":                  &HtmlCleaner{},
 	"WebScraper":                   &WebScraper{},
-	"MarkdownConverter":            &MarkdownConverter{},
-	"MarkitdownConverter":          &MarkitdownConverter{},
-	"TikaConverter":                &TikaConverter{},
+	//"MarkdownConverter":            &MarkdownConverter_old{},
+	"MarkdownConverter": &MarkdownConverter{},
+	"TikaConverter":     &TikaConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -256,8 +256,8 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 	return nil
 }
 
-// MarkitdownConverter 调用markitdown解析文档
-type MarkitdownConverter struct {
+// MarkdownConverter 调用markitdown解析文档
+type MarkdownConverter struct {
 	APIKey          string `json:"api_key,omitempty"`
 	Model           string `json:"model,omitempty"` //理解图片的模型
 	BaseURL         string `json:"base_url,omitempty"`
@@ -269,7 +269,7 @@ type MarkitdownConverter struct {
 	FilePath        string `json:"filePath,omitempty"`
 }
 
-func (component *MarkitdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL
 	}
@@ -303,12 +303,7 @@ func (component *MarkitdownConverter) Initialization(ctx context.Context, input 
 
 	return nil
 }
-func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.Markitdown == "" {
-		err := errors.New(funcT("The Markitdown of MarkitdownConverter cannot be empty"))
-		input[errorKey] = err
-		return err
-	}
+func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
 	document, has := input["document"].(*Document)
 	if document == nil || (!has) {
 		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
@@ -327,7 +322,8 @@ func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]
 		return err
 	}
 
-	if document.Markdown == "" {
+	// 优先使用markitdown转换
+	if document.Markdown == "" && component.Markitdown != "" {
 		uploadFilePath := datadir + filePath
 		markdownFilePath := component.MarkdownFileDir + "/" + FuncGenerateStringID() + ".md"
 		// 获取上传的文件信息
@@ -357,21 +353,30 @@ func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]
 		}
 		document.Markdown = string(markdownByte)
 		//document.FileSize = len(markdownByte)
+	} else if document.Markdown == "" { //读取文本文件
+		markdownByte, err := os.ReadFile(datadir + filePath)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.Markdown = string(markdownByte)
+		document.FileSize = len(markdownByte)
 	}
 	document.Status = 2
 	input["document"] = document
 	return nil
 }
 
-// MarkdownConverter markdown文件读取
-type MarkdownConverter struct {
+/**
+// MarkdownConverter_old markdown文件读取
+type MarkdownConverter_old struct {
 	FilePath string `json:"filePath,omitempty"`
 }
 
-func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownConverter_old) Initialization(ctx context.Context, input map[string]interface{}) error {
 	return nil
 }
-func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownConverter_old) Run(ctx context.Context, input map[string]interface{}) error {
 	document, has := input["document"].(*Document)
 	if document == nil || (!has) {
 		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
@@ -403,7 +408,7 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	input["document"] = document
 	return nil
 }
-
+*/
 // WebScraper 网络爬虫
 type WebScraper struct {
 	UserAgent string `json:"userAgent,omitempty"`
