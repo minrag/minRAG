@@ -44,12 +44,12 @@ func ExecCMD(command string, envs []string, timeout time.Duration) (string, erro
 	}
 
 	output, err := cmd.CombinedOutput()
-	//fmt.Println(string(output))
+	result := string(output)
 	if ctx.Err() == context.DeadlineExceeded {
-		return "", fmt.Errorf("ExecCMD timeout")
+		return result, fmt.Errorf("ExecCMD timeout")
 	}
 	if err != nil {
-		return "", err
+		return result, err
 	}
-	return string(output), nil
+	return result, nil
 }

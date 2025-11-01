@@ -50,8 +50,6 @@ const (
 	ifEmptyStop      string = "__ifEmptyStop__"
 )
 
-// TODO 缺少 function call 的实现和测试
-
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
 	"Pipeline":                     &Pipeline{},
@@ -259,9 +257,9 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 // MarkdownConverter 调用markitdown解析文档
 type MarkdownConverter struct {
 	APIKey          string `json:"api_key,omitempty"`
-	Model           string `json:"model,omitempty"` //理解图片的模型
+	Model           string `json:"model,omitempty"` // 理解图片的模型
 	BaseURL         string `json:"base_url,omitempty"`
-	Prompt          string `json:"prompt,omitempty"`          //理解文档中图片的提示词
+	Prompt          string `json:"prompt,omitempty"`          // 理解文档中图片的提示词
 	Markitdown      string `json:"markitdown,omitempty"`      // markdown的命令路径
 	MarkdownFileDir string `json:"markdownFileDir,omitempty"` // 生成的markdown文件目录
 	ImageFileDir    string `json:"imageFileDir,omitempty"`    // 图片存放的目录
