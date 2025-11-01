@@ -20,13 +20,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"os/exec"
 	"runtime"
 	"time"
 )
 
 // ExecCMD 执行命令
-func ExecCMD(command string, timeout time.Duration) (string, error) {
+func ExecCMD(command string, envs []string, timeout time.Duration) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel() // 确保释放资源
 
@@ -37,7 +38,13 @@ func ExecCMD(command string, timeout time.Duration) (string, error) {
 	} else {
 		cmd = exec.CommandContext(ctx, "sh", "-c", command)
 	}
+
+	if len(envs) > 1 {
+		cmd.Env = append(os.Environ(), envs...)
+	}
+
 	output, err := cmd.CombinedOutput()
+	//fmt.Println(string(output))
 	if ctx.Err() == context.DeadlineExceeded {
 		return "", fmt.Errorf("ExecCMD timeout")
 	}

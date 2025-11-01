@@ -258,13 +258,25 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 
 // MarkitdownConverter 调用markitdown解析文档
 type MarkitdownConverter struct {
+	APIKey          string `json:"api_key,omitempty"`
+	Model           string `json:"model,omitempty"`
+	BaseURL         string `json:"base_url,omitempty"`
+	Prompt          string `json:"prompt,omitempty"`
 	Markitdown      string `json:"markitdown,omitempty"`
 	MarkdownFileDir string `json:"markdownFileDir,omitempty"`
 	FilePath        string `json:"filePath,omitempty"`
 }
 
 func (component *MarkitdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
-
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL
+	}
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
+	}
+	if component.Prompt == "" {
+		component.Prompt = "准确提取图片内容,直接描述图片,不要有引导语之类的无关信息"
+	}
 	defaultExecFile := datadir + "markitdown/markitdown"
 	if pathExist(defaultExecFile) {
 		component.Markitdown = defaultExecFile
@@ -313,7 +325,12 @@ func (component *MarkitdownConverter) Run(ctx context.Context, input map[string]
 		}
 		document.FileSize = int(fileInfo.Size())
 		cmd := component.Markitdown + " " + uploadFilePath + " -o " + markdownFilePath
-		_, err = ExecCMD(cmd, time.Second*60)
+		envs := make([]string, 0)
+		envs = append(envs, "markitdown_api_key="+component.APIKey)
+		envs = append(envs, "markitdown_base_url="+component.BaseURL)
+		envs = append(envs, "markitdown_model="+component.Model)
+		envs = append(envs, "markitdown_prompt="+component.Prompt)
+		_, err = ExecCMD(cmd, envs, time.Second*60)
 		if err != nil {
 			input[errorKey] = err
 			return err
