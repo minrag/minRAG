@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses>.
 
-// 百度千帆平台,主要适配Reranker模型
+// 阿里百炼平台,主要适配Reranker模型
 package main
 
 import (
