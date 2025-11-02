@@ -6,7 +6,12 @@
 minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.支持OpenAI、Gitee AI、百度千帆、腾讯云LKE、阿里云百炼、字节火山引擎等AI平台.        
   
 使用FTS5实现BM25全文检索,使用Vec实现向量检索,实现了
-MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline等组件,支持流水线设置和扩展. 
+MarkdownConverter、DocumentSplitter、OpenAIDocumentEmbedder、SQLiteVecDocumentStore、OpenAITextEmbedder、VecEmbeddingRetriever、FtsKeywordRetriever、DocumentChunkReranker、PromptBuilder、OpenAIChatMemory、OpenAIChatGenerator、ChatMessageLogStore、Pipeline、WebSearch、HtmlCleaner、WebScraper等组件,支持流水线设置和扩展. 
+
+## RAG 从未如此简单 
+minRAG是从零开始的RAG系统,追求极致的简单和强大,不超过1万行代码,无需安装,双击启动.支持OpenAI、Gitee AI、百度千帆、腾讯云LKE、阿里云百炼、字节火山引擎等AI平台.          
+  
+RAG入门教程: [<<十天手搓 minRAG, 操纵 DeepSeek 的幕后黑手>>](https://my.oschina.net/baobao/blog/17679781)  
 
 ## 支持的AI平台
 因为 reranker 没有统一标准,组件参数中base_url要填写完整的路径   
@@ -20,14 +25,14 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 免费或者付费的token
 - ```OpenAITextEmbedder``` 默认使用 ```bge-m3``` 模型  
 - ```GiteeDocumentChunkReranker``` 组件参数 ```{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}```  
-- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3``` 模型  
+- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3.2-Exp``` 模型  
 
 ### 腾讯云LKE知识引擎
 - 注册或设置页面的AI平台```base_url``` 填写 ```SecretId```  ,或在组件参数配置```{"SecretId":"xxx"}```
 - 注册或设置页面的AI平台```api_key```  填写 ```SecretKey``` ,或在组件参数配置```{"SecretKey":"xxx"}```
 - ```LKETextEmbedder和LKEDocumentEmbedder``` 默认使用 ```lke-text-embedding-v1``` 模型  
 - ```LKEDocumentChunkReranker``` 默认使用 ```lke-reranker-base``` 模型
-- ```OpenAIChatGenerator``` [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 ```{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}```  
+- ```OpenAIChatGenerator``` [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 ```{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}```  
 - 记得修改流水线中的组件
 
 ### 百度千帆
@@ -35,15 +40,15 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 永久有效API Key
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```bge-large-zh``` 模型,1024维度  
 - ```DocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}```  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3``` 模型 
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2``` 模型 
 - 记得修改流水线中的组件
 
 ### 阿里云百炼  
 - 注册或设置页面的AI平台```base_url``` 填写 https://dashscope.aliyuncs.com/compatible-mode/v1
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```text-embedding-v3``` 模型,1024维度 
-- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank","top_n":5,"score":0.1}```  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3``` 模型 
+- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}```  
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2-exp``` 模型 
 - 记得修改流水线中的组件
 
 ### 字节火山引擎
@@ -51,8 +56,59 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 建议使用```doubao-embedding```模型,兼容1024维度 
 - ```DocumentChunkReranker``` 火山引擎暂时没有Reranker模型,建议使用其他平台的Reranker模型或者去掉  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3```模型  
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3-1-terminus```模型  
 - 记得修改流水线中的组件
+
+## markitdown集成(默认)
+使用 [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) 解析文档,使用```python build.py```编译的```dist/markitdown```放到 ```minragdatadir```目录下,```MarkdownConverter```组件配置示例:
+```json
+{
+    // 图片解析的模型
+    "model":"Qwen3-VL-30B-A3B-Instruct", 
+    // 理解文档中图片的提示词
+    "prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息", 
+    // markdown的命令路径
+    "markitdown":"minragdatadir/markitdown/markitdown",
+    // 生成的markdown文件目录
+    "markdownDir":"minragdatadir/upload/markitdown/markdown",
+    // 图片存放的目录
+    "imageFileDir":"minragdatadir/upload/markitdown/image",
+    // URL的前缀目录
+    "imageURLDir":"/upload/markitdown/image"
+}
+```
+
+## tika集成
+默认minRAG只支持markdown和text等文本格式,可以使用```TikaConverter```组件调用```tika```服务解析文档内容,```TikaConverter```组件配置示例:
+```json
+{
+    "tikaURL": "http://localhost:9998/tika",
+    "defaultHeaders": {
+        "Content-Type": "application/octet-stream"
+    }
+}
+```
+启动 ```tika``` 的命令如下:
+```shell
+## tika 3.x 依赖 jdk11+
+java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
+
+## 不输出日志
+#nohup java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998 >/dev/null 2>&1 &
+```
+
+或者下载[tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234)   ```start.bat```启动tika.  
+注意修改```indexPipeline```流水线的参数,把原来的```MarkdownConverter```替换为```TikaConverter```:
+```json
+{
+    "start": "TikaConverter",
+    "process": {
+        "TikaConverter": "DocumentSplitter",
+        "DocumentSplitter": "OpenAIDocumentEmbedder",
+        "OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+    }
+}
+```
 
 ## 安装
 运行minRAG,会输出访问的路径,根据提示使用浏览器访问 ```http://127.0.0.1:738/admin/login``` 首次运行会进入安装界面.  
@@ -127,12 +183,15 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 
 ## 组件
 minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型有:
-- MarkdownConverter: 转化和处理Markdown和文本文件
+- MarkdownConverter: 使用markitdown解析文档
 - DocumentSplitter: 分割文档
 - LKEDocumentEmbedder: 腾讯云LKE的文档Embedding模型
 - OpenAIDocumentEmbedder: OpenAI的文档Embedding模型
 - SQLiteVecDocumentStore: SQLiteVec的向量化保存
 - Pipeline: 流水线
+- WebSearch: 联网搜索组件,爬虫bing搜索的页面
+- HtmlCleaner: 网页标签清理
+- WebScraper: 网页爬虫
 - LKETextEmbedder: 腾讯云LKE的文本Embedding模型
 - OpenAITextEmbedder: OpenAI的文本Embedding模型
 - VecEmbeddingRetriever: SQLiteVec向量查询

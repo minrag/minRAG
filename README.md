@@ -25,7 +25,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` as `SecretKey`, or configure it in the component parameters as `{"SecretKey":"xxx"}`.
 - `LKETextEmbedder` and `LKEDocumentEmbedder` default to using the `lke-text-embedding-v1` model.  
 - `LKEDocumentChunkReranker` defaults to using the `lke-reranker-base` model.  
-- `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3"}`.  
+- `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}`.  
 - Remember to modify the components in the pipeline.  
 
 ### Baidu QianFan  
@@ -33,15 +33,15 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with a permanently valid API Key.  
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `bge-large-zh` model, with 1024 dimensions.  
 - The component parameter configuration for `DocumentChunkReranker` is `{"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}`.  
-- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.  
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2` model.  
 - Remember to modify the components in the pipeline.  
 
 ### Alibaba Cloud BaiLian
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://dashscope.aliyuncs.com/compatible-mode/v1`.
 - On the registration or settings page, fill in `api_key` with the applied API KEY.
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
-- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank","top_n":5,"score":0.1}`.
-- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
+- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}`.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2-exp` model.
 - Remember to modify the components in the pipeline.  
 
 ### ByteDance Volcano Engine  
@@ -49,7 +49,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with the applied API KEY.  
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` are recommended to use the `doubao-embedding` model, compatible with 1024 dimensions.
 - Volcano Engine does not currently have a Reranker model, so it is recommended to use Reranker models from other platforms or remove it.
-- `OpenAIChatGenerator` is recommended to use the `deepseek-v3` model.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3-1-terminus` model.
 - Remember to modify the components in the pipeline.
 
 ## UI Preview
@@ -57,16 +57,22 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 
 <img src="minragdatadir/public/index.png" width="600px" />    
 
-## Markitdown Integration (Recommended)
+## Markitdown Integration (Default)
 Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkdownConverter``` component:
 ```json
 {
-	"model":"Qwen3-VL-30B-A3B-Instruct",
-    "prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息",
-	"markitdown":"minragdatadir/markitdown/markitdown",
-	"markdownDir":"minragdatadir/upload/markitdown/markdown",
-	"imageFileDir":"minragdatadir/upload/markitdown/image",
-	"imageURLDir":"/upload/markitdown/image"
+    // Image analysis model
+    "model":"Qwen3-VL-30B-A3B-Instruct", 
+    // Understand the prompts for images in the document
+    "prompt":"Accurately extract the content of the image and directly describe the image without any irrelevant guidance or similar information.", 
+    // Markdown command path
+    "markitdown":"minragdatadir/markitdown/markitdown",
+    // Generated Markdown File Directory
+    "markdownDir":"minragdatadir/upload/markitdown/markdown",
+    // Directory for storing images
+    "imageFileDir":"minragdatadir/upload/markitdown/image",
+    // URL prefix directory
+    "imageURLDir":"/upload/markitdown/image"
 }
 ```   
 
@@ -74,10 +80,10 @@ Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) t
 By default, minRAG only supports text formats like Markdown and plain text. To parse document content, you can use the ```TikaConverter``` component to call the ```tika``` service. Example configuration for ```TikaConverter```:
 ```json
 {
-	"tikaURL": "http://localhost:9998/tika",
-	"defaultHeaders": {
-		"Content-Type": "application/octet-stream"
-	}
+    "tikaURL": "http://localhost:9998/tika",
+    "defaultHeaders": {
+        "Content-Type": "application/octet-stream"
+    }
 }
 ```
 
@@ -95,12 +101,12 @@ Alternatively, download [tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwD
 Note: Modify the parameters in your ```indexPipeline``` workflow by replacing the original ```MarkdownConverter``` with ```TikaConverter```:
 ```json
 {
-	"start": "TikaConverter",
-	"process": {
-		"TikaConverter": "DocumentSplitter",
-		"DocumentSplitter": "OpenAIDocumentEmbedder",
-		"OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
-	}
+    "start": "TikaConverter",
+    "process": {
+        "TikaConverter": "DocumentSplitter",
+        "DocumentSplitter": "OpenAIDocumentEmbedder",
+        "OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
+    }
 }
 ```
 
