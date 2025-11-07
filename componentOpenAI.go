@@ -59,7 +59,6 @@ var componentTypeMap = map[string]IComponent{
 	"PromptBuilder":                &PromptBuilder{},
 	"DocumentChunkReranker":        &DocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
-	"GiteeDocumentChunkReranker":   &GiteeDocumentChunkReranker{},
 	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
 	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
 	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
@@ -719,7 +718,7 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL
+		component.BaseURL = config.AIBaseURL + "/embeddings"
 	}
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
@@ -741,7 +740,7 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 		bodyMap["input"] = []string{documentChunks[i].Markdown}
 		bodyMap["model"] = component.Model
 		bodyMap["encoding_format"] = "float"
-		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
+		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
 
 		if err != nil {
 			input[errorKey] = err
@@ -873,11 +872,12 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL
+		component.BaseURL = config.AIBaseURL + "/embeddings"
 	}
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
 	}
+
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
 	}
@@ -892,7 +892,7 @@ func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]i
 	bodyMap["input"] = []string{query}
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
-	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL+"/embeddings", component.DefaultHeaders, bodyMap)
+	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err

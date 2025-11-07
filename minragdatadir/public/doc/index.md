@@ -24,7 +24,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```base_url``` 填写 https://ai.gitee.com/v1
 - 注册或设置页面的AI平台```api_key```  填写 免费或者付费的token
 - ```OpenAITextEmbedder``` 默认使用 ```bge-m3``` 模型  
-- ```GiteeDocumentChunkReranker``` 组件参数 ```{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}```  
+- ```DocumentChunkReranker```默认使用 ```bge-reranker-v2-m3``` 模型   
 - ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3.2-Exp``` 模型  
 
 ### 腾讯云LKE知识引擎
@@ -197,7 +197,6 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 - VecEmbeddingRetriever: SQLiteVec向量查询
 - FtsKeywordRetriever: FTS5的BM25全文检索
 - LKEDocumentChunkReranker: 腾讯云LKE的Reranker模型重排序
-- GiteeDocumentChunkReranker: Gitee的Reranker模型重排序
 - BaiLianDocumentChunkReranker: 阿里云百炼的Reranker模型重排序
 - DocumentChunkReranker: 默认的Reranker模型重排序
 - PromptBuilder: 构建Prompt提示词
@@ -216,8 +215,8 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 	"process": {
 		"OpenAITextEmbedder": "VecEmbeddingRetriever",
 		"VecEmbeddingRetriever": "FtsKeywordRetriever",
-		"FtsKeywordRetriever": "GiteeDocumentChunkReranker",
-		"GiteeDocumentChunkReranker": "PromptBuilder",
+		"FtsKeywordRetriever": "DocumentChunkReranker",
+		"DocumentChunkReranker": "PromptBuilder",
 		"PromptBuilder": "OpenAIChatMemory",
 		"OpenAIChatMemory": "OpenAIChatGenerator",
 		"OpenAIChatGenerator": "ChatMessageLogStore"

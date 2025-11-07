@@ -17,7 +17,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://ai.gitee.com/v1`.  
 - On the registration or settings page, fill in `api_key` with a free or paid token.    
 - `OpenAITextEmbedder` defaults to using the `bge-m3` model.  
-- The component parameter for `GiteeDocumentChunkReranker` is `{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}`.  
+- `DocumentChunkReranker` defaults to using the `bge-reranker-v2-m3` model. 
 - `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3.2-Exp` model.  
 
 ### Tencent Cloud LKE Knowledge Engine
@@ -40,7 +40,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://dashscope.aliyuncs.com/compatible-mode/v1`.
 - On the registration or settings page, fill in `api_key` with the applied API KEY.
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
-- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}`.
+- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank-v2","top_n":5,"score":0.1}`.
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2-exp` model.
 - Remember to modify the components in the pipeline.  
 

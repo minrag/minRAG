@@ -18,7 +18,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```base_url``` 填写 https://ai.gitee.com/v1
 - 注册或设置页面的AI平台```api_key```  填写 免费或者付费的token
 - ```OpenAITextEmbedder``` 默认使用 ```bge-m3``` 模型  
-- ```GiteeDocumentChunkReranker``` 组件参数 ```{"base_url":"https://ai.gitee.com/api/serverless/bge-reranker-v2-m3/rerank","model":"bge-reranker-v2-m3"}```  
+- ```DocumentChunkReranker```默认使用 ```bge-reranker-v2-m3``` 模型    
 - ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3.2-Exp``` 模型  
 
 ### 腾讯云LKE知识引擎
@@ -41,7 +41,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```base_url``` 填写 https://dashscope.aliyuncs.com/compatible-mode/v1
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```text-embedding-v3``` 模型,1024维度 
-- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}```  
+- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank-v2","top_n":5,"score":0.1}```  
 - ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2-exp``` 模型 
 - 记得修改流水线中的组件
 
