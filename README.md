@@ -23,7 +23,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 ### Tencent Cloud LKE Knowledge Engine
 - On the registration or settings page, fill in `base_url` for the AI platform as `SecretId`, or configure it in the component parameters as `{"SecretId":"xxx"}`.    
 - On the registration or settings page, fill in `api_key` as `SecretKey`, or configure it in the component parameters as `{"SecretKey":"xxx"}`.
-- `LKETextEmbedder` and `LKEDocumentEmbedder` default to using the `lke-text-embedding-v1` model.  
+- `LKETextEmbedder` and `LKEDocumentEmbedder` default to using the `lke-text-embedding-v2` model.  
 - `LKEDocumentChunkReranker` defaults to using the `lke-reranker-base` model.  
 - `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}`.  
 - Remember to modify the components in the pipeline.  

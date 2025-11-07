@@ -49,7 +49,7 @@ X-TC-Region: ap-guangzhou
 */
 // https://cloud.tencent.com/document/product/1772/115368
 
-// LKEDocumentEmbedder  LKE向量化文档字符串
+// LKEDocumentEmbedder  LKE向量化文档字符串.https://cloud.tencent.com/document/product/1772/115343
 type LKEDocumentEmbedder struct {
 	Host   string `json:"Host,omitempty"`   // lkeap.tencentcloudapi.com
 	Action string `json:"Action,omitempty"` // GetEmbedding
@@ -63,7 +63,7 @@ type LKEDocumentEmbedder struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-text-embedding-v2
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -85,7 +85,7 @@ func (component *LKEDocumentEmbedder) Initialization(ctx context.Context, input 
 	}
 
 	if component.Model == "" {
-		component.Model = "lke-text-embedding-v1"
+		component.Model = "lke-text-embedding-v2"
 	}
 
 	if component.Algorithm == "" {
@@ -187,7 +187,7 @@ type LKETextEmbedder struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-text-embedding-v2
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`
@@ -209,7 +209,7 @@ func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[
 	}
 
 	if component.Model == "" {
-		component.Model = "lke-text-embedding-v1"
+		component.Model = "lke-text-embedding-v2"
 	}
 
 	if component.Algorithm == "" {
@@ -275,11 +275,11 @@ func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]inte
 	return nil
 }
 
-// LKEDocumentChunkReranker  LKE对DocumentChunks进行重新排序
+// LKEDocumentChunkReranker  LKE对DocumentChunks进行重新排序. https://cloud.tencent.com/document/product/1772/115339
 type LKEDocumentChunkReranker struct {
 	Host   string `json:"Host,omitempty"`   // lkeap.tencentcloudapi.com
-	Action string `json:"Action,omitempty"` // GetEmbedding
-	Region string `json:"Region,omitempty"` // ap-guangzhou
+	Action string `json:"Action,omitempty"` // RunRerank
+	Region string `json:"Region,omitempty"` // ap-beijing, ap-guangzhou
 
 	Version   string `json:"Version,omitempty"`   // 2024-05-22
 	Algorithm string `json:"Algorithm,omitempty"` // TC3-HMAC-SHA256
@@ -289,7 +289,7 @@ type LKEDocumentChunkReranker struct {
 
 	Timestamp int `json:"-"`
 
-	Model          string            `json:"model,omitempty"` // lke-text-embedding-v1
+	Model          string            `json:"model,omitempty"` // lke-reranker-base
 	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
 	Timeout        int               `json:"timeout,omitempty"`
 	MaxRetries     int               `json:"maxRetries,omitempty"`

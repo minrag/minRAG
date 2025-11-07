@@ -24,7 +24,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 ### 腾讯云LKE知识引擎
 - 注册或设置页面的AI平台```base_url``` 填写 ```SecretId```  ,或在组件参数配置```{"SecretId":"xxx"}```
 - 注册或设置页面的AI平台```api_key```  填写 ```SecretKey``` ,或在组件参数配置```{"SecretKey":"xxx"}```
-- ```LKETextEmbedder和LKEDocumentEmbedder``` 默认使用 ```lke-text-embedding-v1``` 模型  
+- ```LKETextEmbedder和LKEDocumentEmbedder``` 默认使用 ```lke-text-embedding-v2``` 模型  
 - ```LKEDocumentChunkReranker``` 默认使用 ```lke-reranker-base``` 模型
 - ```OpenAIChatGenerator``` [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 ```{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}```  
 - 记得修改流水线中的组件
