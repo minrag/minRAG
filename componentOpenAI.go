@@ -1154,7 +1154,8 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 		component.APIKey = config.AIAPIkey
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL + "/reranker"
+		// 兼容 Jina
+		component.BaseURL = config.AIBaseURL + "/rerank"
 	}
 	if component.DefaultHeaders == nil {
 		component.DefaultHeaders = make(map[string]string, 0)
@@ -1176,15 +1177,21 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 
-	topN = input["topN"].(int)
+	tId, has := input["topN"]
+	if has {
+		topN = tId.(int)
+	}
 	if topN == 0 {
 		topN = component.TopN
 	}
 	if topN == 0 {
 		topN = 5
 	}
-	score = input["score"].(float32)
 
+	tScore, has := input["score"]
+	if has {
+		score = tScore.(float32)
+	}
 	if score <= 0 {
 		score = component.Score
 	}
@@ -1214,7 +1221,9 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 
 	rs := struct {
 		Results []struct {
-			Document       string  `json:"document,omitempty"`
+			Document struct {
+				Text string `json:"text,omitempty"`
+			} `json:"document,omitempty"`
 			RelevanceScore float32 `json:"relevance_score,omitempty"`
 			Index          int     `json:"index,omitempty"`
 		} `json:"results,omitempty"`
@@ -1227,7 +1236,7 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	}
 	rerankerDCS := make([]DocumentChunk, 0)
 	for i := 0; i < len(rs.Results); i++ {
-		markdown := rs.Results[i].Document
+		markdown := rs.Results[i].Document.Text
 		for j := 0; j < len(documentChunks); j++ {
 			dc := documentChunks[j]
 			if markdown == dc.Markdown { //相等

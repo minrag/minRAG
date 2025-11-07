@@ -177,6 +177,7 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	//choice := input["choice"]
 	errObj := input[errorKey]
 	if errObj != nil {
+		FuncLogError(ctx, errObj.(error))
 		errMsg := fmt.Sprintf("component run is error:%v", errObj)
 		if stream {
 			msg := warpOpenAIJsonMessage(stream, errMsg)
