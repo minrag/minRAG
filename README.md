@@ -58,7 +58,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 <img src="minragdatadir/public/index.png" width="600px" />    
 
 ## Markitdown Integration (Default)
-Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkdownConverter``` component:
+Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkdownConverter``` component(Remove // comments when using):
 ```json
 {
     // Image analysis model
