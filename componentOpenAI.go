@@ -275,7 +275,7 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 		component.APIKey = config.AIAPIkey
 	}
 	if component.Prompt == "" {
-		component.Prompt = "准确提取图片内容,直接描述图片,不要有引导语之类的无关信息"
+		component.Prompt = "提取图片内容,不要有引导语,介绍语,换行等"
 	}
 	defaultExecFile := datadir + "markitdown/markitdown"
 	if component.Markitdown == "" && pathExist(defaultExecFile) {

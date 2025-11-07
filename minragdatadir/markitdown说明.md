@@ -4,7 +4,7 @@
 	//图片解析的模型
 	"model":"Qwen3-VL-30B-A3B-Instruct", 
 	//理解文档中图片的提示词
-    "prompt":"准确提取图片内容,直接描述图片,不要有引导语之类的无关信息", 
+    "prompt":"提取图片内容,不要有引导语,介绍语,换行等", 
 	// markdown的命令路径
 	"markitdown":"minragdatadir/markitdown/markitdown",
 	// 生成的markdown文件目录
