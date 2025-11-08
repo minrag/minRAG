@@ -40,7 +40,7 @@ func TestVecQuery(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//需要使用bge-m3模型进行embedding
+	//需要使用Qwen3-Embedding-8B模型进行embedding
 	embedding := input["embedding"].([]float64)
 	query, _ := vecSerializeFloat64(embedding)
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ? ORDER BY score LIMIT 5", query)

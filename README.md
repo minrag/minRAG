@@ -16,8 +16,8 @@ reranker does not have a unified standard, the `base_url` in the component param
 The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100 free calls per day.  
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://ai.gitee.com/v1`.  
 - On the registration or settings page, fill in `api_key` with a free or paid token.    
-- `OpenAITextEmbedder` defaults to using the `bge-m3` model.  
-- `DocumentChunkReranker` defaults to using the `bge-reranker-v2-m3` model. 
+- `OpenAITextEmbedder` defaults to using the `Qwen3-Embedding-8B` model.  
+- `DocumentChunkReranker` defaults to using the `Qwen3-Reranker-8B` model. 
 - `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3.2-Exp` model.  
 
 ### Tencent Cloud LKE Knowledge Engine
@@ -31,8 +31,8 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 ### Baidu QianFan  
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://qianfan.baidubce.com/v2`.  
 - On the registration or settings page, fill in `api_key` with a permanently valid API Key.  
-- `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `bge-large-zh` model, with 1024 dimensions.  
-- `QianFanDocumentChunkReranker` defaults to using the `Qwen3-Reranker-8B` model.  
+- `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `qwen3-embedding-8b` model.  
+- `QianFanDocumentChunkReranker` defaults to using the `qwen3-reranker-8b` model.  
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2` model.  
 - Remember to modify the components in the pipeline.  
 
