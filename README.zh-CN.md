@@ -33,7 +33,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```base_url``` 填写 https://qianfan.baidubce.com/v2
 - 注册或设置页面的AI平台```api_key```  填写 永久有效API Key
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```bge-large-zh``` 模型,1024维度  
-- ```DocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}```  
+- ```QianFanDocumentChunkReranker```默认使用 ```Qwen3-Reranker-8B``` 模型    
 - ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2``` 模型 
 - 记得修改流水线中的组件
 
@@ -41,7 +41,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```base_url``` 填写 https://dashscope.aliyuncs.com/compatible-mode/v1
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```text-embedding-v3``` 模型,1024维度 
-- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank-v2","top_n":5,"score":0.1}```  
+- ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}```  
 - ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2-exp``` 模型 
 - 记得修改流水线中的组件
 
@@ -61,7 +61,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
     "model":"Qwen3-VL-30B-A3B-Instruct", 
     // 理解文档中图片的提示词
     "prompt":"提取图片内容,不要有引导语,介绍语,换行等", 
-    // markdown的命令路径
+    // markitdown的命令路径
     "markitdown":"minragdatadir/markitdown/markitdown",
     // 生成的markdown文件目录
     "markdownDir":"minragdatadir/upload/markitdown/markdown",

@@ -58,6 +58,7 @@ var componentTypeMap = map[string]IComponent{
 	"OpenAIChatMemory":             &OpenAIChatMemory{},
 	"PromptBuilder":                &PromptBuilder{},
 	"DocumentChunkReranker":        &DocumentChunkReranker{},
+	"QianFanDocumentChunkReranker": &QianFanDocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
 	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
 	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
@@ -71,9 +72,8 @@ var componentTypeMap = map[string]IComponent{
 	"DocumentSplitter":             &DocumentSplitter{},
 	"HtmlCleaner":                  &HtmlCleaner{},
 	"WebScraper":                   &WebScraper{},
-	//"MarkdownConverter":            &MarkdownConverter_old{},
-	"MarkdownConverter": &MarkdownConverter{},
-	"TikaConverter":     &TikaConverter{},
+	"MarkdownConverter":            &MarkdownConverter{},
+	"TikaConverter":                &TikaConverter{},
 }
 
 // componentMap 组件的Map,从数据查询拼装参数
@@ -364,48 +364,6 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 	return nil
 }
 
-/**
-// MarkdownConverter_old markdown文件读取
-type MarkdownConverter_old struct {
-	FilePath string `json:"filePath,omitempty"`
-}
-
-func (component *MarkdownConverter_old) Initialization(ctx context.Context, input map[string]interface{}) error {
-	return nil
-}
-func (component *MarkdownConverter_old) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
-		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
-		input[errorKey] = err
-		return err
-	}
-	filePath := component.FilePath
-	if filePath == "" {
-		filePath = document.FilePath
-	} else {
-		document.FilePath = filePath
-	}
-	if filePath == "" && document.Markdown == "" {
-		err := errors.New(funcT("The filePath of MarkdownConverter cannot be empty"))
-		input[errorKey] = err
-		return err
-	}
-
-	if document.Markdown == "" {
-		markdownByte, err := os.ReadFile(datadir + filePath)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
-		document.Markdown = string(markdownByte)
-		document.FileSize = len(markdownByte)
-	}
-	document.Status = 2
-	input["document"] = document
-	return nil
-}
-*/
 // WebScraper 网络爬虫
 type WebScraper struct {
 	UserAgent string `json:"userAgent,omitempty"`

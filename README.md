@@ -32,7 +32,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://qianfan.baidubce.com/v2`.  
 - On the registration or settings page, fill in `api_key` with a permanently valid API Key.  
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `bge-large-zh` model, with 1024 dimensions.  
-- The component parameter configuration for `DocumentChunkReranker` is `{"base_url":"https://qianfan.baidubce.com/v2/rerankers","model":"bce-reranker-base","top_n":5,"score":0.1}`.  
+- `QianFanDocumentChunkReranker` defaults to using the `Qwen3-Reranker-8B` model.  
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2` model.  
 - Remember to modify the components in the pipeline.  
 
@@ -40,7 +40,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `base_url` for the AI platform as `https://dashscope.aliyuncs.com/compatible-mode/v1`.
 - On the registration or settings page, fill in `api_key` with the applied API KEY.
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
-- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"gte-rerank-v2","top_n":5,"score":0.1}`.
+- The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}`.
 - `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2-exp` model.
 - Remember to modify the components in the pipeline.  
 
@@ -65,7 +65,7 @@ Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) t
     "model":"Qwen3-VL-30B-A3B-Instruct", 
     // Understand the prompts for images in the document
     "prompt":"Accurately extract the content of the image and directly describe the image without any irrelevant guidance or similar information.", 
-    // Markdown command path
+    // markitdown command path
     "markitdown":"minragdatadir/markitdown/markitdown",
     // Generated Markdown File Directory
     "markdownDir":"minragdatadir/upload/markitdown/markdown",
