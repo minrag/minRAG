@@ -1,4 +1,5 @@
 v0.1.1
+- 增加```MarkdownTOCIndex``` 和 ```MarkdownTOCRetriever```组件,支持markdown目录索引方式 
 - 增加Dockerfile
 - 增加联网搜索组件
 - 默认使用[markitdown](https://gitee.com/minrag/markitdown)处理文档

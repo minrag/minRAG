@@ -202,6 +202,14 @@ func (entity *Document) GetPKColumnName() string {
 	return "id"
 }
 
+// DocumentTOC 生成文档TOC目录
+type DocumentTOC struct {
+	// ID
+	Id    string         `column:"id" json:"id,omitempty"`
+	Title string         `column:"title" json:"title,omitempty"` // 标题
+	Nodes []*DocumentTOC `json:"nodes,omitempty"`                // 子节点
+}
+
 // DocumentChunk 文档分块
 type DocumentChunk struct {
 
@@ -216,6 +224,12 @@ type DocumentChunk struct {
 
 	// KnowledgeBaseID 知识库ID
 	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+
+	Title    string `column:"title" json:"title,omitempty"`       // 标题
+	ParentID string `column:"parentID" json:"parentID,omitempty"` // 上级ID
+	PreID    string `column:"preID" json:"preID,omitempty"`       // 上一个节点ID
+	NextID   string `column:"nextID" json:"nextID,omitempty"`     // 下一个节点ID
+	Level    int    `column:"level" json:"level,omitempty"`       // 标题级别
 
 	// Markdown Markdown内容
 	Markdown string `column:"markdown" json:"markdown,omitempty"`
@@ -242,6 +256,8 @@ type DocumentChunk struct {
 	RowID int `json:"rowID,omitempty"`
 	// Score 向量表的score匹配分数
 	Score float32 `json:"score,omitempty"`
+
+	Nodes []*DocumentChunk `json:"nodes,omitempty"` // 子节点
 }
 
 // GetTableName 获取表名称

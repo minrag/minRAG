@@ -61,6 +61,7 @@ var componentTypeMap = map[string]IComponent{
 	"QianFanDocumentChunkReranker": &QianFanDocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
 	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
+	"MarkdownTOCRetriever":         &MarkdownTOCRetriever{},
 	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
 	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
 	"OpenAITextEmbedder":           &OpenAITextEmbedder{},
@@ -69,6 +70,7 @@ var componentTypeMap = map[string]IComponent{
 	"SQLiteVecDocumentStore":       &SQLiteVecDocumentStore{},
 	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
+	"MarkdownTOCIndex":             &MarkdownTOCIndex{},
 	"DocumentSplitter":             &DocumentSplitter{},
 	"HtmlCleaner":                  &HtmlCleaner{},
 	"WebScraper":                   &WebScraper{},
@@ -657,6 +659,67 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	return nil
 }
 
+// MarkdownTOCIndex markdown目录索引
+type MarkdownTOCIndex struct {
+}
+
+func (component *MarkdownTOCIndex) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]interface{}) error {
+	document, has := input["document"].(*Document)
+	if document == nil || (!has) {
+		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+
+	// 解析 Markdown
+	tree, list, err := parseMarkdownToTree([]byte(document.Markdown))
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	// 没有数据
+	if len(tree) == 0 || len(list) == 0 {
+		return nil
+	}
+	jsonByte, err := json.Marshal(tree)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	//使用整个对象进行json,减少不不必要的字段
+	tocList := make([]DocumentTOC, 0)
+	err = json.Unmarshal(jsonByte, &tocList)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	tocBytes, err := json.Marshal(tocList)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	//文档的目录
+	document.Toc = string(tocBytes)
+
+	documentChunks := make([]DocumentChunk, 0)
+	for i := 0; i < len(list); i++ {
+		documentChunk := list[i]
+		documentChunk.DocumentID = document.Id
+		documentChunk.KnowledgeBaseID = document.KnowledgeBaseID
+		documentChunk.CreateTime = document.CreateTime
+		documentChunk.UpdateTime = document.UpdateTime
+		documentChunk.SortNo = i
+		documentChunk.Status = document.Status
+		documentChunks = append(documentChunks, *documentChunk)
+	}
+
+	input["documentChunks"] = documentChunks
+	return nil
+}
+
 // OpenAIDocumentEmbedder 向量化文档字符串
 type OpenAIDocumentEmbedder struct {
 	APIKey         string            `json:"api_key,omitempty"`
@@ -750,15 +813,22 @@ func (component *SQLiteVecDocumentStore) Initialization(ctx context.Context, inp
 	return nil
 }
 func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if !has {
+	var document *Document
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of SQLiteVecDocumentStore cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document = input["document"].(*Document)
 
-	documentChunks := input["documentChunks"].([]DocumentChunk)
-	vecDocumentChunks := input["vecDocumentChunks"].([]VecDocumentChunk)
+	var documentChunks []DocumentChunk
+	var vecDocumentChunks []VecDocumentChunk
+	if input["documentChunks"] != nil {
+		documentChunks = input["documentChunks"].([]DocumentChunk)
+	}
+	if input["vecDocumentChunks"] != nil {
+		vecDocumentChunks = input["vecDocumentChunks"].([]VecDocumentChunk)
+	}
 
 	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		//先删除,重新插入
@@ -1079,6 +1149,192 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 		oldDocumentChunks := oldDcs.([]DocumentChunk)
 		documentChunks = append(oldDocumentChunks, documentChunks...)
 	}
+	input["documentChunks"] = documentChunks
+	return nil
+}
+
+// MarkdownTOCRetriever 使用文档目录索引
+type MarkdownTOCRetriever struct {
+	// DocumentID 文档ID
+	DocumentID string `json:"documentID,omitempty"`
+	// KnowledgeBaseID 知识库ID
+	KnowledgeBaseID string `json:"knowledgeBaseID,omitempty"`
+	// Query 需要查询的关键字
+	Query string `json:"query,omitempty"`
+	// TopN 检索多少条
+	TopN int `json:"top_n,omitempty"`
+
+	APIKey         string            `json:"api_key,omitempty"`
+	Model          string            `json:"model,omitempty"`
+	BaseURL        string            `json:"base_url,omitempty"`
+	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
+	Timeout        int               `json:"timeout,omitempty"`
+	client         *http.Client      `json:"-"`
+
+	// PromptTemplate 大模型检索目录的提示词
+	PromptTemplate string             `json:"promptTemplate,omitempty"`
+	t              *template.Template `json:"-"`
+}
+
+func (component *MarkdownTOCRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+	var err error
+	tmpl := template.New("minrag-DocumentTOCIndexRetriever")
+	component.t, err = tmpl.Parse(component.PromptTemplate)
+	if err != nil {
+		return err
+	}
+	if component.Timeout == 0 {
+		component.Timeout = 180
+	}
+
+	component.client = &http.Client{
+		Timeout: time.Second * time.Duration(component.Timeout),
+	}
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL + "/chat/completions"
+	}
+	if component.APIKey == "" {
+		component.APIKey = config.AIAPIkey
+	}
+	if component.DefaultHeaders == nil {
+		component.DefaultHeaders = make(map[string]string, 0)
+	}
+	return nil
+}
+func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string]interface{}) error {
+	documentID := ""
+	knowledgeBaseID := ""
+	topN := 0
+	query := ""
+	qId, has := input["query"]
+	if has {
+		query = qId.(string)
+	}
+	if query == "" {
+		query = component.Query
+	}
+	if query == "" {
+		err := errors.New(funcT("The query of FtsKeywordRetriever cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	dId, has := input["documentID"]
+	if has {
+		documentID = dId.(string)
+	}
+	if documentID == "" {
+		documentID = component.DocumentID
+	}
+	kId, has := input["knowledgeBaseID"]
+	if has {
+		knowledgeBaseID = kId.(string)
+	}
+	if knowledgeBaseID == "" {
+		knowledgeBaseID = component.KnowledgeBaseID
+	}
+	tId, has := input["topN"]
+	if has {
+		topN = tId.(int)
+	}
+	if topN == 0 {
+		topN = component.TopN
+	}
+	if topN == 0 {
+		topN = 5
+	}
+
+	// 查询文档的目录
+	finder := zorm.NewFinder().Append("SELECT id,name,toc from " + tableDocumentName + " WHERE 1=1")
+	if documentID != "" {
+		finder.Append(" and documentID=?", documentID)
+	}
+	if knowledgeBaseID != "" {
+		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+
+	documents := make([]Document, 0)
+	err := zorm.Query(ctx, finder, &documents, nil)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+
+	if len(documents) < 1 { //没有文档
+		return nil
+	}
+
+	tocMap := map[string]interface{}{
+		"query":     query,
+		"documents": documents,
+	}
+
+	// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
+	var buf bytes.Buffer
+	// 执行模板并将结果写入到 bytes.Buffer
+	if err := component.t.Execute(&buf, tocMap); err != nil {
+		input[errorKey] = err
+		return err
+	}
+	// 获取编译后的内容
+	content := buf.String()
+
+	bodyMap := make(map[string]interface{})
+	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: content}}
+	bodyMap["model"] = component.Model
+	bodyMap["response_format"] = map[string]string{"type": "json_object"}
+	//输出类型
+	bodyMap["stream"] = false
+	//请求大模型
+	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	rs := struct {
+		Choices []Choice `json:"choices,omitempty"`
+	}{}
+	err = json.Unmarshal(bodyByte, &rs)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	if len(rs.Choices) < 1 {
+		return nil
+	}
+	//获取第一个结果
+	resultJson := rs.Choices[0].Message.Content
+	if resultJson == "" {
+		return nil
+	}
+
+	docIdResult := struct {
+		Result []string `json:"result,omitempty"`
+	}{}
+	err = json.Unmarshal([]byte(resultJson), &docIdResult)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	if len(docIdResult.Result) < 1 {
+		return nil
+	}
+
+	var documentChunks []DocumentChunk
+	if input["documentChunks"] != nil {
+		documentChunks = input["documentChunks"].([]DocumentChunk)
+	}
+
+	tocChunks := make([]DocumentChunk, 0)
+
+	f_dc := zorm.NewSelectFinder(tableDocumentChunkName).Append("WHERE id in (?)", docIdResult.Result)
+	page := zorm.NewPage()
+	page.PageSize = topN
+	err = zorm.Query(ctx, f_dc, &tocChunks, page)
+	if err != nil {
+		input[errorKey] = err
+		return err
+	}
+	documentChunks = append(documentChunks, tocChunks...)
 	input["documentChunks"] = documentChunks
 	return nil
 }
@@ -1470,7 +1726,7 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 		Timeout: time.Second * time.Duration(component.Timeout),
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL
+		component.BaseURL = config.AIBaseURL + "/chat/completions"
 	}
 	if component.APIKey == "" {
 		component.APIKey = config.AIAPIkey
@@ -1486,7 +1742,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	if !has { //没有消息列表,就根据用户的query构建一个
 		query, hasQuery := input["query"].(string)
 		if !hasQuery {
-			err := errors.New(funcT("input['messages'] cannot be empty"))
+			err := errors.New(funcT("input['query'] cannot be empty"))
 			input[errorKey] = err
 			return err
 		}
@@ -1509,7 +1765,6 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 
 	c := input["c"].(*app.RequestContext)
 
-	url := component.BaseURL + "/chat/completions"
 	stream := true
 	// 如果没有设置,根据请求类型,自动获取是否流式输出
 	if component.Stream == nil && c != nil {
@@ -1523,7 +1778,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 
 	if !stream { //一次性输出,不是流式输出
 		//请求大模型
-		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
+		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
 		if err != nil {
 			input[errorKey] = err
 			return err
@@ -1590,7 +1845,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	component.DefaultHeaders["Connection"] = "keep-alive"
 
 	//请求大模型
-	resp, err := httpPostJsonResponse(component.client, component.APIKey, url, component.DefaultHeaders, bodyMap)
+	resp, err := httpPostJsonResponse(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
 	if err != nil {
 		input[errorKey] = err
 		return err

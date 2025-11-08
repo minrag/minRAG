@@ -65,7 +65,12 @@ CREATE TABLE IF NOT EXISTS document_chunk (
 		id TEXT PRIMARY KEY    NOT NULL,
 		documentID        TEXT NOT NULL,
 		knowledgeBaseID   TEXT NOT NULL,
+		title             TEXT,
 		markdown          TEXT,
+		parentID          TEXT,
+		preID             TEXT,
+		nextID            TEXT,
+		level             INT,
 		createTime        TEXT,
 		updateTime        TEXT,
 		createUser        TEXT,
@@ -86,28 +91,29 @@ CREATE TABLE IF NOT EXISTS component (
 	 ) strict ;
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,1,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"tikaURL":"http://localhost:9998/tika"}','TikaConverter','TikaConverter');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,2,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','MarkdownConverter','MarkdownConverter');
--- INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','MarkdownConverter','MarkdownConverter');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,3,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','WebScraper','WebScraper');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,4,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','HtmlCleaner','HtmlCleaner');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,5,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"splitBy":["\f", "\n\n", "\n", "。", "!", ".", ";", "，", ",", " "],"splitLength":500,"splitOverlap":0}','DocumentSplitter','DocumentSplitter');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,6,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"webURL":"https://www.bing.com/search?q=","querySelector":["li.b_algo div.b_tpcn"],"depth":2,"top_n":3}','WebSearch','WebSearch');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,7,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-text-embedding-v2"}','LKEDocumentEmbedder','LKEDocumentEmbedder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,8,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Embedding-8B","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIDocumentEmbedder','OpenAIDocumentEmbedder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','SQLiteVecDocumentStore','SQLiteVecDocumentStore');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,10,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-text-embedding-v2"}','LKETextEmbedder','LKETextEmbedder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,11,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Embedding-8B","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder','OpenAITextEmbedder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,12,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"top_n":5,"score":0.0}','VecEmbeddingRetriever','VecEmbeddingRetriever');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,13,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"top_n":5,"score":0.0}','FtsKeywordRetriever','FtsKeywordRetriever');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,14,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-reranker-base","top_n":5,"score":0.1}','LKEDocumentChunkReranker','LKEDocumentChunkReranker');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,15,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"qwen3-reranker-8b","top_n":5,"score":0.1}','QianFanDocumentChunkReranker','QianFanDocumentChunkReranker');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,16,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","return_documents":true,"top_n":5,"score":0.1}','BaiLianDocumentChunkReranker','BaiLianDocumentChunkReranker');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,17,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Reranker-8B","top_n":5,"score":0.1}','DocumentChunkReranker','DocumentChunkReranker');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,18,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"promptTemplate":"{{if .webSerachDocuments}} 联网搜索的相关网页内容,忽略内容中无关广告信息.{{ range $i,$v := .webSerachDocuments }} {{ $v.Name }} \n {{ $v.Id }} \n {{ $v.Markdown }} \n\n {{end }}{{end}} {{if .documentChunks}}根据文档,请回答问题,回复中不要说提供了文档.\n 文档: \n {{ range $i,$v := .documentChunks }} {{ $v.Markdown }} \n {{end }} \n{{end}}问题: {{ .query }} \n回答:"}','PromptBuilder','PromptBuilder');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,19,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"memoryLength":3}','OpenAIChatMemory','OpenAIChatMemory');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,20,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"DeepSeek-V3.2-Exp","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIChatGenerator','OpenAIChatGenerator');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,21,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','ChatMessageLogStore','ChatMessageLogStore');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (0,22,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"MarkdownConverter","process":{"MarkdownConverter":"DocumentSplitter","DocumentSplitter":"OpenAIDocumentEmbedder","OpenAIDocumentEmbedder":"SQLiteVecDocumentStore"}}','Pipeline','indexPipeline');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,23,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"OpenAITextEmbedder","process":{"OpenAITextEmbedder":"VecEmbeddingRetriever","VecEmbeddingRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"DocumentChunkReranker","DocumentChunkReranker":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}','Pipeline','default');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,6,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','MarkdownTOCIndex','MarkdownTOCIndex');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,7,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"webURL":"https://www.bing.com/search?q=","querySelector":["li.b_algo div.b_tpcn"],"depth":2,"top_n":3}','WebSearch','WebSearch');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,8,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-text-embedding-v2"}','LKEDocumentEmbedder','LKEDocumentEmbedder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,9,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Embedding-8B","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIDocumentEmbedder','OpenAIDocumentEmbedder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,10,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','SQLiteVecDocumentStore','SQLiteVecDocumentStore');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,11,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-text-embedding-v2"}','LKETextEmbedder','LKETextEmbedder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,12,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Embedding-8B","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAITextEmbedder','OpenAITextEmbedder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,13,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"top_n":5,"score":0.0}','VecEmbeddingRetriever','VecEmbeddingRetriever');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,14,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"top_n":5,"score":0.0}','FtsKeywordRetriever','FtsKeywordRetriever');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,15,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"DeepSeek-V3.2-Exp","promptTemplate":"已知问题和多个文档树状结构,需要找出所有可能包含答案的文档节点ID.\n 问题: {{ .query }} \n   文档树状结构:\n {{if .documents}} {{ range $i,$v := .documents }} 文档名称:{{ $v.Name }} \n 树状结构:{{ $v.Toc }} \n\n {{end }}{{end}} \n\n 请直接回复 JSON 格式:{\"result\":[node_id1, node_id2, ...]}','MarkdownTOCRetriever','MarkdownTOCRetriever');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,16,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"lke-reranker-base","top_n":5,"score":0.1}','LKEDocumentChunkReranker','LKEDocumentChunkReranker');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,17,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"qwen3-reranker-8b","top_n":5,"score":0.1}','QianFanDocumentChunkReranker','QianFanDocumentChunkReranker');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,18,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","return_documents":true,"top_n":5,"score":0.1}','BaiLianDocumentChunkReranker','BaiLianDocumentChunkReranker');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,19,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"Qwen3-Reranker-8B","top_n":5,"score":0.1}','DocumentChunkReranker','DocumentChunkReranker');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,20,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"promptTemplate":"{{if .webSerachDocuments}} 联网搜索的相关网页内容,忽略内容中无关广告信息.{{ range $i,$v := .webSerachDocuments }} {{ $v.Name }} \n {{ $v.Id }} \n {{ $v.Markdown }} \n\n {{end }}{{end}} {{if .documentChunks}}根据文档,请回答问题,回复中不要说提供了文档.\n 文档: \n {{ range $i,$v := .documentChunks }} {{ $v.Markdown }} \n {{end }} \n{{end}}问题: {{ .query }} \n回答:"}','PromptBuilder','PromptBuilder');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,21,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"memoryLength":3}','OpenAIChatMemory','OpenAIChatMemory');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,22,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"model":"DeepSeek-V3.2-Exp","defaultHeaders":{"X-Failover-Enabled": "true", "X-Package": "1910"}}','OpenAIChatGenerator','OpenAIChatGenerator');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,23,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','ChatMessageLogStore','ChatMessageLogStore');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (0,24,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"MarkdownConverter","process":{"MarkdownConverter":"DocumentSplitter","DocumentSplitter":"OpenAIDocumentEmbedder","OpenAIDocumentEmbedder":"SQLiteVecDocumentStore"}}','Pipeline','indexPipeline');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,25,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"OpenAITextEmbedder","process":{"OpenAITextEmbedder":"VecEmbeddingRetriever","VecEmbeddingRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"DocumentChunkReranker","DocumentChunkReranker":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}','Pipeline','default');
 
 
 CREATE TABLE IF NOT EXISTS agent (
@@ -180,7 +186,8 @@ CREATE VIRTUAL TABLE IF NOT EXISTS fts_document_chunk USING fts5 (
     id UNINDEXED,
     documentID UNINDEXED,
     knowledgeBaseID UNINDEXED,
-    markdown ,
+	title,
+    markdown,
     sortNo UNINDEXED,
     status UNINDEXED,
     tokenize = 'simple 0',
@@ -190,22 +197,22 @@ CREATE VIRTUAL TABLE IF NOT EXISTS fts_document_chunk USING fts5 (
 
 CREATE TRIGGER trigger_document_chunk_insert AFTER INSERT ON document_chunk
 BEGIN
-    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
-    VALUES (new.rowid,new.id, new.documentID, new.knowledgeBaseID, new.markdown, new.sortNo, new.status);
+    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, title, markdown, sortNo, status)
+    VALUES (new.rowid,new.id, new.documentID, new.knowledgeBaseID, new.title, new.markdown, new.sortNo, new.status);
 END;
 
 CREATE TRIGGER trigger_document_chunk_delete AFTER DELETE ON document_chunk
 BEGIN
-    INSERT INTO fts_document_chunk(fts_document_chunk, id, documentID, knowledgeBaseID, markdown, sortNo, status)
-    VALUES ('delete', old.id, old.documentID, old.knowledgeBaseID, old.markdown, old.sortNo, old.status);
+    INSERT INTO fts_document_chunk(fts_document_chunk, id, documentID, knowledgeBaseID, title, markdown, sortNo, status)
+    VALUES ('delete', old.id, old.documentID, old.knowledgeBaseID, old.title, old.markdown, old.sortNo, old.status);
 END;
 
 CREATE TRIGGER trigger_document_chunk_update AFTER UPDATE ON document_chunk
 BEGIN
-    INSERT INTO fts_document_chunk(fts_document_chunk, rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
-    VALUES ('delete',old.rowid, old.id, old.documentID, old.knowledgeBaseID, old.markdown, old.sortNo, old.status);
-    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, markdown, sortNo, status)
-    VALUES (new.rowid, new.id, new.documentID, new.knowledgeBaseID, new.markdown, new.sortNo, new.status);
+    INSERT INTO fts_document_chunk(fts_document_chunk, rowid, id, documentID, knowledgeBaseID, title, markdown, sortNo, status)
+    VALUES ('delete',old.rowid, old.id, old.documentID, old.knowledgeBaseID, old.title, old.markdown, old.sortNo, old.status);
+    INSERT INTO fts_document_chunk(rowid, id, documentID, knowledgeBaseID, title, markdown, sortNo, status)
+    VALUES (new.rowid, new.id, new.documentID, new.knowledgeBaseID, new.title, new.markdown, new.sortNo, new.status);
 END;
 
 
