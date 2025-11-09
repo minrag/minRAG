@@ -149,7 +149,16 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 						currentNode.Markdown += string(source[segment.Start:segment.Stop])
 					}
 				}
+
 			}
+		}
+	}
+
+	for i := 0; i < len(listNode); i++ {
+		node := listNode[i]
+		// 给内容加上标题的内容,例如  ## 标题1 \n
+		if node.Markdown != "" {
+			node.Markdown = strings.Repeat("#", node.Level) + " " + node.Title + " \n " + node.Markdown
 		}
 	}
 
