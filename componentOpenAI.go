@@ -659,9 +659,11 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 
 // MarkdownTOCIndex markdown目录索引
 type MarkdownTOCIndex struct {
+	OpenAIChatGenerator
 }
 
 func (component *MarkdownTOCIndex) Initialization(ctx context.Context, input map[string]interface{}) error {
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
 func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]interface{}) error {
@@ -681,9 +683,48 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 		input[errorKey] = err
 		return err
 	}
-	// 内容没有树形结构
+
+	markdown := ""
+	// 内容没有树形结构,调用模型生成markdown格式
 	if len(tree) == 0 || len(list) == 0 {
-		return nil
+		message := `
+		提供内容整理成markdown格式,根据内容拆分合理的目录标题,不要做扩展,只整理格式.
+		返回的json格式示例:{"markdown":<整理的markdown内容>}
+		需要整理为markdown的内容:
+		` + document.Markdown
+		// 请求大模型,获取json结果
+		resultJson, err := llmJSONResult(component.OpenAIChatGenerator, message)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		docIdResult := struct {
+			Markdown string `json:"markdown,omitempty"`
+		}{}
+		err = json.Unmarshal([]byte(resultJson), &docIdResult)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		if docIdResult.Markdown != "" {
+			markdown = docIdResult.Markdown
+		} else {
+			return nil
+		}
+	}
+
+	// 解析 Markdown
+	if markdown != "" {
+		tree, list, err = parseMarkdownToTree([]byte(markdown))
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		// 内容没有树形结构,调用模型生成markdown格式
+		if len(tree) == 0 || len(list) == 0 {
+			return nil
+		}
+		document.Markdown = markdown
 	}
 	jsonByte, err := json.Marshal(tree)
 	if err != nil {
