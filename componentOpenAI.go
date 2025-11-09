@@ -287,7 +287,7 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 	if !pathExist(component.MarkdownFileDir) {
 		os.MkdirAll(component.MarkdownFileDir, 0755)
 	}
-	defaultImageFileDir := datadir + "upload/markitdown/images"
+	defaultImageFileDir := datadir + "upload/markitdown/image"
 	if component.ImageFileDir == "" {
 		component.ImageFileDir = defaultImageFileDir
 	}
@@ -295,7 +295,7 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 		os.MkdirAll(component.ImageFileDir, 0755)
 	}
 	if component.ImageURLPrefix == "" {
-		component.ImageURLPrefix = "/upload/markitdown/images"
+		component.ImageURLPrefix = "/upload/markitdown/image"
 	}
 
 	return nil
@@ -688,7 +688,7 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 	// 内容没有树形结构,调用模型生成markdown格式
 	if len(tree) == 0 || len(list) == 0 {
 		message := `
-		提供内容整理成markdown格式,根据内容拆分合理的目录标题,不要做扩展,只整理格式.如果可能,末级标题的内容至少200字.
+		提供内容整理成markdown格式,根据内容拆分合理的目录标题,不要做扩展,只整理格式.如果可能,末级标题的内容至少200字,必须是原文档的内容,不要修改内容.
 		返回的json格式示例:{"markdown":<整理的markdown内容>}
 		需要整理为markdown的内容:
 		` + document.Markdown
