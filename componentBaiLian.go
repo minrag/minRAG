@@ -22,39 +22,18 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
-	"time"
 )
 
 // https://help.aliyun.com/zh/model-studio/developer-reference/text-rerank-api
 // BaiLianDocumentChunkReranker  阿里百炼的重排序模型
 type BaiLianDocumentChunkReranker struct {
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	// Query 需要查询的关键字
-	Query string `json:"query,omitempty"`
-	// TopN 检索多少条
-	TopN int `json:"top_n,omitempty"`
-	// Score ranker的score匹配分数
-	Score  float32      `json:"score,omitempty"`
-	client *http.Client `json:"-"`
+	DocumentChunkReranker
 }
 
 func (component *BaiLianDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
+	if component.Model == "" {
+		return errors.New("Initialization BaiLianDocumentChunkReranker error:Model is empty")
 	}
 	if component.BaseURL == "" {
 		if config.AIBaseURL == "" {
@@ -66,57 +45,17 @@ func (component *BaiLianDocumentChunkReranker) Initialization(ctx context.Contex
 		}
 		component.BaseURL = config.AIBaseURL[:index] + "/services/rerank/text-rerank/text-rerank"
 	}
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
+	component.DocumentChunkReranker.Initialization(ctx, input)
 	return nil
 }
 func (component *BaiLianDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topN := 0
-	var score float32 = 0.0
-	dcs, has := input["documentChunks"]
-	if !has || dcs == nil {
-		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	queryObj, has := input["query"]
-	if !has {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-	query := queryObj.(string)
-	if query == "" {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-
-	tId, has := input["topN"]
-	if has {
-		topN = tId.(int)
-	}
-	if topN == 0 {
-		topN = component.TopN
-	}
-	if topN == 0 {
-		topN = 5
-	}
-	disId, has := input["score"]
-	if has {
-		score = disId.(float32)
-	}
-	if score <= 0 {
-		score = component.Score
-	}
-
-	documentChunks := dcs.([]DocumentChunk)
-	if topN > len(documentChunks) {
-		topN = len(documentChunks)
-	}
-	if len(documentChunks) < 1 { //没有文档,不需要重排
+	if documentChunks == nil {
 		return nil
-	}
-	documents := make([]string, 0)
-	for i := 0; i < len(documentChunks); i++ {
-		documents = append(documents, documentChunks[i].Markdown)
 	}
 
 	bodyMap := map[string]interface{}{

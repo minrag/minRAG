@@ -22,83 +22,35 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
-	"time"
 )
 
 // https://cloud.baidu.com/doc/qianfan-api/s/2m7u4zt74
 // QianFanDocumentChunkReranker  百度千帆的重排序模型
 type QianFanDocumentChunkReranker struct {
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	// Query 需要查询的关键字
-	Query string `json:"query,omitempty"`
-	// TopN 检索多少条
-	TopN int `json:"top_n,omitempty"`
-	// Score ranker的score匹配分数
-	Score  float32      `json:"score,omitempty"`
-	client *http.Client `json:"-"`
+	DocumentChunkReranker
 }
 
 func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
+	if component.Model == "" {
+		return errors.New("Initialization QianFanDocumentChunkReranker error:Model is empty")
 	}
 	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL + "/reranker"
+		// 兼容 Jina
+		component.BaseURL = config.AIBaseURL + "/rerank"
 	}
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
+
+	component.DocumentChunkReranker.Initialization(ctx, input)
 
 	return nil
 }
 func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topN := 0
-	var score float32 = 0.0
-	documentChunks, has := input["documentChunks"].([]DocumentChunk)
-	if !has || documentChunks == nil {
-		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	query, has := input["query"].(string)
-	if !has || query == "" {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-
-	topN = input["topN"].(int)
-	if topN == 0 {
-		topN = component.TopN
-	}
-	if topN == 0 {
-		topN = 5
-	}
-	score = input["score"].(float32)
-
-	if score <= 0 {
-		score = component.Score
-	}
-	if topN > len(documentChunks) {
-		topN = len(documentChunks)
-	}
-	if len(documentChunks) < 1 { //没有文档,不需要重排
+	if documentChunks == nil {
 		return nil
-	}
-	documents := make([]string, 0)
-	for i := 0; i < len(documentChunks); i++ {
-		documents = append(documents, documentChunks[i].Markdown)
 	}
 
 	bodyMap := map[string]interface{}{

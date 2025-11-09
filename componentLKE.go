@@ -186,12 +186,7 @@ type LKETextEmbedder struct {
 	SecretKey string `json:"SecretKey,omitempty"`
 
 	Timestamp int `json:"-"`
-
-	Model          string            `json:"model,omitempty"` // lke-text-embedding-v2
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	MaxRetries     int               `json:"maxRetries,omitempty"`
-	client         *http.Client      `json:"-"`
+	OpenAIChatGenerator
 }
 
 func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
@@ -220,23 +215,17 @@ func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[
 		component.Service = "lkeap"
 	}
 
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
-
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-
 	if component.SecretId == "" {
 		component.SecretId = config.AIBaseURL
 	}
 	if component.SecretKey == "" {
 		component.SecretKey = config.AIAPIkey
 	}
+
+	if component.BaseURL == "" {
+		component.BaseURL = config.AIBaseURL + "/embeddings"
+	}
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 
 	return nil
 }
@@ -277,6 +266,8 @@ func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]inte
 
 // LKEDocumentChunkReranker  LKE对DocumentChunks进行重新排序. https://cloud.tencent.com/document/product/1772/115339
 type LKEDocumentChunkReranker struct {
+	DocumentChunkReranker
+
 	Host   string `json:"Host,omitempty"`   // lkeap.tencentcloudapi.com
 	Action string `json:"Action,omitempty"` // RunRerank
 	Region string `json:"Region,omitempty"` // ap-beijing, ap-guangzhou
@@ -288,17 +279,6 @@ type LKEDocumentChunkReranker struct {
 	SecretKey string `json:"SecretKey,omitempty"`
 
 	Timestamp int `json:"-"`
-
-	Model          string            `json:"model,omitempty"` // lke-reranker-base
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	MaxRetries     int               `json:"maxRetries,omitempty"`
-
-	// TopN 检索多少条
-	TopN int `json:"top_n,omitempty"`
-	// Score ranker的score匹配分数
-	Score  float32      `json:"score,omitempty"`
-	client *http.Client `json:"-"`
 }
 
 func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
@@ -327,72 +307,18 @@ func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, i
 		component.Service = "lkeap"
 	}
 
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
-
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-
-	if component.SecretId == "" {
-		component.SecretId = config.AIBaseURL
-	}
-	if component.SecretKey == "" {
-		component.SecretKey = config.AIAPIkey
-	}
+	component.DocumentChunkReranker.Initialization(ctx, input)
 
 	return nil
 }
 func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topN := 0
-	var score float32 = 0.0
-	dcs, has := input["documentChunks"]
-	if !has || dcs == nil {
-		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	queryObj, has := input["query"]
-	if !has {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-	query := queryObj.(string)
-	if query == "" {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-
-	tId, has := input["topN"]
-	if has {
-		topN = tId.(int)
-	}
-	if topN == 0 {
-		topN = component.TopN
-	}
-	if topN == 0 {
-		topN = 5
-	}
-	disId, has := input["score"]
-	if has {
-		score = disId.(float32)
-	}
-	if score <= 0 {
-		score = component.Score
-	}
-
-	documentChunks := dcs.([]DocumentChunk)
-	if topN > len(documentChunks) {
-		topN = len(documentChunks)
-	}
-	if len(documentChunks) < 1 { //没有文档,不需要重排
+	if documentChunks == nil {
 		return nil
-	}
-	documents := make([]string, 0)
-	for i := 0; i < len(documentChunks); i++ {
-		documents = append(documents, documentChunks[i].Markdown)
 	}
 
 	bodyMap := map[string]interface{}{

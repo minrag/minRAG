@@ -257,9 +257,8 @@ func (component *TikaConverter) Run(ctx context.Context, input map[string]interf
 
 // MarkdownConverter 调用markitdown解析文档
 type MarkdownConverter struct {
-	APIKey          string `json:"api_key,omitempty"`
-	Model           string `json:"model,omitempty"` // 理解图片的模型
-	BaseURL         string `json:"base_url,omitempty"`
+	OpenAIChatGenerator
+
 	Prompt          string `json:"prompt,omitempty"`          // 理解文档中图片的提示词
 	Markitdown      string `json:"markitdown,omitempty"`      // markdown的命令路径
 	MarkdownFileDir string `json:"markdownFileDir,omitempty"` // 生成的markdown文件目录
@@ -269,12 +268,13 @@ type MarkdownConverter struct {
 }
 
 func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Model == "" {
+		return errors.New("Initialization MarkdownConverter error:Model is empty")
+	}
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL
 	}
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
-	}
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 	if component.Prompt == "" {
 		component.Prompt = "提取图片内容,不要有引导语,介绍语,换行等"
 	}
@@ -673,6 +673,9 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 		input[errorKey] = err
 		return err
 	}
+	if document.Markdown == "" { //没有内容
+		return nil
+	}
 
 	// 解析 Markdown
 	tree, list, err := parseMarkdownToTree([]byte(document.Markdown))
@@ -680,7 +683,7 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 		input[errorKey] = err
 		return err
 	}
-	// 没有数据
+	// 内容没有树形结构
 	if len(tree) == 0 || len(list) == 0 {
 		return nil
 	}
@@ -722,31 +725,17 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 
 // OpenAIDocumentEmbedder 向量化文档字符串
 type OpenAIDocumentEmbedder struct {
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	MaxRetries     int               `json:"maxRetries,omitempty"`
-	client         *http.Client      `json:"-"`
+	OpenAIChatGenerator
 }
 
 func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
+	if component.Model == "" {
+		return errors.New("Initialization OpenAIDocumentEmbedder error:Model is empty")
 	}
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL + "/embeddings"
 	}
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
-	}
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
 func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
@@ -883,32 +872,17 @@ func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[stri
 
 // OpenAITextEmbedder 向量化字符串文本
 type OpenAITextEmbedder struct {
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	MaxRetries     int               `json:"maxRetries,omitempty"`
-	client         *http.Client      `json:"-"`
+	OpenAIChatGenerator
 }
 
 func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
+	if component.Model == "" {
+		return errors.New("Initialization OpenAITextEmbedder error:Model is empty")
 	}
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL + "/embeddings"
 	}
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
-	}
-
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
@@ -1164,12 +1138,8 @@ type MarkdownTOCRetriever struct {
 	// TopN 检索多少条
 	TopN int `json:"top_n,omitempty"`
 
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
-	client         *http.Client      `json:"-"`
+	// 声明LLM大语言类型
+	OpenAIChatGenerator
 
 	// PromptTemplate 大模型检索目录的提示词
 	PromptTemplate string             `json:"promptTemplate,omitempty"`
@@ -1183,22 +1153,10 @@ func (component *MarkdownTOCRetriever) Initialization(ctx context.Context, input
 	if err != nil {
 		return err
 	}
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
 
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-	if component.BaseURL == "" {
-		component.BaseURL = config.AIBaseURL + "/chat/completions"
-	}
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
-	}
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
+	// 调用 LLM模型的初始化方法
+	component.OpenAIChatGenerator.Initialization(ctx, input)
+
 	return nil
 }
 func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string]interface{}) error {
@@ -1277,36 +1235,12 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	}
 	// 获取编译后的内容
 	content := buf.String()
-
-	bodyMap := make(map[string]interface{})
-	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: content}}
-	bodyMap["model"] = component.Model
-	bodyMap["response_format"] = map[string]string{"type": "json_object"}
-	//输出类型
-	bodyMap["stream"] = false
-	//请求大模型
-	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+	// 请求大模型,获取json结果
+	resultJson, err := llmJSONResult(component.OpenAIChatGenerator, content)
 	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	rs := struct {
-		Choices []Choice `json:"choices,omitempty"`
-	}{}
-	err = json.Unmarshal(bodyByte, &rs)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-	if len(rs.Choices) < 1 {
-		return nil
-	}
-	//获取第一个结果
-	resultJson := rs.Choices[0].Message.Content
-	if resultJson == "" {
-		return nil
-	}
-
 	docIdResult := struct {
 		Result []string `json:"result,omitempty"`
 	}{}
@@ -1339,87 +1273,69 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	return nil
 }
 
+// llmJSONResult 请求大模型获得json结果
+func llmJSONResult(component OpenAIChatGenerator, message string) (string, error) {
+	bodyMap := make(map[string]interface{})
+	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: message}}
+	bodyMap["model"] = component.Model
+	bodyMap["response_format"] = map[string]string{"type": "json_object"}
+	//输出类型
+	bodyMap["stream"] = false
+	//请求大模型
+	bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+	if err != nil {
+		return "", err
+	}
+	rs := struct {
+		Choices []Choice `json:"choices,omitempty"`
+	}{}
+	err = json.Unmarshal(bodyByte, &rs)
+	if err != nil {
+		return "", err
+	}
+	if len(rs.Choices) < 1 {
+		return "", nil
+	}
+	//获取第一个结果
+	resultJson := rs.Choices[0].Message.Content
+	return resultJson, nil
+}
+
 // DocumentChunkReranker 对DocumentChunks进行重新排序
 type DocumentChunkReranker struct {
-	APIKey         string            `json:"api_key,omitempty"`
-	Model          string            `json:"model,omitempty"`
-	BaseURL        string            `json:"base_url,omitempty"`
-	DefaultHeaders map[string]string `json:"defaultHeaders,omitempty"`
-	Timeout        int               `json:"timeout,omitempty"`
+	// 声明LLM大语言类型
+	OpenAIChatGenerator
+
 	// Query 需要查询的关键字
 	Query string `json:"query,omitempty"`
 	// TopN 检索多少条
 	TopN int `json:"top_n,omitempty"`
 	// Score ranker的score匹配分数
-	Score  float32      `json:"score,omitempty"`
-	client *http.Client `json:"-"`
+	Score float32 `json:"score,omitempty"`
 }
 
 func (component *DocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Timeout == 0 {
-		component.Timeout = 180
-	}
-
-	component.client = &http.Client{
-		Timeout: time.Second * time.Duration(component.Timeout),
-	}
-
-	if component.APIKey == "" {
-		component.APIKey = config.AIAPIkey
+	if component.Model == "" {
+		return errors.New("Initialization DocumentChunkReranker error:Model is empty")
 	}
 	if component.BaseURL == "" {
 		// 兼容 Jina
 		component.BaseURL = config.AIBaseURL + "/rerank"
 	}
-	if component.DefaultHeaders == nil {
-		component.DefaultHeaders = make(map[string]string, 0)
-	}
 
+	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
 func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
-	topN := 0
-	var score float32 = 0.0
-	documentChunks, has := input["documentChunks"].([]DocumentChunk)
-	if !has || documentChunks == nil {
-		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+
+	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
+	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	query, has := input["query"].(string)
-	if !has || query == "" {
-		return errors.New(funcT("input['query'] cannot be empty"))
-	}
-
-	tId, has := input["topN"]
-	if has {
-		topN = tId.(int)
-	}
-	if topN == 0 {
-		topN = component.TopN
-	}
-	if topN == 0 {
-		topN = 5
-	}
-
-	tScore, has := input["score"]
-	if has {
-		score = tScore.(float32)
-	}
-	if score <= 0 {
-		score = component.Score
-	}
-	if topN > len(documentChunks) {
-		topN = len(documentChunks)
-	}
-	if len(documentChunks) < 1 { //没有文档,不需要重排
+	if documentChunks == nil {
 		return nil
 	}
-	documents := make([]string, 0)
-	for i := 0; i < len(documentChunks); i++ {
-		documents = append(documents, documentChunks[i].Markdown)
-	}
-
 	bodyMap := map[string]interface{}{
 		"model":     component.Model,
 		"query":     query,
@@ -1463,6 +1379,53 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	rerankerDCS = sortDocumentChunksScore(rerankerDCS, topN, score)
 	input["documentChunks"] = rerankerDCS
 	return nil
+}
+
+// checkRerankParameter 检查input里的参数,返回 query,topN,score,documentChunks,documents,error
+func (component *DocumentChunkReranker) checkRerankParameter(ctx context.Context, input map[string]interface{}) (string, int, float32, []DocumentChunk, []string, error) {
+	topN := 0
+	var score float32 = 0.0
+	documentChunks, has := input["documentChunks"].([]DocumentChunk)
+	if !has || documentChunks == nil {
+		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
+		return "", 0, 0.0, nil, nil, err
+	}
+	query, has := input["query"].(string)
+	if !has || query == "" {
+		err := errors.New(funcT("input['query'] cannot be empty"))
+		return "", 0, 0.0, nil, nil, err
+	}
+
+	tId, has := input["topN"]
+	if has {
+		topN = tId.(int)
+	}
+	if topN == 0 {
+		topN = component.TopN
+	}
+	if topN == 0 {
+		topN = 5
+	}
+
+	tScore, has := input["score"]
+	if has {
+		score = tScore.(float32)
+	}
+	if score <= 0 {
+		score = component.Score
+	}
+	if topN > len(documentChunks) {
+		topN = len(documentChunks)
+	}
+	if len(documentChunks) < 1 { //没有文档,不需要重排
+		return "", 0, 0.0, nil, nil, nil
+	}
+	documents := make([]string, 0)
+	for i := 0; i < len(documentChunks); i++ {
+		documents = append(documents, documentChunks[i].Markdown)
+	}
+	return query, topN, score, documentChunks, documents, nil
+
 }
 
 func sortDocumentChunksScore(documentChunks []DocumentChunk, topN int, score float32) []DocumentChunk {
