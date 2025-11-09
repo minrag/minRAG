@@ -10,6 +10,8 @@
   "Please enter the base_url path of the AI platform":"请输入AI平台base_url路径",
   "api_key for the AI platform":"AI平台api_key",
   "Please enter the api_key of the AI platform":"请输入AI平台api_key",
+  "LLM Model":"大语言模型",
+  "Please enter LLM Model":"请输入大语言模型",
   "Supports":"支持",
   "Tencent Cloud LKE,Baidu QianFan,Aliyun BaiLian,ByteDance ARK":"腾讯云LKE、百度千帆、阿里云百炼、火山引擎",
   "Knowledge Base": "知识库",

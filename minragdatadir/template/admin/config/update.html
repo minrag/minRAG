@@ -84,7 +84,13 @@
 					<div class="layui-input-block">
 					  <input type="text" name="aiAPIKey"  autocomplete="off" class="layui-input" value="{{.Data.AIAPIkey}}">
 					</div>
-				</div>		
+				</div>	
+				<div class="layui-form-item layui-col-md6">
+					<label class="layui-form-label">{{T "LLM Model"}}</label>
+					<div class="layui-input-block">
+					  <input type="text" name="llmModel"  autocomplete="off" class="layui-input" value="{{.Data.LLMModel}}">
+					</div>
+				</div>			
 				<div class="layui-form-item">
 					<div class="layui-input-block">
 					  <button type="submit" class="layui-btn layui-bg-blue" lay-submit lay-filter="minrag-form-ajax-update">{{T "Submit Changes"}}</button>

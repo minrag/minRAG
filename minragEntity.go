@@ -57,6 +57,9 @@ type Config struct {
 	// AIAPIkey AI平台api_key
 	AIAPIkey string `column:"aiAPIKey" json:"aiAPIKey,omitempty"`
 
+	// LLMModel 默认的LLM模型
+	LLMModel string `column:"llmModel" json:"llmModel,omitempty"`
+
 	// CreateTime 创建时间
 	CreateTime string `column:"createTime" json:"createTime,omitempty"`
 

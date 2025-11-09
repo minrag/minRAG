@@ -268,9 +268,7 @@ type MarkdownConverter struct {
 }
 
 func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
-	if component.Model == "" {
-		return errors.New("Initialization MarkdownConverter error:Model is empty")
-	}
+
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL
 	}
@@ -1681,6 +1679,13 @@ type OpenAIChatGenerator struct {
 }
 
 func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.Model == "" {
+		component.Model = config.LLMModel
+	}
+	if component.Model == "" {
+		return errors.New("Initialization OpenAIChatGenerator error:Model is empty")
+	}
+
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}

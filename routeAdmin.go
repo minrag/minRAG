@@ -178,7 +178,7 @@ func funcAdminInstall(ctx context.Context, c *app.RequestContext) {
 	// 安装成功,更新安装状态
 	updateInstall(ctx)
 	// 更新AI配置
-	updateConfigAI(ctx, c.PostForm("aiBaseURL"), c.PostForm("aiAPIKey"))
+	updateConfigAI(ctx, c.PostForm("aiBaseURL"), c.PostForm("aiAPIKey"), c.PostForm("llmModel"))
 	//重新初始化组件
 	initComponentMap()
 	c.Redirect(http.StatusOK, cRedirecURI(loginHtml))

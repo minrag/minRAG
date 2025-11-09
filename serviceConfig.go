@@ -113,12 +113,12 @@ func insertConfig(ctx context.Context) error {
 }
 
 // updateConfigAI 安装时更新AI配置
-func updateConfigAI(ctx context.Context, aiBaseURL string, aiAPIKey string) error {
+func updateConfigAI(ctx context.Context, aiBaseURL string, aiAPIKey string, llmModel string) error {
 	if aiBaseURL == "" || aiAPIKey == "" {
 		return nil
 	}
 	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		finder := zorm.NewUpdateFinder(tableConfigName).Append("aiBaseURL=?,aiAPIKey=? WHERE id=?", aiBaseURL, aiAPIKey, "minrag_config")
+		finder := zorm.NewUpdateFinder(tableConfigName).Append("aiBaseURL=?,aiAPIKey=?,llmModel=? WHERE id=?", aiBaseURL, aiAPIKey, llmModel, "minrag_config")
 		return zorm.UpdateFinder(ctx, finder)
 	})
 	if err != nil {
