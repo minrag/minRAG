@@ -263,7 +263,7 @@ type MarkdownConverter struct {
 	Markitdown      string `json:"markitdown,omitempty"`      // markdown的命令路径
 	MarkdownFileDir string `json:"markdownFileDir,omitempty"` // 生成的markdown文件目录
 	ImageFileDir    string `json:"imageFileDir,omitempty"`    // 图片存放的目录
-	ImageURLDir     string `json:"imageURLDir,omitempty"`     // URL的前缀目录
+	ImageURLPrefix  string `json:"imageURLPrefix,omitempty"`  // 图片的URL前缀
 	FilePath        string `json:"filePath,omitempty"`
 }
 
@@ -294,8 +294,8 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 	if !pathExist(component.ImageFileDir) {
 		os.MkdirAll(component.ImageFileDir, 0755)
 	}
-	if component.ImageURLDir == "" {
-		component.ImageURLDir = "/upload/markitdown/images"
+	if component.ImageURLPrefix == "" {
+		component.ImageURLPrefix = "/upload/markitdown/images"
 	}
 
 	return nil
@@ -337,7 +337,7 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 		envs = append(envs, "markitdown_model="+component.Model)
 		envs = append(envs, "markitdown_prompt="+component.Prompt)
 		envs = append(envs, "markitdown_imageFileDir="+component.ImageFileDir)
-		envs = append(envs, "markitdown_imageURLDir="+component.ImageURLDir)
+		envs = append(envs, "markitdown_imageURLPrefix="+component.ImageURLPrefix)
 		_, err = ExecCMD(cmd, envs, time.Second*60)
 		if err != nil {
 			input[errorKey] = err

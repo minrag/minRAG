@@ -63,20 +63,21 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 使用 [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) 解析文档,使用```python build.py```编译的```dist/markitdown```放到 ```minragdatadir```目录下,```MarkdownConverter```组件配置示例:
 ```json
 {
-    // 图片解析的模型
     "model":"Qwen3-VL-30B-A3B-Instruct", 
-    // 理解文档中图片的提示词
     "prompt":"提取图片内容,不要有引导语,介绍语,换行等", 
-    // markdown的命令路径
     "markitdown":"minragdatadir/markitdown/markitdown",
-    // 生成的markdown文件目录
     "markdownDir":"minragdatadir/upload/markitdown/markdown",
-    // 图片存放的目录
     "imageFileDir":"minragdatadir/upload/markitdown/image",
-    // URL的前缀目录
-    "imageURLDir":"/upload/markitdown/image"
+    "imageURLPrefix":"/upload/markitdown/image"
 }
 ```
+字段说明:
+- `model`:图片解析的模型
+- `prompt`:理解文档中图片的提示词
+- `markitdown`:markitdown的命令
+- `markdownDir`:生成的markdown文件目录
+- `imageFileDir`:图片存放的目录
+- `imageURLPrefix`:图片的URL前缀
 
 ## tika集成
 默认minRAG只支持markdown和text等文本格式,可以使用```TikaConverter```组件调用```tika```服务解析文档内容,```TikaConverter```组件配置示例:
@@ -183,8 +184,10 @@ java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 
 ## 组件
 minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型有:
+- TikaConverter: 使用tika解析文档
 - MarkdownConverter: 使用markitdown解析文档
 - DocumentSplitter: 分割文档
+- MarkdownTOCIndex: 索引markdown文件的目录
 - LKEDocumentEmbedder: 腾讯云LKE的文档Embedding模型
 - OpenAIDocumentEmbedder: OpenAI的文档Embedding模型
 - SQLiteVecDocumentStore: SQLiteVec的向量化保存
@@ -196,6 +199,8 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 - OpenAITextEmbedder: OpenAI的文本Embedding模型
 - VecEmbeddingRetriever: SQLiteVec向量查询
 - FtsKeywordRetriever: FTS5的BM25全文检索
+- MarkdownTOCRetriever: 使用markdown的目录检索章节
+- QianFanDocumentChunkReranker: 百度千帆的Reranker模型重排序
 - LKEDocumentChunkReranker: 腾讯云LKE的Reranker模型重排序
 - BaiLianDocumentChunkReranker: 阿里云百炼的Reranker模型重排序
 - DocumentChunkReranker: 默认的Reranker模型重排序

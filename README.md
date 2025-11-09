@@ -58,23 +58,24 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 <img src="minragdatadir/public/index.png" width="600px" />    
 
 ## Markitdown Integration (Default)
-Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkdownConverter``` component(Remove // comments when using):
+Use [https://gitee.com/minrag/markitdown](https://gitee.com/minrag/markitdown) to parse documents, The compiled ```dist/markitdown``` from ```python build.py``` should be placed in the ```minragdatadir``` directory. Example configuration for the ```MarkdownConverter``` component:
 ```json
 {
-    // Image analysis model
     "model":"Qwen3-VL-30B-A3B-Instruct", 
-    // Understand the prompts for images in the document
     "prompt":"Accurately extract the content of the image and directly describe the image without any irrelevant guidance or similar information.", 
-    // markitdown command path
     "markitdown":"minragdatadir/markitdown/markitdown",
-    // Generated Markdown File Directory
     "markdownDir":"minragdatadir/upload/markitdown/markdown",
-    // Directory for storing images
     "imageFileDir":"minragdatadir/upload/markitdown/image",
-    // URL prefix directory
-    "imageURLDir":"/upload/markitdown/image"
+    "imageURLPrefix":"/upload/markitdown/image"
 }
 ```   
+Description:
+- `model`:Image analysis model
+- `prompt`:Understand the prompts for images in the document
+- `markitdown`:markitdown command
+- `markdownDir`:Generated Markdown File Directory
+- `imageFileDir`:Directory for storing images
+- `imageURLPrefix`:images URL prefix 
 
 ## Tika Integration 
 By default, minRAG only supports text formats like Markdown and plain text. To parse document content, you can use the ```TikaConverter``` component to call the ```tika``` service. Example configuration for ```TikaConverter```:
