@@ -1275,6 +1275,7 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	// 获取编译后的内容
 	content := buf.String()
 	// 请求大模型,获取json结果
+	// @TODO 可以做成function call 函数,有大模型回调需要查看的nodeId
 	resultJson, err := llmJSONResult(component.OpenAIChatGenerator, content)
 	if err != nil {
 		input[errorKey] = err
