@@ -1632,11 +1632,18 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]int
 		}
 		agentPrompt := ChatMessage{Role: "system", Content: agent.AgentPrompt}
 		messages = append(messages, agentPrompt)
+
+		// input 中的tools对象
+		var tools []interface{}
+		if input["tools"] != nil {
+			tools = input["tools"].([]interface{})
+		}
+
 		//tools
 		if len(agent.Tools) > 0 {
 			toolSlice := make([]string, 0)
 			json.Unmarshal([]byte(agent.Tools), &toolSlice)
-			tools := make([]interface{}, 0)
+
 			for i := 0; i < len(toolSlice); i++ {
 				toolName := toolSlice[i]
 				fc, has := functionCallingMap[toolName]
