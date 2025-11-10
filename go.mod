@@ -3,7 +3,7 @@ module gitee.com/minrag/minrag
 go 1.25
 
 require (
-	gitee.com/chunanyong/zorm v1.7.9
+	gitee.com/chunanyong/zorm v1.8.0
 	github.com/chromedp/cdproto v0.0.0-20250803210736-d308e07a266d
 	github.com/chromedp/chromedp v0.14.2
 	github.com/cloudwego/hertz v0.10.3
