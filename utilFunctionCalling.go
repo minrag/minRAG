@@ -20,15 +20,25 @@ package main
 import (
 	"context"
 	"encoding/json"
+
+	"gitee.com/chunanyong/zorm"
 )
 
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 func init() {
+	ctx := context.Background()
+	//天气查询函数
 	fcWeather := FCWeather{}
-	fc, err := fcWeather.Initialization(context.TODO(), get_weather_json)
+	weather, err := fcWeather.Initialization(ctx, get_weather_json)
 	if err == nil {
-		functionCallingMap["get_weather"] = fc
+		functionCallingMap["get_weather"] = weather
+	}
+	//本地知识库检索函数
+	fcSearchKnowledgeBase := FCSearchKnowledgeBase{}
+	searchKnowledgeBase, err := fcSearchKnowledgeBase.Initialization(ctx, search_knowledge_base_json)
+	if err == nil {
+		functionCallingMap["search_knowledge_base"] = searchKnowledgeBase
 	}
 }
 
@@ -55,7 +65,8 @@ var get_weather_json = `{
 					"description": "The city and state, e.g. San Francisco, CA"
 				}
 			},
-			"required": ["location"]
+			"required": ["location"],
+			"additionalProperties": false
 		}
 	}
 }`
@@ -94,4 +105,77 @@ func (fc FCWeather) Run(ctx context.Context, arguments string) (string, error) {
 		}
 	}
 	return fc.Location + "的气温是25度", nil
+}
+
+var search_knowledge_base_json = `{
+	"type": "function",
+	"function": {
+		"name": "search_knowledge_base",
+		"description": "根据提供的节点ID数组检索本地知识库中的相关内容",
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"nodeIds": {
+					"type": "array",
+                    "items": {"type": "string"},
+					"description": "要检索的节点ID数组"
+				}
+			},
+			"required": ["nodeIds"],
+			"additionalProperties": false
+		}
+	}
+}`
+
+// FCSearchKnowledgeBase 查询本地知识库的函数
+type FCSearchKnowledgeBase struct {
+	//接受模型返回的 arguments
+	NodeIds        []string               `json:"nodeIds,omitempty"`
+	DescriptionMap map[string]interface{} `json:"-"`
+}
+
+func (fc FCSearchKnowledgeBase) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
+	dm := make(map[string]interface{})
+	if descriptionJson == "" {
+		return fc, nil
+	}
+	err := json.Unmarshal([]byte(descriptionJson), &dm)
+	if err != nil {
+		return fc, err
+	}
+	fc.DescriptionMap = dm
+	return fc, nil
+}
+
+// 获取描述的Map
+func (fc FCSearchKnowledgeBase) Description(ctx context.Context) interface{} {
+	return fc.DescriptionMap
+}
+
+// Run 执行方法
+func (fc FCSearchKnowledgeBase) Run(ctx context.Context, arguments string) (string, error) {
+	if arguments == "" {
+		return "", nil
+	}
+	err := json.Unmarshal([]byte(arguments), &fc)
+	if err != nil {
+		return "", nil
+	}
+	if len(fc.NodeIds) < 1 {
+		return "", nil
+	}
+
+	tocChunks := make([]DocumentChunk, 0)
+	f_dc := zorm.NewSelectFinder(tableDocumentChunkName, "id,markdown").Append("WHERE id in (?)", fc.NodeIds)
+	page := zorm.NewPage()
+	page.PageSize = 100
+	err = zorm.Query(ctx, f_dc, &tocChunks, page)
+	if err != nil {
+		return "", nil
+	}
+	resultByte, err := json.Marshal(tocChunks)
+	if err != nil {
+		return "", nil
+	}
+	return string(resultByte), nil
 }
