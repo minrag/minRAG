@@ -26,19 +26,24 @@ import (
 
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
+const (
+	FCWeatherName             = "get_weather"
+	FCSearchKnowledgeBaseName = "search_knowledge_base"
+)
+
 func init() {
 	ctx := context.Background()
 	//天气查询函数
 	fcWeather := FCWeather{}
 	weather, err := fcWeather.Initialization(ctx, get_weather_json)
 	if err == nil {
-		functionCallingMap["get_weather"] = weather
+		functionCallingMap[FCWeatherName] = weather
 	}
 	//本地知识库检索函数
 	fcSearchKnowledgeBase := FCSearchKnowledgeBase{}
 	searchKnowledgeBase, err := fcSearchKnowledgeBase.Initialization(ctx, search_knowledge_base_json)
 	if err == nil {
-		functionCallingMap["search_knowledge_base"] = searchKnowledgeBase
+		functionCallingMap[FCSearchKnowledgeBaseName] = searchKnowledgeBase
 	}
 }
 
@@ -111,14 +116,14 @@ var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
 		"name": "search_knowledge_base",
-		"description": "根据提供的节点ID数组检索本地知识库中的相关内容",
+		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点",
 		"parameters": {
 			"type": "object",
 			"properties": {
 				"nodeIds": {
 					"type": "array",
                     "items": {"type": "string"},
-					"description": "要检索的节点ID数组"
+					"description": "要检索的知识库文档节点ID"
 				}
 			},
 			"required": ["nodeIds"],

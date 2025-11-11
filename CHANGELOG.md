@@ -1,3 +1,7 @@
+v0.1.2
+- 使用```search_knowledge_base```知识库搜索函数代替直接调用大模型
+- 完善注释,文档
+
 v0.1.1
 - 配置增加默认大语言模型```llmModel```
 - 增加```MarkdownTOCIndex``` 和 ```MarkdownTOCRetriever```组件,支持markdown目录索引方式 

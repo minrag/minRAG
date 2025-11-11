@@ -1186,6 +1186,10 @@ type MarkdownTOCRetriever struct {
 }
 
 func (component *MarkdownTOCRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+	if component.TopN == 0 {
+		component.TopN = 5
+	}
+
 	var err error
 	tmpl := template.New("minrag-DocumentTOCIndexRetriever")
 	component.t, err = tmpl.Parse(component.PromptTemplate)
@@ -1236,9 +1240,6 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	if topN == 0 {
 		topN = component.TopN
 	}
-	if topN == 0 {
-		topN = 5
-	}
 
 	// 查询文档的目录
 	finder := zorm.NewFinder().Append("SELECT id,name,toc from " + tableDocumentName + " WHERE 1=1")
@@ -1261,7 +1262,6 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	}
 
 	tocMap := map[string]interface{}{
-		"query":     query,
 		"documents": documents,
 	}
 
@@ -1273,43 +1273,24 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 		return err
 	}
 	// 获取编译后的内容
-	content := buf.String()
-	// 请求大模型,获取json结果
-	// @TODO 可以做成function call 函数,有大模型回调需要查看的nodeId
-	resultJson, err := llmJSONResult(component.OpenAIChatGenerator, content)
-	if err != nil {
-		input[errorKey] = err
-		return err
+	message := buf.String()
+	var messages []ChatMessage
+	if input["messages"] != nil {
+		messages = input["messages"].([]ChatMessage)
 	}
-	docIdResult := struct {
-		Result []string `json:"result,omitempty"`
-	}{}
-	err = json.Unmarshal([]byte(resultJson), &docIdResult)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-	if len(docIdResult.Result) < 1 {
-		return nil
-	}
+	//添加文档的树状结构
+	messages = append(messages, ChatMessage{Role: "system", Content: message})
+	input["messages"] = messages
 
-	var documentChunks []DocumentChunk
-	if input["documentChunks"] != nil {
-		documentChunks = input["documentChunks"].([]DocumentChunk)
+	// input 中的tools对象
+	var tools []interface{}
+	if input["tools"] != nil {
+		tools = input["tools"].([]interface{})
 	}
+	fc := functionCallingMap[FCSearchKnowledgeBaseName]
+	tools = append(tools, fc.Description(ctx))
+	input["tools"] = tools
 
-	tocChunks := make([]DocumentChunk, 0)
-
-	f_dc := zorm.NewSelectFinder(tableDocumentChunkName).Append("WHERE id in (?)", docIdResult.Result)
-	page := zorm.NewPage()
-	page.PageSize = topN
-	err = zorm.Query(ctx, f_dc, &tocChunks, page)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-	documentChunks = append(documentChunks, tocChunks...)
-	input["documentChunks"] = documentChunks
 	return nil
 }
 
@@ -1723,6 +1704,7 @@ type OpenAIChatGenerator struct {
 	MaxRetries     int               `json:"maxRetries,omitempty"`
 	Temperature    float32           `json:"temperature,omitempty"`
 	Stream         *bool             `json:"stream,omitempty"`
+	MaxDeep        int               `json:"maxDeep,omitempty"` //最大迭代深度
 	//MaxCompletionTokens int64             `json:"maxCompletionTokens,omitempty"`
 	client *http.Client `json:"-"`
 }
@@ -1737,6 +1719,9 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 
 	if component.Timeout == 0 {
 		component.Timeout = 180
+	}
+	if component.MaxDeep == 0 {
+		component.MaxDeep = 10
 	}
 
 	component.client = &http.Client{
@@ -1754,22 +1739,23 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 	return nil
 }
 func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
+
+	if input["query"] == nil {
+		err := errors.New(funcT("input['query'] cannot be empty"))
+		input[errorKey] = err
+		return err
+	}
+	query := input["query"].(string)
 	messages := make([]ChatMessage, 0)
-	ms, has := input["messages"]
-	if !has { //没有消息列表,就根据用户的query构建一个
-		query, hasQuery := input["query"].(string)
-		if !hasQuery {
-			err := errors.New(funcT("input['query'] cannot be empty"))
-			input[errorKey] = err
-			return err
-		}
+	if input["messages"] != nil {
+		messages = input["messages"].([]ChatMessage)
+	} else {
 		cm := ChatMessage{Role: "user", Content: query}
 		messages = append(messages, cm)
-	} else {
-		messages = ms.([]ChatMessage)
 	}
+
 	bodyMap := make(map[string]interface{})
-	bodyMap["messages"] = messages
+
 	bodyMap["model"] = component.Model
 	if component.Temperature != 0 {
 		bodyMap["temperature"] = component.Temperature
@@ -1778,6 +1764,8 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	tools, has := input["tools"]
 	if has {
 		bodyMap["tools"] = tools
+	} else { //没有tools函数,默认迭代一次
+		component.MaxDeep = 1
 	}
 
 	c := input["c"].(*app.RequestContext)
@@ -1793,41 +1781,197 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	//输出类型
 	bodyMap["stream"] = stream
 
-	if !stream { //一次性输出,不是流式输出
-		//请求大模型
-		bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
-		rs := struct {
-			Choices []Choice `json:"choices,omitempty"`
-		}{}
-		err = json.Unmarshal(bodyByte, &rs)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
-		if len(rs.Choices) < 1 {
-			err := errors.New("httpPostJsonBody choices is empty")
-			input[errorKey] = err
-			return err
-		}
-		//获取第一个结果
-		choice := rs.Choices[0]
-		rsByte, _ := json.Marshal(rs)
-		rsStr := string(rsByte)
-		//没有函数调用,把模型返回的choice放入到input["choice"],并输出
-		if len(choice.Message.ToolCalls) == 0 {
-			input["choice"] = choice
-			c.WriteString(rsStr)
-			c.Flush()
-			return nil
+	// 多次深入迭代调用
+	for i := 0; i < component.MaxDeep; i++ {
+		// 设置message 参数
+		bodyMap["messages"] = messages
+
+		if !stream { //一次性输出,不是流式输出
+			//请求大模型
+			bodyByte, err := httpPostJsonBody(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+			if err != nil {
+				input[errorKey] = err
+				return err
+			}
+			rs := struct {
+				Choices []Choice `json:"choices,omitempty"`
+			}{}
+			err = json.Unmarshal(bodyByte, &rs)
+			if err != nil {
+				input[errorKey] = err
+				return err
+			}
+			if len(rs.Choices) < 1 {
+				err := errors.New("httpPostJsonBody choices is empty")
+				input[errorKey] = err
+				return err
+			}
+			//获取第一个结果
+			choice := rs.Choices[0]
+			rsByte, _ := json.Marshal(rs)
+			rsStr := string(rsByte)
+			//没有函数调用,把模型返回的choice放入到input["choice"],并输出
+			if len(choice.Message.ToolCalls) == 0 {
+				input["choice"] = choice
+				c.WriteString(rsStr)
+				c.Flush()
+				return nil
+			}
+			//追加返回的 assistant message
+			messages = append(messages, choice.Message)
+
+			//遍历所有的函数,追加到messages列表
+			for i := 0; i < len(choice.Message.ToolCalls); i++ {
+				tc := choice.Message.ToolCalls[i]
+				funcName := tc.Function.Name
+				//获取函数的实现对象
+				fc, has := functionCallingMap[funcName]
+				if !has {
+					continue
+				}
+				//执行函数
+				content, err := fc.Run(ctx, tc.Function.Arguments)
+				if err != nil {
+					continue
+				}
+				//将函数执行的结果和tool_call_id追加到messages列表
+				messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
+			}
+
+			//重新放入 input["messages"]
+			input["messages"] = messages
+			//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
+			//delete(input, "tools")
+			//重新运行组件,调用大模型.
+			//component.Run(ctx, input)
+
+			// 进入下一次循环
+			continue
 		}
 
+		// toolCalls 需要调用的函数列表,如果有值,说明需要调用函数,不能直接返回结果
+		var toolCalls []ToolCall
+
+		//设置SSE的协议头
+		component.DefaultHeaders["Accept"] = "text/event-stream"
+		component.DefaultHeaders["Cache-Control"] = "no-cache"
+		component.DefaultHeaders["Connection"] = "keep-alive"
+
+		//请求大模型
+		resp, err := httpPostJsonResponse(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		defer resp.Body.Close()
+		//用于拼接stream返回的最终结果
+		choice := Choice{FinishReason: "stop"}
+		//消息内容
+		var messageContent strings.Builder
+		//推理内容
+		var reasoningContent strings.Builder
+		// 使用 bufio.NewReader 逐行读取响应体
+		reader := bufio.NewReader(resp.Body)
+		//循环处理stream流输出
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+				input[errorKey] = err
+				return err
+			}
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			// SSE的标准格式是 data:空格 开头,后面跟着数据
+			if !strings.HasPrefix(line, "data: ") {
+				err := errors.New("stream data format is error")
+				input[errorKey] = err
+				return err
+			}
+			data := strings.TrimPrefix(line, "data: ")
+			if data == "[DONE]" { //结束符
+				// 没有需要调用的函数,就输出结束 DONE
+				if c != nil && len(toolCalls) == 0 {
+					c.WriteString("data: [DONE]\n\n")
+					c.Flush()
+				}
+				break
+			}
+			if data == "" {
+				continue
+			}
+			rs := struct {
+				Choices []Choice `json:"choices,omitempty"`
+			}{}
+			//大模型返回的json对象,进行接受
+			err = json.Unmarshal([]byte(data), &rs)
+			if err != nil {
+				input[errorKey] = err
+				return err
+			}
+			if len(rs.Choices) < 1 {
+				//err := errors.New("httpPostJsonResponse choices is empty")
+				//input[errorKey] = err
+				//return err
+				continue
+			}
+			//FinishReason结束符
+			if rs.Choices[0].FinishReason != "" {
+				choice.FinishReason = rs.Choices[0].FinishReason
+			}
+
+			// 模型返回的调用函数,有可能是多个函数
+			tcLen := len(rs.Choices[0].Delta.ToolCalls)
+			// 模型返回的有函数调用,初始化toolCalls,长度一致
+			if tcLen > 0 && len(toolCalls) == 0 {
+				toolCalls = make([]ToolCall, tcLen)
+			}
+			//stream会把函数参数片段输出,需要重新拼接为完整的函数信息
+			for i := 0; i < tcLen; i++ {
+				tc := rs.Choices[0].Delta.ToolCalls[i]
+				if tc.Id != "" { //tool_call_id 不会分段
+					toolCalls[tc.Index].Id = tc.Id
+				}
+				if tc.Function.Name != "" { //tool_call_name 函数名称,不会分段
+					toolCalls[tc.Index].Function.Name = tc.Function.Name
+				}
+				if tc.Function.Arguments != "" { //函数的参数,会分段,所以循环拼接起来
+					toolCalls[tc.Index].Function.Arguments += tc.Function.Arguments
+				}
+			}
+
+			rsByte, _ := json.Marshal(rs)
+			rsStr := string(rsByte)
+
+			// 不是函数调用,把返回的内容输出到页面
+			if c != nil && len(toolCalls) == 0 {
+				c.WriteString("data: " + rsStr + "\n\n")
+				c.Flush()
+			}
+			// 不是函数调用,把内容拼接起来
+			if len(toolCalls) == 0 {
+				messageContent.WriteString(rs.Choices[0].Delta.Content)
+				reasoningContent.WriteString(rs.Choices[0].Delta.ReasoningContent)
+			}
+		}
+		// 大模型的返回
+		message := ChatMessage{Role: "assistant", Content: messageContent.String(), ReasoningContent: reasoningContent.String(), ToolCalls: toolCalls}
+		//没有函数调用,把模型返回的choice放入到input["choice"]
+		if len(toolCalls) == 0 {
+			choice.Message = message
+			input["choice"] = choice
+			return nil
+		}
+		//追加返回的 assistant message
+		messages = append(messages, message)
+
 		//遍历所有的函数,追加到messages列表
-		for i := 0; i < len(choice.Message.ToolCalls); i++ {
-			tc := choice.Message.ToolCalls[i]
+		for i := 0; i < len(toolCalls); i++ {
+			tc := toolCalls[i]
 			funcName := tc.Function.Name
 			//获取函数的实现对象
 			fc, has := functionCallingMap[funcName]
@@ -1842,152 +1986,13 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 			//将函数执行的结果和tool_call_id追加到messages列表
 			messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
 		}
-
 		//重新放入 input["messages"]
 		input["messages"] = messages
 		//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
-		delete(input, "tools")
+		//delete(input, "tools")
 		//重新运行组件,调用大模型.
-		component.Run(ctx, input)
-
-		return nil
+		//component.Run(ctx, input)
 	}
-
-	// toolCalls 需要调用的函数列表,如果有值,说明需要调用函数,不能直接返回结果
-	var toolCalls []ToolCall
-
-	//设置SSE的协议头
-	component.DefaultHeaders["Accept"] = "text/event-stream"
-	component.DefaultHeaders["Cache-Control"] = "no-cache"
-	component.DefaultHeaders["Connection"] = "keep-alive"
-
-	//请求大模型
-	resp, err := httpPostJsonResponse(component.client, component.APIKey, component.BaseURL, component.DefaultHeaders, bodyMap)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
-	defer resp.Body.Close()
-	//用于拼接stream返回的最终结果
-	choice := Choice{FinishReason: "stop"}
-	var message strings.Builder
-	// 使用 bufio.NewReader 逐行读取响应体
-	reader := bufio.NewReader(resp.Body)
-	//循环处理stream流输出
-	for {
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			input[errorKey] = err
-			return err
-		}
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		// SSE的标准格式是 data:空格 开头,后面跟着数据
-		if !strings.HasPrefix(line, "data: ") {
-			err := errors.New("stream data format is error")
-			input[errorKey] = err
-			return err
-		}
-		data := strings.TrimPrefix(line, "data: ")
-		if data == "[DONE]" { //结束符
-			// 没有需要调用的函数,就输出结束 DONE
-			if c != nil && len(toolCalls) == 0 {
-				c.WriteString("data: [DONE]\n\n")
-				c.Flush()
-			}
-			break
-		}
-		if data == "" {
-			continue
-		}
-		rs := struct {
-			Choices []Choice `json:"choices,omitempty"`
-		}{}
-		//大模型返回的json对象,进行接受
-		err = json.Unmarshal([]byte(data), &rs)
-		if err != nil {
-			input[errorKey] = err
-			return err
-		}
-		if len(rs.Choices) < 1 {
-			//err := errors.New("httpPostJsonResponse choices is empty")
-			//input[errorKey] = err
-			//return err
-			continue
-		}
-		//FinishReason结束符
-		if rs.Choices[0].FinishReason != "" {
-			choice.FinishReason = rs.Choices[0].FinishReason
-		}
-
-		// 模型返回的调用函数,有可能是多个函数
-		tcLen := len(rs.Choices[0].Delta.ToolCalls)
-		// 模型返回的有函数调用,初始化toolCalls,长度一致
-		if tcLen > 0 && len(toolCalls) == 0 {
-			toolCalls = make([]ToolCall, tcLen)
-		}
-		//stream会把函数参数片段输出,需要重新拼接为完整的函数信息
-		for i := 0; i < tcLen; i++ {
-			tc := rs.Choices[0].Delta.ToolCalls[i]
-			if tc.Id != "" { //tool_call_id 不会分段
-				toolCalls[tc.Index].Id = tc.Id
-			}
-			if tc.Function.Name != "" { //tool_call_name 函数名称,不会分段
-				toolCalls[tc.Index].Function.Name = tc.Function.Name
-			}
-			if tc.Function.Arguments != "" { //函数的参数,会分段,所以循环拼接起来
-				toolCalls[tc.Index].Function.Arguments += tc.Function.Arguments
-			}
-		}
-
-		rsByte, _ := json.Marshal(rs)
-		rsStr := string(rsByte)
-
-		// 不是函数调用,把返回的内容输出到页面
-		if c != nil && len(toolCalls) == 0 {
-			c.WriteString("data: " + rsStr + "\n\n")
-			c.Flush()
-		}
-		// 不是函数调用,把内容拼接起来
-		if len(toolCalls) == 0 {
-			message.WriteString(rs.Choices[0].Delta.Content)
-		}
-	}
-	//没有函数调用,把模型返回的choice放入到input["choice"]
-	if len(toolCalls) == 0 {
-		choice.Message = ChatMessage{Role: "assistant", Content: message.String()}
-		input["choice"] = choice
-		return nil
-	}
-	//遍历所有的函数,追加到messages列表
-	for i := 0; i < len(toolCalls); i++ {
-		tc := toolCalls[i]
-		funcName := tc.Function.Name
-		//获取函数的实现对象
-		fc, has := functionCallingMap[funcName]
-		if !has {
-			continue
-		}
-		//执行函数
-		content, err := fc.Run(ctx, tc.Function.Arguments)
-		if err != nil {
-			continue
-		}
-		//将函数执行的结果和tool_call_id追加到messages列表
-		messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
-	}
-	//重新放入 input["messages"]
-	input["messages"] = messages
-	//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
-	delete(input, "tools")
-	//重新运行组件,调用大模型.
-	component.Run(ctx, input)
-
 	return nil
 
 }
