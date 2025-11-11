@@ -222,12 +222,12 @@ func (component *TikaConverter) Initialization(ctx context.Context, input map[st
 	return nil
 }
 func (component *TikaConverter) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of TikaConverter cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document := input["document"].(*Document)
 
 	filePath := component.FilePath
 	if filePath == "" {
@@ -301,12 +301,13 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 	return nil
 }
 func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document := input["document"].(*Document)
+
 	filePath := component.FilePath
 	if filePath == "" {
 		filePath = document.FilePath
@@ -435,12 +436,14 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	return nil
 }
 func (component *WebScraper) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of WebScraper cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+
+	document := input["document"].(*Document)
 	_, err := component.FetchPage(ctx, document, input)
 	if err != nil {
 		input[errorKey] = err
@@ -585,12 +588,12 @@ func (component *HtmlCleaner) Initialization(ctx context.Context, input map[stri
 	return nil
 }
 func (component *HtmlCleaner) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document := input["document"].(*Document)
 	doc, err := html.Parse(bytes.NewReader([]byte(document.Markdown)))
 	if err != nil {
 		return err
@@ -650,12 +653,13 @@ func (component *DocumentSplitter) Initialization(ctx context.Context, input map
 	return nil
 }
 func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document := input["document"].(*Document)
 	if len(component.SplitBy) < 1 {
 		component.SplitBy = []string{"\f", "\n\n", "\n", "。", "!", ".", ";", "，", ",", " "}
 	}
@@ -706,12 +710,13 @@ func (component *MarkdownTOCIndex) Initialization(ctx context.Context, input map
 	return nil
 }
 func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]interface{}) error {
-	document, has := input["document"].(*Document)
-	if document == nil || (!has) {
+
+	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	document := input["document"].(*Document)
 	if document.Markdown == "" { //没有内容
 		return nil
 	}
@@ -818,11 +823,11 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 	return nil
 }
 func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	documentChunks, has := input["documentChunks"].([]DocumentChunk)
-	if !has {
+
+	if input["documentChunks"] == nil {
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
 	}
-
+	documentChunks := input["documentChunks"].([]DocumentChunk)
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		bodyMap := make(map[string]interface{}, 0)
@@ -965,10 +970,11 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	return nil
 }
 func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	query, has := input["query"].(string)
-	if !has {
+
+	if input["query"] == nil {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+	query := input["query"].(string)
 	bodyMap := make(map[string]interface{}, 0)
 	bodyMap["input"] = []string{query}
 	bodyMap["model"] = component.Model
@@ -1449,17 +1455,18 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 func (component *DocumentChunkReranker) checkRerankParameter(ctx context.Context, input map[string]interface{}) (string, int, float32, []DocumentChunk, []string, error) {
 	topN := 0
 	var score float32 = 0.0
-	documentChunks, has := input["documentChunks"].([]DocumentChunk)
-	if !has || documentChunks == nil {
+
+	if input["documentChunks"] == nil {
 		err := errors.New(funcT("input['documentChunks'] cannot be empty"))
 		return "", 0, 0.0, nil, nil, err
 	}
-	query, has := input["query"].(string)
-	if !has || query == "" {
+	documentChunks := input["documentChunks"].([]DocumentChunk)
+
+	if input["query"] == nil {
 		err := errors.New(funcT("input['query'] cannot be empty"))
 		return "", 0, 0.0, nil, nil, err
 	}
-
+	query := input["query"].(string)
 	tId, has := input["topN"]
 	if has {
 		topN = tId.(int)
@@ -1534,10 +1541,11 @@ func (component *WebSearch) Initialization(ctx context.Context, input map[string
 }
 
 func (component *WebSearch) Run(ctx context.Context, input map[string]interface{}) error {
-	query, has := input["query"].(string)
-	if !has {
+
+	if input["query"] == nil {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+	query := input["query"].(string)
 	webURL := component.WebURL + query
 	document := &Document{}
 	input1 := make(map[string]interface{}, 0)
@@ -1600,12 +1608,12 @@ func (component *PromptBuilder) Initialization(ctx context.Context, input map[st
 func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
 	_, has := input[ifEmptyStop]
 	if has {
-		dcs, hasdcs := input["documentChunks"]
-		if !hasdcs || dcs == nil {
+
+		if input["documentChunks"] == nil {
 			input[endKey] = true
 			return nil
 		}
-		documentChunks := dcs.([]DocumentChunk)
+		documentChunks := input["documentChunks"].([]DocumentChunk)
 		if len(documentChunks) < 1 {
 			input[endKey] = true
 			return nil
@@ -1636,20 +1644,19 @@ func (component *OpenAIChatMemory) Initialization(ctx context.Context, input map
 	return nil
 }
 func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]interface{}) error {
-	prompt, has := input["prompt"]
-	if !has {
+
+	if input["prompt"] == nil {
 		err := errors.New(funcT("input['prompt'] cannot be empty"))
 		input[errorKey] = err
 		return err
 	}
+	prompt := input["prompt"].(string)
 	messages := make([]ChatMessage, 0)
-	ms, has := input["messages"]
-	if has {
-		messages = ms.([]ChatMessage)
+	if input["messages"] != nil {
+		messages = input["messages"].([]ChatMessage)
 	}
-	agentID, has := input["agentID"]
-	if has {
-		agent, err := findAgentByID(ctx, agentID.(string))
+	if input["agentID"] != nil {
+		agent, err := findAgentByID(ctx, input["agentID"].(string))
 		if err != nil {
 			input[errorKey] = err
 			return err
@@ -1703,7 +1710,7 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]int
 
 	}
 
-	promptMessage := ChatMessage{Role: "user", Content: prompt.(string)}
+	promptMessage := ChatMessage{Role: "user", Content: prompt}
 	messages = append(messages, promptMessage)
 	input["messages"] = messages
 
@@ -2050,24 +2057,27 @@ func (component *ChatMessageLogStore) Initialization(ctx context.Context, input 
 }
 
 func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]interface{}) error {
-	c, has := input["c"].(*app.RequestContext)
-	if !has || c == nil {
+
+	if input["c"] == nil {
 		return errors.New(`input["c"] is nil`)
 	}
+	c := input["c"].(*app.RequestContext)
 
-	roomID, has := input["roomID"].(string)
-	if !has || roomID == "" {
+	if input["roomID"] == nil {
 		return errors.New(`input["roomID"] is nil`)
 	}
-	agentID, has := input["agentID"].(string)
-	if !has || agentID == "" {
+	roomID := input["roomID"].(string)
+
+	if input["agentID"] == nil {
 		return errors.New(`input["agentID"] is nil`)
 	}
+	agentID := input["agentID"].(string)
 
-	query, has := input["query"].(string)
-	if !has || query == "" {
+	if input["query"] == nil {
 		return errors.New(`input["query"] is nil`)
 	}
+	query := input["query"].(string)
+
 	agent, err := findAgentByID(ctx, agentID)
 	if err != nil {
 		return err

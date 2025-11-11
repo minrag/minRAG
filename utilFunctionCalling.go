@@ -27,18 +27,12 @@ import (
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 const (
-	FCWeatherName             = "get_weather"
 	FCSearchKnowledgeBaseName = "search_knowledge_base"
 )
 
 func init() {
 	ctx := context.Background()
-	//天气查询函数
-	fcWeather := FCWeather{}
-	weather, err := fcWeather.Initialization(ctx, get_weather_json)
-	if err == nil {
-		functionCallingMap[FCWeatherName] = weather
-	}
+
 	//本地知识库检索函数
 	fcSearchKnowledgeBase := FCSearchKnowledgeBase{}
 	searchKnowledgeBase, err := fcSearchKnowledgeBase.Initialization(ctx, search_knowledge_base_json)
@@ -57,65 +51,11 @@ type IToolFunctionCalling interface {
 	Run(ctx context.Context, arguments string) (string, error)
 }
 
-var get_weather_json = `{
-	"type": "function",
-	"function": {
-		"name": "get_weather",
-		"description": "Get weather of an location, the user shoud supply a location first",
-		"parameters": {
-			"type": "object",
-			"properties": {
-				"location": {
-					"type": "string",
-					"description": "The city and state, e.g. San Francisco, CA"
-				}
-			},
-			"required": ["location"],
-			"additionalProperties": false
-		}
-	}
-}`
-
-// FCWeather 天气函数
-type FCWeather struct {
-	//接受模型返回的 arguments
-	Location       string                 `json:"location,omitempty"`
-	DescriptionMap map[string]interface{} `json:"-"`
-}
-
-func (fc FCWeather) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
-	dm := make(map[string]interface{})
-	if descriptionJson == "" {
-		return fc, nil
-	}
-	err := json.Unmarshal([]byte(descriptionJson), &dm)
-	if err != nil {
-		return fc, err
-	}
-	fc.DescriptionMap = dm
-	return fc, nil
-}
-
-// 获取描述的Map
-func (fc FCWeather) Description(ctx context.Context) interface{} {
-	return fc.DescriptionMap
-}
-
-// Run 执行方法
-func (fc FCWeather) Run(ctx context.Context, arguments string) (string, error) {
-	if arguments != "" {
-		err := json.Unmarshal([]byte(arguments), &fc)
-		if err != nil {
-			return "", nil
-		}
-	}
-	return fc.Location + "的气温是25度", nil
-}
-
+// search_knowledge_base_json 查询知识库的函数json字符串
 var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
-		"name": "search_knowledge_base",
+		"name": "` + FCSearchKnowledgeBaseName + `",
 		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容",
 		"parameters": {
 			"type": "object",
