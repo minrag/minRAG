@@ -549,6 +549,7 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	return hrefSlice, nil
 }
 
+// @TODO 也可以尝试网页截屏,然后让多模态大模型识别网页正文,方便去除广告.
 // convertMarkdown 使用大模型,把抓取的html页面转换为markdown格式
 func (component *WebScraper) convertMarkdown(ctx context.Context, title string, html string) (string, error) {
 	if component.Prompt == "" || html == "" {
