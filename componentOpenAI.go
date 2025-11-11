@@ -148,21 +148,19 @@ func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}
 	return component.runProcess(ctx, input, component.Start)
 }
 func (component *Pipeline) runProcess(ctx context.Context, input map[string]interface{}, componentName string) error {
-	pipelineComponent, has := componentMap[componentName]
-	if !has {
+	if componentMap[componentName] == nil {
 		return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), componentName)
 	}
+	pipelineComponent := componentMap[componentName]
 	err := pipelineComponent.Run(ctx, input)
 	if err != nil {
 		input[errorKey] = err
 		return err
 	}
-	err, has = input[errorKey].(error)
-	if has {
-		return err
+	if input[errorKey] != nil {
+		return input[errorKey].(error)
 	}
-	_, has = input[endKey]
-	if has {
+	if input[endKey] != nil {
 		return nil
 	}
 	nextComponentName := component.Process[componentName]

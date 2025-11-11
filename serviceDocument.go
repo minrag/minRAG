@@ -29,10 +29,10 @@ import (
 func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) {
 	input := make(map[string]interface{})
 	input["document"] = document
-	indexPipeline, has := componentMap["indexPipeline"]
-	if !has || indexPipeline == nil {
+	if componentMap["indexPipeline"] == nil {
 		return false, errors.New("indexPipeline is empty")
 	}
+	indexPipeline := componentMap["indexPipeline"]
 	err := indexPipeline.Run(ctx, input)
 	if err != nil {
 		return false, err

@@ -117,11 +117,10 @@ func (component *LKEDocumentEmbedder) Initialization(ctx context.Context, input 
 	return nil
 }
 func (component *LKEDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	documentChunksObj, has := input["documentChunks"]
-	if !has {
+	if input["documentChunks"] == nil {
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
 	}
-	documentChunks := documentChunksObj.([]DocumentChunk)
+	documentChunks := input["documentChunks"].([]DocumentChunk)
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
@@ -230,12 +229,12 @@ func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[
 	return nil
 }
 func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
-	queryObj, has := input["query"]
-	if !has {
+	if input["query"] == nil {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
+	query := input["query"].(string)
 	bodyMap := make(map[string]interface{}, 0)
-	bodyMap["Inputs"] = []string{queryObj.(string)}
+	bodyMap["Inputs"] = []string{query}
 	bodyMap["Model"] = component.Model
 	bodyByte, err := httpPostLKEBody(component.client, component.SecretId, component.SecretKey, component.Host, component.Algorithm, component.Service, component.Version, component.Action, component.Region, bodyMap)
 	if err != nil {
