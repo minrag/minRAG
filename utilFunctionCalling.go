@@ -27,7 +27,7 @@ import (
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 const (
-	FCSearchKnowledgeBaseName = "search_knowledge_base"
+	fcSearchKnowledgeBaseName = "search_knowledge_base"
 )
 
 func init() {
@@ -37,7 +37,7 @@ func init() {
 	fcSearchKnowledgeBase := FCSearchKnowledgeBase{}
 	searchKnowledgeBase, err := fcSearchKnowledgeBase.Initialization(ctx, search_knowledge_base_json)
 	if err == nil {
-		functionCallingMap[FCSearchKnowledgeBaseName] = searchKnowledgeBase
+		functionCallingMap[fcSearchKnowledgeBaseName] = searchKnowledgeBase
 	}
 }
 
@@ -55,7 +55,7 @@ type IToolFunctionCalling interface {
 var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
-		"name": "` + FCSearchKnowledgeBaseName + `",
+		"name": "` + fcSearchKnowledgeBaseName + `",
 		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容",
 		"parameters": {
 			"type": "object",
