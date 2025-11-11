@@ -1338,7 +1338,7 @@ func llmJSONResult(ctx context.Context, component OpenAIChatGenerator, message s
 	bodyMap := make(map[string]interface{})
 	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: message}}
 	bodyMap["model"] = component.Model
-	if component.Temperature > 0 {
+	if component.Temperature != 0 {
 		bodyMap["temperature"] = component.Temperature
 	}
 	bodyMap["response_format"] = map[string]string{"type": "json_object"}
@@ -1975,6 +1975,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 			//stream会把函数参数片段输出,需要重新拼接为完整的函数信息
 			for i := 0; i < tcLen; i++ {
 				tc := rs.Choices[0].Delta.ToolCalls[i]
+				toolCalls[tc.Index].Type = "function"
 				if tc.Id != "" { //tool_call_id 不会分段
 					toolCalls[tc.Index].Id = tc.Id
 				}

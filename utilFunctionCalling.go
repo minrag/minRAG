@@ -116,7 +116,7 @@ var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
 		"name": "search_knowledge_base",
-		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点",
+		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容",
 		"parameters": {
 			"type": "object",
 			"properties": {
