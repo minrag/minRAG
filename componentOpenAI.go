@@ -366,6 +366,9 @@ func (component *MarkdownConverter) Run(ctx context.Context, input map[string]in
 
 // WebScraper 网络爬虫
 type WebScraper struct {
+	OpenAIChatGenerator
+	//调用大模型转换为markdown的提示词,如果不为空,则调用大模型进行转换
+	Prompt    string `json:"prompt,omitempty"`
 	UserAgent string `json:"userAgent,omitempty"`
 	WebURL    string `json:"webURL,omitempty"`
 	// Depth 抓取的深度,默认1,也就是当前页面
@@ -424,6 +427,10 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 	component.chromedpOptions = append(chromedp.DefaultExecAllocatorOptions[:], component.chromedpOptions...)
 
 	//component.RemoteChromeAddress = "ws://10.0.0.131:9222/"
+
+	if component.Prompt != "" { //初始化大模型
+		component.OpenAIChatGenerator.Initialization(ctx, input)
+	}
 
 	return nil
 }
@@ -523,6 +530,10 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 		return nil, err
 	}
 	document.Markdown = strings.Join(hcs, ".")
+	markdown, err := component.convertMarkdown(ctx, title, document.Markdown)
+	if markdown != "" {
+		document.Markdown = markdown
+	}
 	document.Name = title
 	hrefSlice := make([]string, 0)
 	for i := 0; i < len(hrefs); i++ {
@@ -536,6 +547,33 @@ func (component *WebScraper) FetchPage(ctx context.Context, document *Document, 
 	}
 
 	return hrefSlice, nil
+}
+
+// convertMarkdown 使用大模型,把抓取的html页面转换为markdown格式
+func (component *WebScraper) convertMarkdown(ctx context.Context, title string, html string) (string, error) {
+	if component.Prompt == "" || html == "" {
+		return html, nil
+	}
+
+	/*
+		message := `
+			提供内容整理成markdown格式,根据内容拆分合理的目录标题,不要做扩展,只整理格式.如果可能,末级标题的内容至少200字,必须是原文档的内容,不要修改内容.
+			返回的json格式示例:{"markdown":<整理的markdown内容>}
+			需要整理为markdown的内容:
+			` + html
+	*/
+	message := component.Prompt + " \n 网页标题:" + title + "\n 网页内容:" + html
+	component.Temperature = 0.1
+	// 请求大模型,获取json结果
+	resultJson, err := llmJSONResult(ctx, component.OpenAIChatGenerator, message)
+	if err != nil {
+		return "", err
+	}
+	markdownResult := struct {
+		Markdown string `json:"markdown,omitempty"`
+	}{}
+	err = json.Unmarshal([]byte(resultJson), &markdownResult)
+	return markdownResult.Markdown, err
 }
 
 // HtmlCleaner 清理html标签
@@ -558,11 +596,11 @@ func (component *HtmlCleaner) Run(ctx context.Context, input map[string]interfac
 	}
 
 	var buf strings.Builder
-	var inScript, inStyle bool // 新增状态标记[1,3](@ref)
+	var inScript, inStyle bool // 新增状态标记
 
 	var extract func(*html.Node)
 	extract = func(n *html.Node) {
-		// 新增标签检测逻辑[6,7](@ref)
+		// 新增标签检测逻辑
 		switch n.Type {
 		case html.ElementNode:
 			switch n.Data {
@@ -572,19 +610,19 @@ func (component *HtmlCleaner) Run(ctx context.Context, input map[string]interfac
 				inStyle = true
 			}
 		case html.TextNode:
-			if !inScript && !inStyle { // 仅收集非脚本/样式内容[2,4](@ref)
+			if !inScript && !inStyle { // 仅收集非脚本/样式内容
 				buf.WriteString(strings.TrimSpace(n.Data) + " ")
 			}
 		}
 
-		// 递归处理子节点（跳过脚本/样式内容）[8](@ref)
+		// 递归处理子节点(跳过脚本/样式内容)
 		if !inScript && !inStyle {
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				extract(c)
 			}
 		}
 
-		// 重置标签状态[9](@ref)
+		// 重置标签状态
 		if n.Type == html.ElementNode {
 			switch n.Data {
 			case "script":
@@ -692,22 +730,23 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 		返回的json格式示例:{"markdown":<整理的markdown内容>}
 		需要整理为markdown的内容:
 		` + document.Markdown
+		component.Temperature = 0.1
 		// 请求大模型,获取json结果
-		resultJson, err := llmJSONResult(component.OpenAIChatGenerator, message)
+		resultJson, err := llmJSONResult(ctx, component.OpenAIChatGenerator, message)
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		docIdResult := struct {
+		markdownResult := struct {
 			Markdown string `json:"markdown,omitempty"`
 		}{}
-		err = json.Unmarshal([]byte(resultJson), &docIdResult)
+		err = json.Unmarshal([]byte(resultJson), &markdownResult)
 		if err != nil {
 			input[errorKey] = err
 			return err
 		}
-		if docIdResult.Markdown != "" {
-			markdown = docIdResult.Markdown
+		if markdownResult.Markdown != "" {
+			markdown = markdownResult.Markdown
 		} else {
 			return nil
 		}
@@ -1295,10 +1334,13 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 }
 
 // llmJSONResult 请求大模型获得json结果
-func llmJSONResult(component OpenAIChatGenerator, message string) (string, error) {
+func llmJSONResult(ctx context.Context, component OpenAIChatGenerator, message string) (string, error) {
 	bodyMap := make(map[string]interface{})
 	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: message}}
 	bodyMap["model"] = component.Model
+	if component.Temperature > 0 {
+		bodyMap["temperature"] = component.Temperature
+	}
 	bodyMap["response_format"] = map[string]string{"type": "json_object"}
 	//输出类型
 	bodyMap["stream"] = false
@@ -1479,9 +1521,9 @@ func (component *WebSearch) Initialization(ctx context.Context, input map[string
 	if component.TopN == 0 {
 		component.TopN = 3
 	}
-	if component.Depth == 0 {
-		component.Depth = 2
-	}
+
+	component.Depth = 2
+
 	if component.WebURL == "" { //默认使用bing搜索
 		component.WebURL = "https://www.bing.com/search?q="
 		component.QuerySelector = []string{"li.b_algo div.b_tpcn"}

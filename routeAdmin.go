@@ -999,6 +999,8 @@ func funcUpdateSQL(ctx context.Context, c *app.RequestContext) {
 // funcWebScraper 抓取网页
 func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 	webScraper := &WebScraper{}
+	//webScraper.Prompt = `把爬虫抓取的网页内容整理成markdown格式把网页内容拆分合理的目录标题,只保留和网页标题相关的内容,删除广告和无效的内容,但是不能扩展内容,必须是原网页的内容,只整理格式.如果可能,末级标题的内容至少200字.\n返回的json格式示例:{"markdown":<整理的markdown内容>}\n需要整理为markdown的网页内容`
+
 	err := c.Bind(webScraper)
 	if err != nil || webScraper.KnowledgeBaseID == "" {
 		c.JSON(http.StatusInternalServerError, ResponseData{StatusCode: 0, Message: funcT("JSON data conversion error")})
