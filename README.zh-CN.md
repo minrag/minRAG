@@ -167,6 +167,9 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | maxRequestBodySize | int  | 最大请求     |  默认 20M  |
 | locale      | string      | 语言包       |  默认 zh-CN,en-US |
 | proxy       | string      | http代理地址 |             |
+| aiBaseURL   | string      | AI平台base_url |             |
+| aiAPIKey    | string      | AI平台api_key |             |
+| llmModel    | string      | 默认的LLM模型 |             |
 | createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
 | updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
 | createUser  | string      | 创建人       |  初始化 system  |
@@ -248,7 +251,11 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | id          | string      | 主键         |   否    | - |
 | documentID  | string      | 文档ID     | 否      |    -    |
 | knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
-| knowledgeBaseName | string | 知识库名称   | 否      |    -    |
+| title       | string      | 标题         | 否      |    -    |
+| parentID    | string      | 上级ID      | 否      |    -    |
+| preID       | string      | 上一个节点ID | 否      |    -    |
+| nextID      | string      | 下一个节点ID | 否      |    -    |
+| level       | int         | 标题级别     | 否      |    -    |
 | markdown    | string      | Markdown内容 | 是      | 使用 jieba 分词器 |
 | createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
 | updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |

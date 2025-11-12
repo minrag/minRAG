@@ -153,6 +153,9 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | maxRequestBodySize  | int | Maximum Request Body Size | Default 20M |
 | locale      | string      | Language Pack       | Default zh-CN,en-US |
 | proxy       | string      | HTTP Proxy Address  |       |
+| aiBaseURL   | string      | AI base_url |             |
+| aiAPIKey    | string      | AI api_key |             |
+| llmModel    | string      | default LLM Model |             |
 | createTime  | string      | Creation Time       | 2006-01-02 15:04:05 |
 | updateTime  | string      | Update Time | 2006-01-02 15:04:05 |
 | createUser  | string      | Creator     | Initialized as system |
@@ -230,6 +233,11 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | documentID  | string      | Document ID | No| -|
 | knowledgeBaseID     | string      | Knowledge Base ID   | No| -|
 | knowledgeBaseName   | string      | Knowledge Base Name | No| -|
+| title       | string      | title         | -      |    -    |
+| parentID    | string      | parentID      | -      |    -    |
+| preID       | string      | pre node ID   | -      |    -    |
+| nextID      | string      | nextID        | -      |    -    |
+| level       | int         | title level   | -      |    -    |
 | markdown    | string      | Markdown Content    | Yes       | Using jieba tokenizer    |
 | createTime  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
 | updateTime  | string      | Update Time | - | 2006-01-02 15:04:05      |
