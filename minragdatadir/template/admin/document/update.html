@@ -32,10 +32,9 @@
 				</div>
 			</div>
 			<div class="layui-col-md4">
-				<label class="layui-form-label">{{T "Sort"}}</label>
+				<label class="layui-form-label">{{T "Summary"}}</label>
 				<div class="layui-input-block">
-					<input type="number" name="sortNo" lay-verify="required" lay-reqtext='{{T "Please fill in the sort number"}}' autocomplete="off"
-						class="layui-input" value="{{.Data.SortNo}}">
+					<input type="text" name="summary" autocomplete="off" class="layui-input" value="{{.Data.Summary}}">
 				</div>
 			</div>
 		</div>
@@ -173,7 +172,7 @@
 		// 提交事件
 		form.on('submit(minrag-form-ajax-update)', function (data) {
 			var field = data.field; // 获取表单字段值
-			field.sortNo = field.sortNo - 0;
+			//field.sortNo = field.sortNo - 0;
 			field.status = field.status - 0;
 			field.knowledgeBaseName = $("#knowledgeBaseID").find("option:selected").text();
 			field.markdown = cherry.getMarkdown();

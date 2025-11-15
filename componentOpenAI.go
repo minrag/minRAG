@@ -1518,13 +1518,13 @@ func sortDocumentChunksScore(documentChunks []DocumentChunk, topN int, score flo
 // WebSearch 联网搜索,基于网络爬虫扩展
 type WebSearch struct {
 	WebScraper
-	// TopN 检索前几个链接,默认3
+	// TopN 检索前几个链接,默认5
 	TopN int `json:"top_n,omitempty"`
 }
 
 func (component *WebSearch) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.TopN == 0 {
-		component.TopN = 3
+		component.TopN = 5
 	}
 	err := component.WebScraper.Initialization(ctx, input)
 	return err

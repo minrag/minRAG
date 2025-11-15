@@ -68,7 +68,7 @@ var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
 		"name": "` + fcSearchKnowledgeBaseName + `",
-		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.也可以在documentIds中全文检索query关键字,检索文档节点内容.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容.可以和web_search网络搜索配合使用",
+		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.也可以在documentIds中全文检索query关键字,检索文档节点内容.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容.可以和web_search网络联网搜索配合使用",
 		"parameters": {
 			"type": "object",
 			"properties": {
@@ -180,13 +180,13 @@ var web_search_json = `{
 	"type": "function",
 	"function": {
 		"name": "` + fcWebSearchName + `",
-		"description": "用于信息检索的网络搜索,可以多次调用.可以和search_knowledge_base本地知识库检索配合使用",
+		"description": "用于信息检索的网络联网搜索,可以多次调用.可以和search_knowledge_base本地知识库检索配合使用",
 		"parameters": {
 			"type": "object",
 			"properties": {
 				"query": {
 					"type": "string",
-					"description": "要搜索的内容"
+					"description": "要网络联网搜索的内容"
 				}
 			},
 			"required": ["query"],
