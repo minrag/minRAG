@@ -172,6 +172,9 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	}
 
 	input["knowledgeBaseID"] = agent.KnowledgeBaseID
+	//设置到ctx里,可以传递到函数
+	ctx = context.WithValue(ctx, "knowledgeBaseID", agent.KnowledgeBaseID)
+	ctx = context.WithValue(ctx, "agentID", agent.Id)
 	pipeline := componentMap[agent.PipelineID]
 	pipeline.Run(ctx, input)
 	//choice := input["choice"]

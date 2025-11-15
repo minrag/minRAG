@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 
 	"gitee.com/chunanyong/zorm"
 )
@@ -56,17 +57,25 @@ var search_knowledge_base_json = `{
 	"type": "function",
 	"function": {
 		"name": "` + fcSearchKnowledgeBaseName + `",
-		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容",
+		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,也可以使用query在文档中进行全文检索,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容",
 		"parameters": {
 			"type": "object",
 			"properties": {
+			    "documentIds": {
+					"type": "array",
+                    "items": {"type": "string"},
+					"description": "要检索的知识库文档ID,可以配合 query 在文档中全文检索关联的节点ID"
+				},
+				"query": {
+					"type": "string",
+					"description": "在documentIds文档中全文检索关联的节点ID,需要同时传递documentIds"
+				},
 				"nodeIds": {
 					"type": "array",
                     "items": {"type": "string"},
 					"description": "要检索的知识库文档节点ID"
 				}
 			},
-			"required": ["nodeIds"],
 			"additionalProperties": false
 		}
 	}
@@ -75,7 +84,10 @@ var search_knowledge_base_json = `{
 // FCSearchKnowledgeBase 查询本地知识库的函数
 type FCSearchKnowledgeBase struct {
 	//接受模型返回的 arguments
-	NodeIds        []string               `json:"nodeIds,omitempty"`
+	DocumentIds []string `json:"documentIds,omitempty"`
+	Query       string   `json:"query,omitempty"`
+	NodeIds     []string `json:"nodeIds,omitempty"`
+
 	DescriptionMap map[string]interface{} `json:"-"`
 }
 
@@ -106,14 +118,41 @@ func (fc FCSearchKnowledgeBase) Run(ctx context.Context, arguments string) (stri
 	if err != nil {
 		return "", nil
 	}
-	if len(fc.NodeIds) < 1 {
+	if len(fc.NodeIds) < 1 && len(fc.DocumentIds) < 1 && len(fc.Query) < 1 {
 		return "", nil
 	}
-
+	knowledgeBaseID := ""
+	if ctx.Value("knowledgeBaseID") != nil {
+		knowledgeBaseID = ctx.Value("knowledgeBaseID").(string)
+	}
+	pageSize := 100
 	tocChunks := make([]DocumentChunk, 0)
-	f_dc := zorm.NewSelectFinder(tableDocumentChunkName, "id,markdown").Append("WHERE id in (?)", fc.NodeIds)
+	f_dc := zorm.NewSelectFinder(tableDocumentChunkName, "id,markdown").Append("WHERE 1=1 ")
+	f_dc.SelectTotalCount = false
+	if knowledgeBaseID != "" {
+		f_dc.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+	if len(fc.NodeIds) > 0 {
+		f_dc.Append("and id in (?)", fc.NodeIds)
+	}
+	if len(fc.DocumentIds) > 0 {
+		f_dc.Append("and documentID in (?)", fc.DocumentIds)
+	}
+	if len(fc.Query) > 0 {
+		// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
+		f_fts := zorm.NewFinder().Append("SELECT id from fts_document_chunk where fts_document_chunk match jieba_query(?)", fc.Query)
+		if len(fc.DocumentIds) > 0 {
+			f_fts.Append("and documentID in (?)", fc.DocumentIds)
+		}
+		// BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
+		f_fts.Append("and -1*rank >= ?", 0.3)
+		f_fts.Append("ORDER BY -1*rank DESC LIMIT " + strconv.Itoa(pageSize))
+
+		f_dc.Append("and id in (").AppendFinder(f_fts)
+		f_dc.Append(")")
+	}
 	page := zorm.NewPage()
-	page.PageSize = 100
+	page.PageSize = pageSize
 	err = zorm.Query(ctx, f_dc, &tocChunks, page)
 	if err != nil {
 		return "", nil

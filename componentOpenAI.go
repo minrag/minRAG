@@ -1286,7 +1286,7 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	}
 
 	// 查询文档的目录
-	finder := zorm.NewFinder().Append("SELECT id,name,toc from " + tableDocumentName + " WHERE 1=1")
+	finder := zorm.NewFinder().Append("SELECT id,name,summary,toc from " + tableDocumentName + " WHERE 1=1")
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
