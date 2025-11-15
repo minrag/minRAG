@@ -2080,6 +2080,9 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	if err != nil {
 		return err
 	}
+	if input["choice"] == nil {
+		return errors.New(`input["choice"] is nil`)
+	}
 
 	choice := input["choice"].(Choice)
 
