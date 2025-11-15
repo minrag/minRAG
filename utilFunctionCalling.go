@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"strconv"
+	"sync"
 
 	"gitee.com/chunanyong/zorm"
 )
@@ -28,7 +29,10 @@ import (
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 const (
+	// fcSearchKnowledgeBaseName 知识库检索
 	fcSearchKnowledgeBaseName = "search_knowledge_base"
+	// fcWebSearchName 联网搜索
+	fcWebSearchName = "web_search"
 )
 
 func init() {
@@ -39,6 +43,13 @@ func init() {
 	searchKnowledgeBase, err := fcSearchKnowledgeBase.Initialization(ctx, search_knowledge_base_json)
 	if err == nil {
 		functionCallingMap[fcSearchKnowledgeBaseName] = searchKnowledgeBase
+	}
+
+	//联网搜索函数
+	fcWebSearch := FCWebSearch{}
+	webSearch, err := fcWebSearch.Initialization(ctx, web_search_json)
+	if err == nil {
+		functionCallingMap[fcWebSearchName] = webSearch
 	}
 }
 
@@ -161,5 +172,113 @@ func (fc FCSearchKnowledgeBase) Run(ctx context.Context, arguments string) (stri
 	if err != nil {
 		return "", nil
 	}
+	return string(resultByte), nil
+}
+
+// web_search_json 网络搜索json字符串
+var web_search_json = `{
+	"type": "function",
+	"function": {
+		"name": "` + fcWebSearchName + `",
+		"description": "用于信息检索的网络搜索,可以多次调用.本地知识库没有匹配信息时,建议尝试联网搜索",
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"query": {
+					"type": "string",
+					"description": "要搜索的内容"
+				}
+			},
+			"required": ["query"],
+			"additionalProperties": false
+		}
+	}
+}`
+
+// FCWebSearch 网络搜索的函数
+type FCWebSearch struct {
+	//接受模型返回的 arguments
+	Query string `json:"query,omitempty"`
+
+	DescriptionMap map[string]interface{} `json:"-"`
+}
+
+func (fc FCWebSearch) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
+	dm := make(map[string]interface{})
+	if descriptionJson == "" {
+		return fc, nil
+	}
+	err := json.Unmarshal([]byte(descriptionJson), &dm)
+	if err != nil {
+		return fc, err
+	}
+	fc.DescriptionMap = dm
+	return fc, nil
+}
+
+// 获取描述的Map
+func (fc FCWebSearch) Description(ctx context.Context) interface{} {
+	return fc.DescriptionMap
+}
+
+// Run 执行方法
+func (fc FCWebSearch) Run(ctx context.Context, arguments string) (string, error) {
+	if arguments == "" {
+		return "", nil
+	}
+	err := json.Unmarshal([]byte(arguments), &fc)
+	if err != nil {
+		return "", nil
+	}
+	if len(fc.Query) < 1 {
+		return "", nil
+	}
+	webSearch := WebSearch{}
+
+	webSearch.Depth = 2
+	webSearch.QuerySelector = []string{"li.b_algo div.b_tpcn"}
+	webURL := "https://www.bing.com/search?q=" + fc.Query
+	input1 := make(map[string]interface{}, 0)
+	webSearch.Initialization(ctx, input1)
+
+	document := &Document{}
+	input1["document"] = document
+	input1["webScraper_webURL"] = webURL
+	hrefSlice, _ := webSearch.FetchPage(ctx, document, input1)
+	if len(hrefSlice) < 1 {
+		return "", nil
+	}
+	tokN := webSearch.TopN
+	if len(hrefSlice) < tokN {
+		tokN = len(hrefSlice)
+	}
+	hrefWS := &WebSearch{}
+	hrefWS.WebScraper.Depth = 1
+	hrefWS.WebScraper.QuerySelector = []string{"body"}
+	hrefWS.WebScraper.Initialization(ctx, nil)
+	webSerachDocuments := make([]Document, 0)
+	// 使用WaitGroup和Mutex的基本异步方案
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	for j := 0; j < tokN; j++ {
+		wg.Add(1)
+		go func(href string) {
+			defer wg.Done()
+			document := &Document{}
+			document.Id = href
+			hrefInput := make(map[string]interface{}, 0)
+			hrefInput["document"] = document
+			hrefInput["webScraper_webURL"] = href
+			hrefWS.WebScraper.FetchPage(ctx, document, hrefInput)
+			if document.Markdown != "" {
+				mu.Lock()
+				webSerachDocuments = append(webSerachDocuments, *document)
+				mu.Unlock()
+			}
+		}(hrefSlice[j])
+
+	}
+	wg.Wait() // 等待所有goroutine完成
+	resultByte, _ := json.Marshal(webSerachDocuments)
 	return string(resultByte), nil
 }

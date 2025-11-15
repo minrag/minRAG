@@ -1,4 +1,5 @@
 v0.1.4
+- ```WebSearch```组件基于```web_search```函数实现
 - 修复nil值异常
 - ```search_knowledge_base```支持关键字全文检索
 - 完善注释,文档

@@ -32,7 +32,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"text/template"
 	"time"
 
@@ -1527,64 +1526,19 @@ func (component *WebSearch) Initialization(ctx context.Context, input map[string
 	if component.TopN == 0 {
 		component.TopN = 3
 	}
-
-	component.Depth = 2
-
-	if component.WebURL == "" { //默认使用bing搜索
-		component.WebURL = "https://www.bing.com/search?q="
-		component.QuerySelector = []string{"li.b_algo div.b_tpcn"}
-	}
 	err := component.WebScraper.Initialization(ctx, input)
 	return err
 }
 
 func (component *WebSearch) Run(ctx context.Context, input map[string]interface{}) error {
-
-	if input["query"] == nil {
-		return errors.New(funcT("input['query'] cannot be empty"))
+	// input 中的tools对象
+	var tools []interface{}
+	if input["tools"] != nil {
+		tools = input["tools"].([]interface{})
 	}
-	query := input["query"].(string)
-	webURL := component.WebURL + query
-	document := &Document{}
-	input1 := make(map[string]interface{}, 0)
-	input1["document"] = document
-	input1["webScraper_webURL"] = webURL
-	hrefSlice, _ := component.FetchPage(ctx, document, input1)
-	if len(hrefSlice) < 1 {
-		return nil
-	}
-	tokN := component.TopN
-	if len(hrefSlice) < tokN {
-		tokN = len(hrefSlice)
-	}
-	hrefWS := &WebSearch{}
-	hrefWS.WebScraper.Depth = 1
-	hrefWS.WebScraper.QuerySelector = []string{"body"}
-	hrefWS.WebScraper.Initialization(ctx, nil)
-	webSerachDocuments := make([]Document, 0)
-	// 使用WaitGroup和Mutex的基本异步方案
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	for j := 0; j < tokN; j++ {
-		wg.Add(1)
-		go func(href string) {
-			defer wg.Done()
-			document := &Document{}
-			document.Id = href
-			hrefInput := make(map[string]interface{}, 0)
-			hrefInput["document"] = document
-			hrefInput["webScraper_webURL"] = href
-			hrefWS.WebScraper.FetchPage(ctx, document, hrefInput)
-			if document.Markdown != "" {
-				mu.Lock()
-				webSerachDocuments = append(webSerachDocuments, *document)
-				mu.Unlock()
-			}
-		}(hrefSlice[j])
-
-	}
-	wg.Wait() // 等待所有goroutine完成
-	input["webSerachDocuments"] = webSerachDocuments
+	fc := functionCallingMap[fcWebSearchName]
+	tools = append(tools, fc.Description(ctx))
+	input["tools"] = tools
 	return nil
 }
 
