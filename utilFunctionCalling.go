@@ -226,39 +226,38 @@ func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string) (
 	if ctx.Value("knowledgeBaseID") != nil {
 		knowledgeBaseID = ctx.Value("knowledgeBaseID").(string)
 	}
-	pageSize := 100
-	tocChunks := make([]DocumentChunk, 0)
-	f_dc := zorm.NewSelectFinder(tableDocumentChunkName, "id,markdown").Append("WHERE 1=1 ")
-	f_dc.SelectTotalCount = false
-	if knowledgeBaseID != "" {
-		f_dc.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	var score float32 = 0.3
+	if ctx.Value("score") != nil {
+		score = ctx.Value("score").(float32)
 	}
-	if len(fc.DocumentIds) > 0 {
-		f_dc.Append("and documentID in (?)", fc.DocumentIds)
+
+	topN := 5
+	if ctx.Value("topN") != nil {
+		topN = ctx.Value("topN").(int)
 	}
 
 	// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-	f_fts := zorm.NewFinder().Append("SELECT id from fts_document_chunk where fts_document_chunk match jieba_query(?)", fc.Query)
+	finder := zorm.NewFinder().Append("SELECT id,markdown from fts_document_chunk where fts_document_chunk match jieba_query(?)", fc.Query)
 	if len(fc.DocumentIds) > 0 {
-		f_fts.Append("and documentID in (?)", fc.DocumentIds)
+		finder.Append("and documentID in (?)", fc.DocumentIds)
+	}
+	if knowledgeBaseID != "" {
+		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
+		finder.Append("and -1*rank >= ?", score)
 	}
 	// BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
-	f_fts.Append("and -1*rank >= ?", 0.3)
-	f_fts.Append("ORDER BY -1*rank DESC LIMIT " + strconv.Itoa(pageSize))
 
-	f_dc.Append("and id in (").AppendFinder(f_fts)
-	f_dc.Append(")")
+	finder.Append("ORDER BY -1*rank DESC LIMIT " + strconv.Itoa(topN))
 
-	page := zorm.NewPage()
-	page.PageSize = pageSize
-	err = zorm.Query(ctx, f_dc, &tocChunks, page)
+	documentChunks := make([]DocumentChunk, 0)
+	err = zorm.Query(ctx, finder, &documentChunks, nil)
 	if err != nil {
-		return "", nil
+		//input[errorKey] = err
+		return "", err
 	}
-	resultByte, err := json.Marshal(tocChunks)
-	if err != nil {
-		return "", nil
-	}
+	resultByte, _ := json.Marshal(documentChunks)
 	return string(resultByte), nil
 }
 

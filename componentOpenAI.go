@@ -1181,31 +1181,15 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if score <= 0 {
 		score = component.Score
 	}
-	// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
-	finder := zorm.NewFinder().Append("SELECT rowid,-1*rank as score,* from fts_document_chunk where fts_document_chunk match jieba_query(?)", query)
-	if documentID != "" {
-		finder.Append(" and documentID=?", documentID)
-	}
-	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
-	}
-	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
-		finder.Append(" and score >= ?", score)
-	}
-	finder.Append("ORDER BY score DESC LIMIT " + strconv.Itoa(topN))
-	documentChunks := make([]DocumentChunk, 0)
-	err := zorm.Query(ctx, finder, &documentChunks, nil)
-	if err != nil {
-		input[errorKey] = err
-		return err
-	}
 
-	oldDcs, has := input["documentChunks"]
-	if has && oldDcs != nil {
-		oldDocumentChunks := oldDcs.([]DocumentChunk)
-		documentChunks = append(oldDocumentChunks, documentChunks...)
+	// input 中的tools对象
+	var tools []interface{}
+	if input["tools"] != nil {
+		tools = input["tools"].([]interface{})
 	}
-	input["documentChunks"] = documentChunks
+	fc := functionCallingMap[fcSearchDocumentByKeywordName]
+	tools = append(tools, fc.Description(ctx))
+	input["tools"] = tools
 	return nil
 }
 
