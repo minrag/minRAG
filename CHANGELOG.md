@@ -1,3 +1,9 @@
+v0.1.5
+- 使用ctx组件和函数传递参数
+- ```FtsKeywordRetriever```组件基于```search_document_by_keyword```函数实现
+- ```search_knowledge_base```函数修改为```search_document_by_node```
+- 完善注释,文档
+
 v0.1.4
 - ```WebSearch```组件基于```web_search```函数实现
 - 修复nil值异常

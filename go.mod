@@ -10,7 +10,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.32
 	github.com/mojocn/base64Captcha v1.3.8
 	github.com/yuin/goldmark v1.7.13
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
 )
 

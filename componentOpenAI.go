@@ -1330,7 +1330,7 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	if input["tools"] != nil {
 		tools = input["tools"].([]interface{})
 	}
-	fc := functionCallingMap[fcSearchKnowledgeBaseName]
+	fc := functionCallingMap[fcSearchDocumentByNodeName]
 	tools = append(tools, fc.Description(ctx))
 	input["tools"] = tools
 
