@@ -1156,6 +1156,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	}
 	if documentID == "" {
 		documentID = component.DocumentID
+		input["documentID"] = documentID
 	}
 	kId, has := input["knowledgeBaseID"]
 	if has {
@@ -1163,6 +1164,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	}
 	if knowledgeBaseID == "" {
 		knowledgeBaseID = component.KnowledgeBaseID
+		input["knowledgeBaseID"] = knowledgeBaseID
 	}
 	tId, has := input["topN"]
 	if has {
@@ -1170,9 +1172,11 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	}
 	if topN == 0 {
 		topN = component.TopN
+		input["topN"] = topN
 	}
 	if topN == 0 {
 		topN = 5
+		input["topN"] = topN
 	}
 	disId, has := input["score"]
 	if has {
@@ -1180,6 +1184,7 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	}
 	if score <= 0 {
 		score = component.Score
+		input["score"] = score
 	}
 
 	// input 中的tools对象
@@ -1816,7 +1821,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 					continue
 				}
 				//执行函数
-				content, err := fc.Run(ctx, tc.Function.Arguments)
+				content, err := fc.Run(ctx, tc.Function.Arguments, input)
 				if err != nil {
 					continue
 				}
@@ -1966,7 +1971,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 				continue
 			}
 			//执行函数
-			content, err := fc.Run(ctx, tc.Function.Arguments)
+			content, err := fc.Run(ctx, tc.Function.Arguments, input)
 			if err != nil {
 				continue
 			}

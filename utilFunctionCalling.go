@@ -69,7 +69,7 @@ type IToolFunctionCalling interface {
 	//获取描述的Map
 	Description(ctx context.Context) interface{}
 	// Run 执行方法
-	Run(ctx context.Context, arguments string) (string, error)
+	Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error)
 }
 
 // search_document_by_node_json 查询知识库的函数json字符串
@@ -118,7 +118,7 @@ func (fc FCSearchDocumentByNode) Description(ctx context.Context) interface{} {
 }
 
 // Run 执行方法
-func (fc FCSearchDocumentByNode) Run(ctx context.Context, arguments string) (string, error) {
+func (fc FCSearchDocumentByNode) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -130,8 +130,8 @@ func (fc FCSearchDocumentByNode) Run(ctx context.Context, arguments string) (str
 		return "", nil
 	}
 	knowledgeBaseID := ""
-	if ctx.Value("knowledgeBaseID") != nil {
-		knowledgeBaseID = ctx.Value("knowledgeBaseID").(string)
+	if intput["knowledgeBaseID"] != nil {
+		knowledgeBaseID = intput["knowledgeBaseID"].(string)
 	}
 
 	tocChunks := make([]DocumentChunk, 0)
@@ -211,7 +211,7 @@ func (fc FCSearchDocumentByKeyword) Description(ctx context.Context) interface{}
 }
 
 // Run 执行方法
-func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string) (string, error) {
+func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -223,17 +223,17 @@ func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string) (
 		return "", nil
 	}
 	knowledgeBaseID := ""
-	if ctx.Value("knowledgeBaseID") != nil {
-		knowledgeBaseID = ctx.Value("knowledgeBaseID").(string)
+	if intput["knowledgeBaseID"] != nil {
+		knowledgeBaseID = intput["knowledgeBaseID"].(string)
 	}
 	var score float32 = 0.3
-	if ctx.Value("score") != nil {
-		score = ctx.Value("score").(float32)
+	if intput["score"] != nil {
+		score = intput["score"].(float32)
 	}
 
 	topN := 5
-	if ctx.Value("topN") != nil {
-		topN = ctx.Value("topN").(int)
+	if intput["topN"] != nil {
+		topN = intput["topN"].(int)
 	}
 
 	// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
@@ -308,7 +308,7 @@ func (fc FCWebSearch) Description(ctx context.Context) interface{} {
 }
 
 // Run 执行方法
-func (fc FCWebSearch) Run(ctx context.Context, arguments string) (string, error) {
+func (fc FCWebSearch) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
