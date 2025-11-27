@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"runtime/debug"
 	"slices"
 	"sort"
 	"strconv"
@@ -1739,6 +1740,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 	defer func() {
 		if err := recover(); err != nil {
 			FuncLogError(ctx, fmt.Errorf("panic recovered: %v", err))
+			FuncLogError(ctx, fmt.Errorf("panic debug.Stack(): %s", string(debug.Stack())))
 		}
 	}()
 	if input["query"] == nil {
@@ -1988,6 +1990,9 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 			//将函数执行的结果和tool_call_id追加到messages列表
 			messages = append(messages, ChatMessage{Role: "tool", ToolCallID: tc.Id, Content: content})
 		}
+		// 清空 toolCalls,下次调用.因为每次循环的函数数量不一样,所以需要清空,避免上面循环函数,数组越界的bug
+		toolCalls = nil
+
 		//重新放入 input["messages"]
 		input["messages"] = messages
 		//删除掉input中的tools,避免再次调用函数,造成递归死循环.就是带着函数结果请求大模型,结果大模型又返回调用函数,造成死循环.
