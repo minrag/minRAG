@@ -1736,7 +1736,11 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 	return nil
 }
 func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
-
+	defer func() {
+		if err := recover(); err != nil {
+			FuncLogError(ctx, fmt.Errorf("panic recovered: %v", err))
+		}
+	}()
 	if input["query"] == nil {
 		err := errors.New(funcT("input['query'] cannot be empty"))
 		input[errorKey] = err
