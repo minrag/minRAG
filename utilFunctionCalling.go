@@ -162,20 +162,19 @@ var search_document_by_keyword_json = `{
 	"type": "function",
 	"function": {
 		"name": "` + fcSearchDocumentByKeywordName + `",
-		"description": "根据用户问题和提供的知识库文档结构树,在documentIds中全文检索query关键字,如果函数返回的内容和用户问题关系不紧密,可以多次调用此函数,获取其他的内容.可以和web_search网络联网搜索配合使用",
+		"description": "根据用户问题和提供的知识库文档结构树,全文检索query关键字,如果函数返回的内容和用户问题关系不紧密,可以多次调用此函数,获取其他的内容.可以和web_search网络联网搜索配合使用",
 		"parameters": {
 			"type": "object",
 			"properties": {
+			"query": {
+					"type": "string",
+					"description": "全文检索关联的内容"
+				},
 			    "documentIds": {
 					"type": "array",
                     "items": {"type": "string"},
-					"description": "要检索的知识库文档ID,可以配合 query 在文档中全文检索关联内容"
-				},
-				"query": {
-					"type": "string",
-					"description": "全文检索关联的内容"
+					"description": "要检索的知识库文档ID,可以配合 query 在文档中全文检索关联内容,可以为空,非必要字段"
 				}
-				
 			},
 			"required": ["query"],
 			"additionalProperties": false
