@@ -49,6 +49,12 @@ const (
 	ifEmptyStop      string = "__ifEmptyStop__"
 )
 
+/**
+@TODO 图形结构,组件都有自己的ID,有上游节点的List和下游节点的List,都是相同的组件对象数组
+节点必须等待上游节点都进行了调用才进行下游节点,不然就挂起等待.这样就完成了基本的数据结构.
+每次任务可以先把组件都实例化了,放到map里,有id进行获取,类似单例
+**/
+
 // componentTypeMap 组件类型对照,key是类型名称,value是组件实例
 var componentTypeMap = map[string]IComponent{
 	"Pipeline":                     &Pipeline{},
