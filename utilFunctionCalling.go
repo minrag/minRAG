@@ -238,8 +238,10 @@ func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string, i
 
 	// BM25的FTS5实现在返回结果之前将结果乘以-1,得分越小(数值上更负),表示匹配越好
 	finder := zorm.NewFinder().Append("SELECT id,markdown from fts_document_chunk where fts_document_chunk match jieba_query(?)", fc.Query)
+	finder.SelectTotalCount = false
+	finder.Append(" and markdown !=?  and markdown is not null", "")
 	if len(fc.DocumentIds) > 0 {
-		finder.Append("and documentID in (?)", fc.DocumentIds)
+		finder.Append(" and documentID in (?)", fc.DocumentIds)
 	}
 	if knowledgeBaseID != "" {
 		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
