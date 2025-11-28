@@ -18,6 +18,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	// 用于生成唯一的 ID
@@ -36,13 +37,8 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 	// 2. 解析 Markdown 文本,获取 AST
 	doc := parser.Parse(text.NewReader(source))
 
-	// treeNode 树形节点结构
 	var treeNode []*DocumentChunk
-
-	// listNode 按照顺序记录节点 (用于 PreID/NextID 赋值)
 	var listNode []*DocumentChunk
-
-	// ancestors 作为一个栈,用于跟踪当前路径上的父节点
 	var ancestors []*DocumentChunk
 
 	// 3. 遍历 AST 的所有子节点
@@ -52,16 +48,17 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 		if heading, ok := node.(*ast.Heading); ok {
 			level := heading.Level
 
-			// 提取标题的纯文本 (已修复: 替换过时的 Text(source) )
+			// 提取标题的纯文本
 			var titleBuilder strings.Builder
 			for n := heading.FirstChild(); n != nil; n = n.NextSibling() {
+				// 确保只提取 ast.Text 节点的内容
 				if textNode, ok := n.(*ast.Text); ok {
 					titleBuilder.Write(textNode.Segment.Value(source))
 				}
+				// 忽略其他类型的节点，如 Link, CodeSpan 等，只关注纯文本标题
 			}
 			title := titleBuilder.String()
 
-			// 生成新的 ID
 			id := FuncGenerateStringID()
 
 			// === 5. 调整 "ancestors" 栈 (处理层级关系) ===
@@ -97,7 +94,6 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 			// 9. 处理 PreID 和 NextID (链表关系)
 			if len(listNode) > 0 {
 				lastNode := listNode[len(listNode)-1]
-
 				lastNode.NextID = newNode.Id
 				newNode.PreID = lastNode.Id
 			}
@@ -110,23 +106,23 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 			if len(ancestors) > 0 {
 				currentNode := ancestors[len(ancestors)-1]
 
-				// === 修正: 专门处理 Fenced Code Block 以保留 ``` 标签 ===
+				// === 特殊处理 A: Fenced Code Block (必须手动添加围栏) ===
 				if fcb, isFencedCodeBlock := node.(*ast.FencedCodeBlock); isFencedCodeBlock {
 					var codeBlock strings.Builder
 
+					// 确保代码块前有换行
+					if currentNode.Markdown != "" && !strings.HasSuffix(currentNode.Markdown, "\n") {
+						codeBlock.WriteString("\n")
+					}
+
 					// 1. 添加开始的代码围栏和语言标签 (例如: ```shell)
-					codeBlock.WriteString("\n")
 					codeBlock.WriteString("```")
-
-					// 【已修复: 替换过时的 fcb.Info.Text(source) 为 fcb.Info.Value(source) 】
-					if fcb != nil && fcb.Info != nil && source != nil {
+					if fcb.Info != nil {
 						info := string(fcb.Info.Value(source))
-
 						if info != "" {
 							codeBlock.WriteString(info)
 						}
 					}
-
 					codeBlock.WriteString("\n")
 
 					// 2. 添加代码块内容
@@ -142,23 +138,85 @@ func parseMarkdownToTree(source []byte) ([]*DocumentChunk, []*DocumentChunk, err
 					currentNode.Markdown += codeBlock.String()
 
 				} else {
-					// 正常的内容块处理 (Paragraph, List, etc.)
-					segments := node.Lines()
-					for i := 0; i < segments.Len(); i++ {
-						segment := segments.At(i)
-						currentNode.Markdown += string(source[segment.Start:segment.Stop])
+					// === 通用处理 B: 所有其他块级元素 (列表、段落、引用、HTML块等) ===
+					var minStart, maxStop = -1, -1
+					foundContent := false
+
+					// 1. 递归遍历该节点下的所有子节点，找到文本在源码中的【最小开始】和【最大结束】位置
+					ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
+						if !entering {
+							return ast.WalkContinue, nil
+						}
+						// 只有拥有 lines() 的块级节点，才参与边界计算
+						if n.Type() == ast.TypeBlock {
+							lines := n.Lines()
+							if lines.Len() > 0 {
+								foundContent = true
+								firstLine := lines.At(0)
+								lastLine := lines.At(lines.Len() - 1)
+
+								if minStart == -1 || firstLine.Start < minStart {
+									minStart = firstLine.Start
+								}
+								if lastLine.Stop > maxStop {
+									maxStop = lastLine.Stop
+								}
+							}
+
+						}
+						return ast.WalkContinue, nil
+					})
+
+					// 2. 如果找到了有效的文本范围
+					if foundContent && minStart != -1 && maxStop != -1 {
+						// 【核心逻辑】回溯：从文本开始处向前寻找行首
+						// 这能自动包含列表符（- ）、引用符（> ）和缩进
+						realStart := minStart
+						for realStart > 0 && source[realStart-1] != '\n' {
+							realStart--
+						}
+
+						// 提取原始内容
+						chunkContent := string(source[realStart:maxStop])
+
+						// 3. 拼接内容
+						// 如果当前 Markdown 已经有内容且不以换行结尾，补一个换行
+						if currentNode.Markdown != "" && !strings.HasSuffix(currentNode.Markdown, "\n") {
+							currentNode.Markdown += "\n"
+						}
+						// 添加提取的内容，并确保末尾有一个换行符，以便与下一个块隔开
+						currentNode.Markdown += chunkContent + "\n"
+					} else {
+						// 专门处理没有内容但占据行数的节点，例如 <hr> 或空 HTML 块
+						if node.Lines().Len() > 0 {
+							// 提取原始行
+							segments := node.Lines()
+							var content strings.Builder
+							for i := 0; i < segments.Len(); i++ {
+								segment := segments.At(i)
+								content.Write(source[segment.Start:segment.Stop])
+							}
+
+							if content.Len() > 0 {
+								if currentNode.Markdown != "" && !strings.HasSuffix(currentNode.Markdown, "\n") {
+									currentNode.Markdown += "\n"
+								}
+								currentNode.Markdown += content.String() + "\n"
+							}
+						}
 					}
 				}
-
 			}
 		}
 	}
 
+	// 12. 最终处理: 统一添加标题头
 	for i := 0; i < len(listNode); i++ {
 		node := listNode[i]
-		// 给内容加上标题的内容,例如  ## 标题1 \n
 		if node.Markdown != "" {
-			node.Markdown = strings.Repeat("#", node.Level) + " " + node.Title + " \n " + node.Markdown
+			// 移除内容末尾多余的空格和换行符，然后加上标题和单个换行符
+			node.Markdown = strings.TrimSpace(node.Markdown)
+			node.Markdown = fmt.Sprintf("%s %s\n%s\n", strings.Repeat("#", node.Level), node.Title, node.Markdown)
 		}
 	}
 
