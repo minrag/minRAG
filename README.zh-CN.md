@@ -105,6 +105,16 @@ java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 }
 ```
 
+## Agentic AI
+index组件配置:  
+```json
+{"start":"MarkdownConverter","process":{"MarkdownConverter":"MarkdownIndex","MarkdownIndex":"SQLiteVecDocumentStore"}}
+```
+default组件配置: 
+```json
+{"start":"MarkdownRetriever","process":{"MarkdownRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}
+```
+
 ## 界面预览
 <img src="minragdatadir/public/demo.png" width="600px" />    
 

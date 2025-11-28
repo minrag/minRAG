@@ -110,6 +110,15 @@ Note: Modify the parameters in your ```indexPipeline``` workflow by replacing th
     }
 }
 ```
+## Agentic AI
+Index Component Configuration:  
+```json
+{"start":"MarkdownConverter","process":{"MarkdownConverter":"MarkdownIndex","MarkdownIndex":"SQLiteVecDocumentStore"}}
+```
+default Component Configuration: 
+```json
+{"start":"MarkdownRetriever","process":{"MarkdownRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}
+```
 
 ## Development Environment  
 minRAG uses ```https://github.com/wangfenjin/simple``` as the FTS5 full-text search extension. The compiled libsimple file is placed in the ```minragdatadir/extensions``` directory. If minRAG fails to start and reports an error connecting to the database, please check if the libsimple file is correct. If you need to recompile libsimple, please refer to https://github.com/wangfenjin/simple.  
