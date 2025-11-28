@@ -1,7 +1,8 @@
 v0.1.5
 - 使用ctx组件和函数传递参数
-- ```FtsKeywordRetriever```组件基于```search_document_by_keyword```函数实现
-- ```search_knowledge_base```函数修改为```search_document_by_node```
+- 增加```search_document_toc_by_id```函数,查找文档目录
+- ```FtsKeywordRetriever```组件基于```search_content_by_keyword```函数实现
+- ```search_knowledge_base```函数修改为```search_content_by_node```
 - 完善注释,文档
 
 v0.1.4
@@ -22,7 +23,7 @@ v0.1.2
 
 v0.1.1
 - 配置增加默认大语言模型```llmModel```
-- 增加```MarkdownTOCIndex``` 和 ```MarkdownTOCRetriever```组件,支持markdown目录索引方式 
+- 增加```MarkdownIndex``` 和 ```MarkdownRetriever```组件,支持markdown目录索引方式 
 - 增加Dockerfile
 - 增加联网搜索组件
 - 默认使用[markitdown](https://gitee.com/minrag/markitdown)处理文档

@@ -29,10 +29,12 @@ import (
 var functionCallingMap = make(map[string]IToolFunctionCalling, 0)
 
 const (
-	// fcSearchDocumentByNodeName 根据节点检索知识库
-	fcSearchDocumentByNodeName = "search_document_by_node"
-	// fcSearchDocumentByKeywordName 根据关键字检索知识库
-	fcSearchDocumentByKeywordName = "search_document_by_keyword"
+	// fcSearchDocumentTOCByIDName 检索文档目录数据函数
+	fcSearchDocumentTOCByIDName = "search_document_toc_by_id"
+	// fcSearchContentByNodeName 根据节点检索文档内容
+	fcSearchContentByNodeName = "search_content_by_node"
+	// fcSearchContentByKeywordName 根据关键字检索文档内容
+	fcSearchContentByKeywordName = "search_content_by_keyword"
 	// fcWebSearchName 联网搜索
 	fcWebSearchName = "web_search"
 )
@@ -40,18 +42,25 @@ const (
 func init() {
 	ctx := context.Background()
 
-	//本地知识库检索节点函数
-	fcSearchDocumentByNode := FCSearchDocumentByNode{}
-	searchDocumentByNode, err := fcSearchDocumentByNode.Initialization(ctx, search_document_by_node_json)
+	//本地知识库检索文档目录数据函数
+	fcSearchDocumentTOCById := FCSearchDocumentTOCById{}
+	searchDocumentTOCById, err := fcSearchDocumentTOCById.Initialization(ctx, search_document_toc_by_id_json)
 	if err == nil {
-		functionCallingMap[fcSearchDocumentByNodeName] = searchDocumentByNode
+		functionCallingMap[fcSearchDocumentTOCByIDName] = searchDocumentTOCById
+	}
+
+	//本地知识库检索节点函数
+	fcSearchDocumentByNode := FCSearchContentByNode{}
+	searchDocumentByNode, err := fcSearchDocumentByNode.Initialization(ctx, search_content_by_node_json)
+	if err == nil {
+		functionCallingMap[fcSearchContentByNodeName] = searchDocumentByNode
 	}
 
 	//本地知识库检索关键字函数
 	fcSearchDocumentByKeyword := FCSearchDocumentByKeyword{}
-	searchDocumentByKeyword, err := fcSearchDocumentByKeyword.Initialization(ctx, search_document_by_keyword_json)
+	searchDocumentByKeyword, err := fcSearchDocumentByKeyword.Initialization(ctx, search_content_by_keyword_json)
 	if err == nil {
-		functionCallingMap[fcSearchDocumentByKeywordName] = searchDocumentByKeyword
+		functionCallingMap[fcSearchContentByKeywordName] = searchDocumentByKeyword
 	}
 
 	//联网搜索函数
@@ -72,34 +81,34 @@ type IToolFunctionCalling interface {
 	Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error)
 }
 
-// search_document_by_node_json 查询知识库的函数json字符串
-var search_document_by_node_json = `{
+// search_document_toc_by_id_json 查询文档目录的结构树函数json字符串
+var search_document_toc_by_id_json = `{
 	"type": "function",
 	"function": {
-		"name": "` + fcSearchDocumentByNodeName + `",
-		"description": "根据用户问题和提供的知识库文档结构树,找出所有可能包含答案的知识库文档节点ID,如果可能至少返回5个节点.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容.可以和其他检索搜索函数配合使用",
+		"name": "` + fcSearchDocumentTOCByIDName + `",
+		"description": "根据用户问题和提供的文档列表,找出所有可能包含答案的文档目录结构数据,再配合使用` + fcSearchContentByNodeName + `函数,查找具体目录节点的内容.如果函数返回的文档目录数据和用户问题关系不紧密,可以多次调用此函数,获取其他的文档目录数据.可以和其他检索搜索函数配合使用",
 		"parameters": {
 			"type": "object",
 			"properties": {
-				"nodeIds": {
+				"documentIds": {
 					"type": "array",
                     "items": {"type": "string"},
 					"description": "要检索的知识库文档节点ID"
 				}
 			},
-			"required": ["nodeIds"],
+			"required": ["documentIds"],
 			"additionalProperties": false
 		}
 	}
 }`
 
-// FCSearchDocumentByNode 查询本地知识库的函数
-type FCSearchDocumentByNode struct {
-	NodeIds        []string               `json:"nodeIds,omitempty"`
+// FCSearchDocumentById 查询本地知识库的文档目录
+type FCSearchDocumentTOCById struct {
+	DocumentIds    []string               `json:"documentIds,omitempty"`
 	DescriptionMap map[string]interface{} `json:"-"`
 }
 
-func (fc FCSearchDocumentByNode) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
+func (fc FCSearchDocumentTOCById) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
 	dm := make(map[string]interface{})
 	if descriptionJson == "" {
 		return fc, nil
@@ -113,12 +122,97 @@ func (fc FCSearchDocumentByNode) Initialization(ctx context.Context, description
 }
 
 // 获取描述的Map
-func (fc FCSearchDocumentByNode) Description(ctx context.Context) interface{} {
+func (fc FCSearchDocumentTOCById) Description(ctx context.Context) interface{} {
 	return fc.DescriptionMap
 }
 
 // Run 执行方法
-func (fc FCSearchDocumentByNode) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+func (fc FCSearchDocumentTOCById) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+	if arguments == "" {
+		return "", nil
+	}
+	err := json.Unmarshal([]byte(arguments), &fc)
+	if err != nil {
+		return "", nil
+	}
+	if len(fc.DocumentIds) < 1 {
+		return "", nil
+	}
+	knowledgeBaseID := ""
+	if intput["knowledgeBaseID"] != nil {
+		knowledgeBaseID = intput["knowledgeBaseID"].(string)
+	}
+
+	documentTOCs := make([]Document, 0)
+	f_dc := zorm.NewSelectFinder(tableDocumentName, "id,name,toc").Append("WHERE 1=1 ")
+	f_dc.SelectTotalCount = false
+	if knowledgeBaseID != "" {
+		f_dc.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+	}
+	if len(fc.DocumentIds) > 0 {
+		f_dc.Append("and id in (?)", fc.DocumentIds)
+	}
+
+	page := zorm.NewPage()
+	page.PageSize = len(fc.DocumentIds)
+	err = zorm.Query(ctx, f_dc, &documentTOCs, page)
+	if err != nil {
+		return "", nil
+	}
+	resultByte, err := json.Marshal(documentTOCs)
+	if err != nil {
+		return "", nil
+	}
+	return string(resultByte), nil
+}
+
+// search_content_by_node_json 查询知识库的函数json字符串
+var search_content_by_node_json = `{
+	"type": "function",
+	"function": {
+		"name": "` + fcSearchContentByNodeName + `",
+		"description": "根据用户问题,先使用` + fcSearchDocumentTOCByIDName + `函数找出所有可能包含答案的文档目录,再使用` + fcSearchContentByNodeName + `函数查找找出所有可能包含答案的节点ID内容.如果函数返回的节点内容和用户问题关系不紧密,可以多次调用此函数,获取其他的节点内容.可以和其他检索搜索函数配合使用",
+		"parameters": {
+			"type": "object",
+			"properties": {
+				"nodeIds": {
+					"type": "array",
+                    "items": {"type": "string"},
+					"description": "要检索的文档节点ID"
+				}
+			},
+			"required": ["nodeIds"],
+			"additionalProperties": false
+		}
+	}
+}`
+
+// FCSearchContentByNode 查询本地知识库的函数
+type FCSearchContentByNode struct {
+	NodeIds        []string               `json:"nodeIds,omitempty"`
+	DescriptionMap map[string]interface{} `json:"-"`
+}
+
+func (fc FCSearchContentByNode) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
+	dm := make(map[string]interface{})
+	if descriptionJson == "" {
+		return fc, nil
+	}
+	err := json.Unmarshal([]byte(descriptionJson), &dm)
+	if err != nil {
+		return fc, err
+	}
+	fc.DescriptionMap = dm
+	return fc, nil
+}
+
+// 获取描述的Map
+func (fc FCSearchContentByNode) Description(ctx context.Context) interface{} {
+	return fc.DescriptionMap
+}
+
+// Run 执行方法
+func (fc FCSearchContentByNode) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -157,11 +251,11 @@ func (fc FCSearchDocumentByNode) Run(ctx context.Context, arguments string, intp
 	return string(resultByte), nil
 }
 
-// search_document_by_keyword_json 查询知识库的函数json字符串
-var search_document_by_keyword_json = `{
+// search_content_by_keyword_json 查询知识库的函数json字符串
+var search_content_by_keyword_json = `{
 	"type": "function",
 	"function": {
-		"name": "` + fcSearchDocumentByKeywordName + `",
+		"name": "` + fcSearchContentByKeywordName + `",
 		"description": "根据用户问题和提供的知识库文档结构树,全文检索query关键字,如果函数返回的内容和用户问题关系不紧密,可以多次调用此函数,获取其他的内容.可以和web_search网络联网搜索配合使用",
 		"parameters": {
 			"type": "object",
@@ -267,7 +361,7 @@ var web_search_json = `{
 	"type": "function",
 	"function": {
 		"name": "` + fcWebSearchName + `",
-		"description": "用于信息检索的网络联网搜索,可以多次调用.可以和search_document_by_node本地知识库检索配合使用",
+		"description": "用于信息检索的网络联网搜索,可以多次调用.可以和search_content_by_node本地知识库检索配合使用",
 		"parameters": {
 			"type": "object",
 			"properties": {

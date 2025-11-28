@@ -67,7 +67,7 @@ var componentTypeMap = map[string]IComponent{
 	"QianFanDocumentChunkReranker": &QianFanDocumentChunkReranker{},
 	"BaiLianDocumentChunkReranker": &BaiLianDocumentChunkReranker{},
 	"LKEDocumentChunkReranker":     &LKEDocumentChunkReranker{},
-	"MarkdownTOCRetriever":         &MarkdownTOCRetriever{},
+	"MarkdownRetriever":            &MarkdownRetriever{},
 	"FtsKeywordRetriever":          &FtsKeywordRetriever{},
 	"VecEmbeddingRetriever":        &VecEmbeddingRetriever{},
 	"OpenAITextEmbedder":           &OpenAITextEmbedder{},
@@ -76,7 +76,7 @@ var componentTypeMap = map[string]IComponent{
 	"SQLiteVecDocumentStore":       &SQLiteVecDocumentStore{},
 	"OpenAIDocumentEmbedder":       &OpenAIDocumentEmbedder{},
 	"LKEDocumentEmbedder":          &LKEDocumentEmbedder{},
-	"MarkdownTOCIndex":             &MarkdownTOCIndex{},
+	"MarkdownIndex":                &MarkdownIndex{},
 	"DocumentSplitter":             &DocumentSplitter{},
 	"HtmlCleaner":                  &HtmlCleaner{},
 	"WebScraper":                   &WebScraper{},
@@ -704,16 +704,16 @@ func (component *DocumentSplitter) Run(ctx context.Context, input map[string]int
 	return nil
 }
 
-// MarkdownTOCIndex markdown目录索引
-type MarkdownTOCIndex struct {
+// MarkdownIndex markdown目录索引
+type MarkdownIndex struct {
 	OpenAIChatGenerator
 }
 
-func (component *MarkdownTOCIndex) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownIndex) Initialization(ctx context.Context, input map[string]interface{}) error {
 	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
-func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownIndex) Run(ctx context.Context, input map[string]interface{}) error {
 
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
@@ -794,6 +794,30 @@ func (component *MarkdownTOCIndex) Run(ctx context.Context, input map[string]int
 	}
 	//文档的目录
 	document.Toc = string(tocBytes)
+
+	if document.Toc != "" { //根据文档名称和目录,让模型生成文档的摘要
+		message := `
+		根据提供的文档目录,概括整理文档的摘要,不要超过200字.
+		返回的json格式示例:{"summary":<整理的文档摘要内容>}
+		需要整理的文档名称是:` + document.Name + `
+		文档目录是:` + document.Toc
+		component.Temperature = 0.1
+		// 请求大模型,获取json结果
+		resultJson, err := llmJSONResult(ctx, component.OpenAIChatGenerator, message)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		summaryResult := struct {
+			Summary string `json:"summary,omitempty"`
+		}{}
+		err = json.Unmarshal([]byte(resultJson), &summaryResult)
+		if err != nil {
+			input[errorKey] = err
+			return err
+		}
+		document.Summary = summaryResult.Summary
+	}
 
 	documentChunks := make([]DocumentChunk, 0)
 	for i := 0; i < len(list); i++ {
@@ -1199,14 +1223,14 @@ func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]
 	if input["tools"] != nil {
 		tools = input["tools"].([]interface{})
 	}
-	fc := functionCallingMap[fcSearchDocumentByKeywordName]
+	fc := functionCallingMap[fcSearchContentByKeywordName]
 	tools = append(tools, fc.Description(ctx))
 	input["tools"] = tools
 	return nil
 }
 
-// MarkdownTOCRetriever 使用文档目录索引
-type MarkdownTOCRetriever struct {
+// MarkdownRetriever 使用文档目录索引
+type MarkdownRetriever struct {
 	// DocumentID 文档ID
 	DocumentID string `json:"documentID,omitempty"`
 	// KnowledgeBaseID 知识库ID
@@ -1224,7 +1248,7 @@ type MarkdownTOCRetriever struct {
 	t              *template.Template `json:"-"`
 }
 
-func (component *MarkdownTOCRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
 	if component.TopN == 0 {
 		component.TopN = 5
 	}
@@ -1241,7 +1265,7 @@ func (component *MarkdownTOCRetriever) Initialization(ctx context.Context, input
 
 	return nil
 }
-func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]interface{}) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topN := 0
@@ -1281,7 +1305,7 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	}
 
 	// 查询文档的目录
-	finder := zorm.NewFinder().Append("SELECT id,name,summary,toc from " + tableDocumentName + " WHERE 1=1")
+	finder := zorm.NewFinder().Append("SELECT id,name,summary from " + tableDocumentName + " WHERE 1=1")
 	if documentID != "" {
 		finder.Append(" and documentID=?", documentID)
 	}
@@ -1326,8 +1350,12 @@ func (component *MarkdownTOCRetriever) Run(ctx context.Context, input map[string
 	if input["tools"] != nil {
 		tools = input["tools"].([]interface{})
 	}
-	fc := functionCallingMap[fcSearchDocumentByNodeName]
-	tools = append(tools, fc.Description(ctx))
+	// 添加查询文档目录和节点内容的函数
+	fcTOC := functionCallingMap[fcSearchDocumentTOCByIDName]
+	tools = append(tools, fcTOC.Description(ctx))
+	fcNode := functionCallingMap[fcSearchContentByNodeName]
+	tools = append(tools, fcNode.Description(ctx))
+
 	input["tools"] = tools
 
 	return nil

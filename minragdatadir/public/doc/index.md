@@ -187,7 +187,7 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 - TikaConverter: 使用tika解析文档
 - MarkdownConverter: 使用markitdown解析文档
 - DocumentSplitter: 分割文档
-- MarkdownTOCIndex: 索引markdown文件的目录
+- MarkdownIndex: 索引markdown文件的目录
 - LKEDocumentEmbedder: 腾讯云LKE的文档Embedding模型
 - OpenAIDocumentEmbedder: OpenAI的文档Embedding模型
 - SQLiteVecDocumentStore: SQLiteVec的向量化保存
@@ -199,7 +199,7 @@ minRAG的数据处理步骤都是组件,包括流水线也是组件,组件类型
 - OpenAITextEmbedder: OpenAI的文本Embedding模型
 - VecEmbeddingRetriever: SQLiteVec向量查询
 - FtsKeywordRetriever: FTS5的BM25全文检索
-- MarkdownTOCRetriever: 使用markdown的目录检索章节
+- MarkdownRetriever: 使用markdown的目录检索章节
 - QianFanDocumentChunkReranker: 百度千帆的Reranker模型重排序
 - LKEDocumentChunkReranker: 腾讯云LKE的Reranker模型重排序
 - BaiLianDocumentChunkReranker: 阿里云百炼的Reranker模型重排序
