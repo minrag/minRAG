@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS component (
 		id TEXT PRIMARY KEY NOT NULL,
 		componentType     TEXT NOT NULL,
 		parameter         TEXT,
-		expression		  TEXT,
+		runExpression	  TEXT,
 		upStream          TEXT,
 		downStream        TEXT,
 		createTime        TEXT,
