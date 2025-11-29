@@ -104,6 +104,7 @@ func init() {
 func initComponentMap() {
 	componentMap = make(map[string]IComponent, 0)
 	// indexPipeline 比较特殊,默认禁用,为了不让Agent绑定上
+	// 分两次查询,一次查询组件,放入map,一次查询流水线,放入map
 	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 or id=?", "indexPipeline")
 	cs := make([]Component, 0)
 	ctx := context.Background()
@@ -146,6 +147,8 @@ func initComponentMap() {
 type Pipeline struct {
 	Start   string            `json:"start,omitempty"`
 	Process map[string]string `json:"process,omitempty"`
+	// Components 流水线的组件列表
+	Components []Component `json:"components,omitempty"`
 }
 
 func (component *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
