@@ -156,10 +156,12 @@ func initComponentMap() {
 
 // Pipeline 流水线也是组件
 type Pipeline struct {
+	Id      string            `column:"id" json:"id,omitempty"`
 	Start   string            `json:"start,omitempty"`
 	Process map[string]string `json:"process,omitempty"`
-	// Components 流水线的组件列表
-	Components []Component `json:"components,omitempty"`
+	// Components 流水线的组件map[组件id]*Component
+	// 或者使用对象,不用指针,每次修改了再放回map,例如upStream,感觉还是指针好点,就是处理起来麻烦,因为还要从公共map里获取copy对象副本,互相隔离
+	Components map[string]*Component `json:"components,omitempty"`
 }
 
 func (component *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
