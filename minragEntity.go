@@ -330,7 +330,7 @@ type Component struct {
 	// 引入默认的struct,隔离IEntityStruct的方法改动
 	zorm.EntityStruct
 
-	// ID
+	// Id 组件ID,可以根据ID获取声明的公共组件,也可以是自定义组件
 	Id string `column:"id" json:"id,omitempty"`
 
 	// ComponentType 组件类型,和componentTypeMap关联
@@ -338,6 +338,18 @@ type Component struct {
 
 	// Parameter 参数,json格式字符串
 	Parameter string `column:"parameter" json:"parameter,omitempty"`
+
+	// Expression 执行表达式,组件执行时先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
+	Expression string `column:"expression" json:"expression,omitempty"`
+
+	// 流水线里的所有组件都放到一个map<Id,Component>,可以根据ID获取单例,避免使用指针,因为每个流水线的组件要互相隔离
+	//UpStreamJSON 上游组件的JSON字符串
+	UpStreamJSON string      `column:"upStream"`
+	UpStream     []Component `json:"upstream,omitempty"`
+
+	// DownStreamJSON 下游组件的JSON字符串
+	DownStreamJSON string      `column:"downStream"`
+	DownStream     []Component `json:"downstream,omitempty"`
 
 	// CreateTime 创建时间
 	CreateTime string `column:"createTime" json:"createTime,omitempty"`
