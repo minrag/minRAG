@@ -103,12 +103,23 @@ func init() {
 // initComponentMap 初始化componentMap
 func initComponentMap() {
 	componentMap = make(map[string]IComponent, 0)
-	// indexPipeline 比较特殊,默认禁用,为了不让Agent绑定上
-	// 分两次查询,一次查询组件,放入map,一次查询流水线,放入map
-	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 or id=?", "indexPipeline")
+
+	// 普通组件
+	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType!=? order by sortNo asc", "Pipeline")
+	finder.SelectTotalCount = false
 	cs := make([]Component, 0)
 	ctx := context.Background()
 	zorm.Query(ctx, finder, &cs, nil)
+
+	// 流水线组, indexPipeline 比较特殊,默认禁用,为了不让Agent绑定上
+	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType=? order by sortNo asc", "Pipeline")
+	finderPipeline.SelectTotalCount = false
+	csPipeline := make([]Component, 0)
+	zorm.Query(ctx, finderPipeline, &csPipeline, nil)
+
+	// 合并两个数组,把流水线组件放到后面
+	cs = append(cs, csPipeline...)
+
 	for i := 0; i < len(cs); i++ {
 		c := cs[i]
 		componentType, has := componentTypeMap[c.ComponentType]
