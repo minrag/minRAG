@@ -111,7 +111,7 @@ func initComponentMap() {
 	ctx := context.Background()
 	zorm.Query(ctx, finder, &cs, nil)
 
-	// 流水线组, indexPipeline 比较特殊,默认禁用,为了不让Agent绑定上
+	// 流水线组
 	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType=? order by sortNo asc", "Pipeline")
 	finderPipeline.SelectTotalCount = false
 	csPipeline := make([]Component, 0)

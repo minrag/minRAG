@@ -527,7 +527,9 @@ func funcKnowledgeBases() []KnowledgeBase {
 // funcPipelineIDs 可用的流水线ID
 func funcPipelineIDs() []string {
 	pipelineIDs := make([]string, 0)
-	finder := zorm.NewSelectFinder(tableComponentName, "id").Append("WHERE componentType=? and status=1 order by sortNo desc", "Pipeline")
+	// indexPipeline 比较特殊,不让Agent绑定上
+	finder := zorm.NewSelectFinder(tableComponentName, "id").Append("WHERE componentType=? and status=1 and id!=? order by sortNo desc", "Pipeline", "indexPipeline")
+	finder.SelectTotalCount = false
 	zorm.Query(context.Background(), finder, &pipelineIDs, nil)
 	return pipelineIDs
 }
