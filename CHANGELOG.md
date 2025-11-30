@@ -1,5 +1,6 @@
 v0.1.5
-- 修改组件的组装方式,支持多个节点汇聚
+- 流水线和组件的实例进行隔离
+- 修改组件的组装方式,支持多对多节点汇聚
 - 增加```search_document_toc_by_id```函数,查找文档目录
 - ```FtsKeywordRetriever```组件基于```search_content_by_keyword```函数实现
 - ```search_knowledge_base```函数修改为```search_content_by_node```

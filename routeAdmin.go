@@ -180,7 +180,7 @@ func funcAdminInstall(ctx context.Context, c *app.RequestContext) {
 	// 更新AI配置
 	updateConfigAI(ctx, c.PostForm("aiBaseURL"), c.PostForm("aiAPIKey"), c.PostForm("llmModel"))
 	//重新初始化组件
-	initComponentMap()
+	initBaseComponentMap()
 	c.Redirect(http.StatusOK, cRedirecURI(loginHtml))
 }
 
@@ -256,7 +256,7 @@ func funcAdminReload(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	// 刷新组件Map
-	initComponentMap()
+	initBaseComponentMap()
 
 	//重新生成静态文件
 	go genStaticFile()
@@ -637,7 +637,7 @@ func funcUpdateConfig(ctx context.Context, c *app.RequestContext) {
 	// 刷新config之后,刷新组件Map才会有效果
 	config, site = loadInstallConfig()
 	// 刷新组件Map
-	initComponentMap()
+	initBaseComponentMap()
 }
 
 // funcUpdateSite 更新站点
@@ -716,7 +716,7 @@ func funcUpdateComponent(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	// 刷新组件Map
-	initComponentMap()
+	initBaseComponentMap()
 	c.JSON(http.StatusOK, ResponseData{StatusCode: 1, UrlPathParam: "component"})
 }
 
@@ -896,7 +896,7 @@ func funcSaveComponent(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	// 刷新组件Map
-	initComponentMap()
+	initBaseComponentMap()
 	c.JSON(http.StatusOK, ResponseData{StatusCode: count.(int), Message: funcT("Saved successfully!")})
 }
 

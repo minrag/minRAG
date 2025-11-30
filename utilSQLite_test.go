@@ -34,7 +34,7 @@ func TestVecLikeQuery(t *testing.T) {
 
 func TestVecQuery(t *testing.T) {
 	ctx := context.Background()
-	embedder := componentMap["OpenAITextEmbedder"]
+	embedder := baseComponentMap["OpenAITextEmbedder"]
 	input := map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."}
 	err := embedder.Run(ctx, input)
 	if err != nil {
@@ -56,7 +56,7 @@ func TestVecQuery(t *testing.T) {
 
 func TestDocumentSplitter(t *testing.T) {
 	ctx := context.Background()
-	documentSplitter := componentMap["DocumentSplitter"]
+	documentSplitter := baseComponentMap["DocumentSplitter"]
 	input := make(map[string]interface{}, 0)
 	input["document"] = &Document{Markdown: "我是中国人,我爱中国。圣诞节,了大家安康金发傲娇考虑实际得分拉萨放假啊十六分是。1。2。3。"}
 	err := documentSplitter.Run(ctx, input)
@@ -74,7 +74,7 @@ func TestDocumentSplitter(t *testing.T) {
 
 func TestFtsKeywordRetriever(t *testing.T) {
 	ctx := context.Background()
-	ftsKeywordRetriever := componentMap["FtsKeywordRetriever"]
+	ftsKeywordRetriever := baseComponentMap["FtsKeywordRetriever"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "马斯克"
 	err := ftsKeywordRetriever.Run(ctx, input)
@@ -91,7 +91,7 @@ func TestFtsKeywordRetriever(t *testing.T) {
 
 func TestDocumentChunkReranker(t *testing.T) {
 	ctx := context.Background()
-	documentChunkReranker := componentMap["DocumentChunkReranker"]
+	documentChunkReranker := baseComponentMap["DocumentChunkReranker"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
@@ -113,7 +113,7 @@ func TestDocumentChunkReranker(t *testing.T) {
 
 func TestPromptBuilder(t *testing.T) {
 	ctx := context.Background()
-	promptBuilder := componentMap["PromptBuilder"]
+	promptBuilder := baseComponentMap["PromptBuilder"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
@@ -127,10 +127,10 @@ func TestPromptBuilder(t *testing.T) {
 	}
 	fmt.Println(input["prompt"])
 
-	openAIChatMemory := componentMap["OpenAIChatMemory"]
+	openAIChatMemory := baseComponentMap["OpenAIChatMemory"]
 	openAIChatMemory.Run(ctx, input)
 
-	openAIChatGenerator := componentMap["OpenAIChatGenerator"]
+	openAIChatGenerator := baseComponentMap["OpenAIChatGenerator"]
 	openAIChatGenerator.Run(ctx, input)
 	choice := input["choice"]
 	fmt.Println(choice)
@@ -138,7 +138,7 @@ func TestPromptBuilder(t *testing.T) {
 
 func TestPipline(t *testing.T) {
 	ctx := context.Background()
-	defaultPipline := componentMap["default"]
+	defaultPipline := baseComponentMap["default"]
 	input := make(map[string]interface{}, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
