@@ -84,9 +84,6 @@ CREATE TABLE IF NOT EXISTS component (
 		id TEXT PRIMARY KEY NOT NULL,
 		componentType     TEXT NOT NULL,
 		parameter         TEXT,
-		runExpression	  TEXT,
-		upStream          TEXT,
-		downStream        TEXT,
 		createTime        TEXT,
 		updateTime        TEXT,
 		createUser        TEXT,
@@ -116,8 +113,8 @@ INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,21,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"memoryLength":3}','OpenAIChatMemory','OpenAIChatMemory');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,22,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"maxDeep":10}','OpenAIChatGenerator','OpenAIChatGenerator');
 INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,23,'','2025-10-24 10:24:00','2025-10-24 10:24:00','','ChatMessageLogStore','ChatMessageLogStore');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,24,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"MarkdownConverter","process":{"MarkdownConverter":"DocumentSplitter","DocumentSplitter":"OpenAIDocumentEmbedder","OpenAIDocumentEmbedder":"SQLiteVecDocumentStore"}}','Pipeline','indexPipeline');
-INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,25,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"start":"OpenAITextEmbedder","process":{"OpenAITextEmbedder":"VecEmbeddingRetriever","VecEmbeddingRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"DocumentChunkReranker","DocumentChunkReranker":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}','Pipeline','default');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,24,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"id":"indexPipeline","downStream":[{"id":"MarkdownConverter","downStream":[{"id":"DocumentSplitter","downStream":[{"id":"OpenAIDocumentEmbedder","downStream":[{"id":"SQLiteVecDocumentStore"}]}]}]}]}','Pipeline','indexPipeline');
+INSERT INTO component (status,sortNo,createUser,updateTime,createTime,parameter,componentType,id) VALUES (1,25,'','2025-10-24 10:24:00','2025-10-24 10:24:00','{"id":"default","downStream":[{"id":"OpenAITextEmbedder","downStream":[{"id":"VecEmbeddingRetriever","downStream":[{"id":"FtsKeywordRetriever","downStream":[{"id":"DocumentChunkReranker","downStream":[{"id":"PromptBuilder","downStream":[{"id":"OpenAIChatMemory","downStream":[{"id":"OpenAIChatGenerator","downStream":[{"id":"ChatMessageLogStore"}]}]}]}]}]}]}]}]}','Pipeline','default');
 
 
 CREATE TABLE IF NOT EXISTS agent (

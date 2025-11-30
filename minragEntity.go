@@ -17,7 +17,11 @@
 
 package main
 
-import "gitee.com/chunanyong/zorm"
+import (
+	"context"
+
+	"gitee.com/chunanyong/zorm"
+)
 
 // Config 配置表
 type Config struct {
@@ -336,22 +340,18 @@ type Component struct {
 	// ComponentType 组件类型,和componentTypeMap关联
 	ComponentType string `column:"componentType" json:"componentType,omitempty"`
 
-	// Parameter 参数,json格式字符串
+	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
 	Parameter string `column:"parameter" json:"parameter,omitempty"`
 
 	// RunExpression 运行表达式,组件运行时先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
-	RunExpression string `column:"runExpression" json:"runExpression,omitempty"`
+	RunExpression string `json:"runExpression,omitempty"`
 
 	// 流水线里的所有组件都放到一个map<Id,Component>,可以根据ID获取单例,避免使用指针,因为每个流水线的组件要互相隔离
-	//UpStreamJSON 上游组件的JSON字符串
-	UpStreamJSON string `column:"upStream"`
 	// UpStream 上游组件,必须上游组件都执行完成后,才会执行当前组件.默认为空,只有一个上游时,可以为空
-	UpStream []Component `json:"upstream,omitempty"`
+	UpStream []*Component `json:"upstream,omitempty"`
 
-	// DownStreamJSON 下游组件的JSON字符串
-	DownStreamJSON string `column:"downStream"`
 	// DownStream 下游组件,多个节点时,一般指定runExpression,同时执行多个下游节点
-	DownStream []Component `json:"downstream,omitempty"`
+	DownStream []*Component `json:"downstream,omitempty"`
 
 	// CreateTime 创建时间
 	CreateTime string `column:"createTime" json:"createTime,omitempty"`
@@ -367,6 +367,16 @@ type Component struct {
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
+}
+
+// Initialization 初始化方法
+func (entity *Component) Initialization(ctx context.Context, input map[string]interface{}) error {
+	return nil
+}
+
+// Run 执行方法
+func (entity *Component) Run(ctx context.Context, input map[string]interface{}) error {
+	return nil
 }
 
 // GetTableName 获取表名称
