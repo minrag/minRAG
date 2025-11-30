@@ -101,23 +101,73 @@ Alternatively, download [tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwD
 
 Note: Modify the parameters in your ```indexPipeline``` workflow by replacing the original ```MarkdownConverter``` with ```TikaConverter```:
 ```json
-{
-    "start": "TikaConverter",
-    "process": {
-        "TikaConverter": "DocumentSplitter",
-        "DocumentSplitter": "OpenAIDocumentEmbedder",
-        "OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
-    }
+{ 
+    "id":"indexPipeline",
+    "downStream":[
+        {
+            "id":"TikaConverter",
+             "downStream":[{
+                "id":"DocumentSplitter",
+                 "downStream":[{
+                    "id":"OpenAIDocumentEmbedder",
+                     "downStream":[{
+                        "id":"SQLiteVecDocumentStore"
+                     }]
+                 }]
+             }]
+        }
+
+    ]
+    
 }
 ```
 ## Agentic AI
 Index Component Configuration:  
 ```json
-{"start":"MarkdownConverter","process":{"MarkdownConverter":"MarkdownIndex","MarkdownIndex":"SQLiteVecDocumentStore"}}
+{ 
+    "id":"indexPipeline",
+    "downStream":[
+        {
+            "id":"MarkdownConverter",
+             "downStream":[{
+                "id":"MarkdownIndex",
+                 "downStream":[{
+                    "id":"SQLiteVecDocumentStore"
+                 }]
+             }]
+        }
+
+    ]
+    
+}
 ```
 default Component Configuration: 
 ```json
-{"start":"MarkdownRetriever","process":{"MarkdownRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}
+{ 
+    "id":"default",
+    "downStream":[
+        {
+            "id":"MarkdownRetriever",
+             "downStream":[{
+                "id":"FtsKeywordRetriever",
+                 "downStream":[{
+                    "id":"PromptBuilder",
+                     "downStream":[{
+                        "id":"OpenAIChatMemory",
+                         "downStream":[{
+                            "id":"OpenAIChatGenerator",
+                             "downStream":[{
+                                "id":"ChatMessageLogStore"
+                             }]
+                         }]
+                     }]
+                 }]
+             }]
+        }
+
+    ]
+    
+}
 ```
 
 ## Development Environment  

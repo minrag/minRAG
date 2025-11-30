@@ -95,24 +95,75 @@ java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 或者下载[tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234)   ```start.bat```启动tika.  
 注意修改```indexPipeline```流水线的参数,把原来的```MarkdownConverter```替换为```TikaConverter```:
 ```json
-{
-    "start": "TikaConverter",
-    "process": {
-        "TikaConverter": "DocumentSplitter",
-        "DocumentSplitter": "OpenAIDocumentEmbedder",
-        "OpenAIDocumentEmbedder": "SQLiteVecDocumentStore"
-    }
+{ 
+    "id":"indexPipeline",
+    "downStream":[
+        {
+            "id":"TikaConverter",
+             "downStream":[{
+                "id":"DocumentSplitter",
+                 "downStream":[{
+                    "id":"OpenAIDocumentEmbedder",
+                     "downStream":[{
+                        "id":"SQLiteVecDocumentStore"
+                     }]
+                 }]
+             }]
+        }
+
+    ]
+    
 }
+
 ```
 
 ## Agentic AI
 index组件配置:  
 ```json
-{"start":"MarkdownConverter","process":{"MarkdownConverter":"MarkdownIndex","MarkdownIndex":"SQLiteVecDocumentStore"}}
+{ 
+    "id":"indexPipeline",
+    "downStream":[
+        {
+            "id":"MarkdownConverter",
+             "downStream":[{
+                "id":"MarkdownIndex",
+                 "downStream":[{
+                    "id":"SQLiteVecDocumentStore"
+                 }]
+             }]
+        }
+
+    ]
+    
+}
 ```
 default组件配置: 
 ```json
-{"start":"MarkdownRetriever","process":{"MarkdownRetriever":"FtsKeywordRetriever","FtsKeywordRetriever":"PromptBuilder","PromptBuilder":"OpenAIChatMemory","OpenAIChatMemory":"OpenAIChatGenerator","OpenAIChatGenerator":"ChatMessageLogStore"}}
+{ 
+    "id":"default",
+    "downStream":[
+        {
+            "id":"MarkdownRetriever",
+             "downStream":[{
+                "id":"FtsKeywordRetriever",
+                 "downStream":[{
+                    "id":"PromptBuilder",
+                     "downStream":[{
+                        "id":"OpenAIChatMemory",
+                         "downStream":[{
+                            "id":"OpenAIChatGenerator",
+                             "downStream":[{
+                                "id":"ChatMessageLogStore"
+                             }]
+                         }]
+                     }]
+                 }]
+             }]
+        }
+
+    ]
+    
+}
 ```
 
 ## 界面预览
