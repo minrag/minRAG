@@ -32,20 +32,19 @@ import (
 /**
 
 flowchart TD
-    A[流水线启动] --> B[遍历pipelineComponentMap<br>初始化组件实例]
-    B --> C{运行表达式<br>RunExpression是否为空?}
-    C -- 是 --> D[表达式验证通过]
-    C -- 否 --> E[执行表达式引擎计算]
-    E --> F{表达式结果是否为真?}
-    F -- 否 --> G[标记当前组件状态为“跳过”]
-    F -- 是 --> D
-    G --> H
-    D --> H{检查上游依赖<br>UpStream是否为空?}
-    H -- 是 --> I[所有上游节点均已完成]
-    H -- 否 --> J[等待所有UpStream节点<br>执行完成]
-    J --> I
-    I --> K[执行当前组件核心逻辑]
-    K --> L[更新组件状态为“完成”<br>并通知下游DownStream节点]
+    A[流水线启动] --> B[遍历pipelineComponentMap<br>初始化所有组件实例]
+    B --> C[为每个组件实例<br>加载其下游节点完整对象]
+    C --> D[从根节点开始<br>（UpStream为空的组件）]
+    D --> E{检查UpStreamCondition<br>是否全部满足？}
+    E -- 是 --> F[执行当前组件核心逻辑]
+    E -- 否 --> G[标记当前组件状态为“阻塞”]
+    F --> H[更新组件状态为“完成”]
+    G --> I[等待条件满足或超时]
+    I -.-> E
+    H --> J[通知所有下游节点<br>（DownStream中的组件）]
+    J --> K{是否所有下游节点<br>均已执行完毕？}
+    K -- 否 --> D
+    K -- 是 --> L[整条流水线执行结束]
 
 **/
 
@@ -53,9 +52,9 @@ flowchart TD
 流水线组件有ID和基础组件ID,基础组件ID,对应组件表的ID,为空时,默认为ID.比如一个基础组件被多次引用,ID不同,BaseComponentId相同
 所有组件都放到了pipelineComponentMap map[流水线组件id]*PipelineComponent,每个流水线组件的所有组件都是互相隔离的,都是新的实例
 
-有运行表达式RunExpression,组件运行前先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
+有上游节点UpStream和下游节点DownStream,都是[]*PipelineComponent类型,上游节点默认为空,当有多个节点时,要全部完成才能进行下游节点.
+从UpStreamCondition map[upStreamID]Condition 获取上游节点进入的表达式,组件运行前先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
 
-有上游节点UpStream和下游节点DownStream,都是[]*PipelineComponent类型,上游节点默认为空,当有多个节点时,要全部完成才能进行下游节点
 下游节点DownStream的JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
 
 有参数Parameter,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,如果流水线里有多个相同基础组件的组件,必须使用BaseComponentId,使用ID来区分不同的组件实例
@@ -72,17 +71,15 @@ type PipelineComponent struct {
 	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
 	Parameter string `json:"parameter,omitempty"`
 
-	// RunExpression 运行表达式,组件运行时先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
-	RunExpression string             `json:"runExpression,omitempty"`
-	t             *template.Template `json:"-"`
-
 	// 流水线里的所有组件都放到一个map<Id,PipelineComponent>,可以根据ID获取单例,避免使用指针,因为每个流水线的组件要互相隔离
 	// UpStream 上游组件,必须上游组件都执行完成后,才会执行当前组件.默认为空,只有一个上游时,可以为空
-	UpStream []*PipelineComponent `json:"upstream,omitempty"`
+	UpStream []*PipelineComponent `json:"upStream,omitempty"`
+	// UpStreamCondition  map[upStreamId]Condition  上游组件条件表达式,先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
+	UpStreamCondition map[string]string `json:"upStreamCondition,omitempty"`
 
-	// DownStream 下游组件,多个节点时,一般指定runExpression,同时执行多个下游节点
+	// DownStream 下游组件,多个节点时,一般指定runCondition,同时执行多个下游节点
 	// JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
-	DownStream []*PipelineComponent `json:"downstream,omitempty"`
+	DownStream []*PipelineComponent `json:"downStream,omitempty"`
 
 	// Component 组件实例对象,运行时使用
 	Component IComponent `json:"-"`
@@ -91,7 +88,7 @@ type PipelineComponent struct {
 // Pipeline 流水线,也是IComponent实现
 type Pipeline struct {
 
-	// 引入组件Struct
+	// 引入流水线组件
 	PipelineComponent
 
 	// pipelineComponentMap map[流水线组件id]*PipelineComponent
@@ -148,16 +145,10 @@ func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input ma
 			//初始化组件
 			pipelineComponent.Component.Initialization(ctx, input)
 		}
-		if pipelineComponent.RunExpression != "" {
-			tmpl := template.New("pipelineComponentMap-" + pipelineComponent.Id)
-			var err error
-			pipelineComponent.t, err = tmpl.Parse(pipelineComponent.RunExpression)
-			if err != nil {
-				FuncLogError(ctx, err)
-				continue
-			}
-		}
+
+		// 记录到map中
 		pipeline.pipelineComponentMap[pipelineComponent.Id] = pipelineComponent
+
 		/*
 			//按照顺序包装所有的组件,等于两层处理,不再递归处理
 			cs := make([]*PipelineComponent, 0)
@@ -195,34 +186,46 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
 		}
 		pipelineComponent := pipelineComponentMap[id]
-		// 使用text/template进行表达式计算
-		if pipelineComponent.t != nil {
-			// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
-			var buf bytes.Buffer
-			// 执行模板并将结果写入到 bytes.Buffer
-			if err := pipelineComponent.t.Execute(&buf, input); err != nil {
-				input[errorKey] = err
-				return err
-			}
-			// 获取编译后的内容
-			result := strings.TrimSpace(buf.String())
-			// 如果结果不是 true,则跳过该组件的执行
-			if strings.ToLower(result) != "true" {
-				continue
-			}
 
-		}
 		if len(pipelineComponent.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
-			//remove(component.UpStream, upStreamId)
 			upId := upStream.Id
 			index := -1
 			for j := 0; j < len(pipelineComponent.UpStream); j++ {
-				if pipelineComponent.UpStream[index].Id == upId {
+				if pipelineComponent.UpStream[j].Id == upId {
 					index = j
 					break
 				}
 			}
-			if index >= 0 {
+			if index >= 0 { //属于上游的组件
+				condition := ""
+				if pipelineComponent.UpStreamCondition != nil {
+					condition = pipelineComponent.UpStreamCondition[upId]
+				}
+				if condition != "" {
+					tmpl := template.New("pipelineComponentMap-" + upId + "-" + pipelineComponent.Id)
+					t, err := tmpl.Parse(condition)
+					if err != nil {
+						FuncLogError(ctx, err)
+						input[errorKey] = err
+						return err
+					}
+					// 使用text/template进行表达式计算
+					// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
+					var buf bytes.Buffer
+					// 执行模板并将结果写入到 bytes.Buffer
+					if err := t.Execute(&buf, input); err != nil {
+						FuncLogError(ctx, err)
+						input[errorKey] = err
+						return err
+					}
+					// 获取编译后的内容
+					result := strings.TrimSpace(buf.String())
+					// 如果结果不是 true,则跳过该组件的执行
+					if strings.ToLower(result) != "true" {
+						continue
+					}
+				}
+				// 符合条件,删除上游组件
 				pipelineComponent.UpStream = append(pipelineComponent.UpStream[:index], pipelineComponent.UpStream[index+1:]...)
 			}
 			if len(pipelineComponent.UpStream) > 0 {
