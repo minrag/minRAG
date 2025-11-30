@@ -163,21 +163,21 @@ type Pipeline struct {
 	pipelineComponentMap map[string]IComponent `json:"-"`
 }
 
-func (component *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
 	// 初始化流水线的组件map
-	component.pipelineComponentMap = make(map[string]IComponent, 0)
+	pipeline.pipelineComponentMap = make(map[string]IComponent, 0)
 	// 获取上游组件,流水线的上游只能是流水线组件
-	for _, up := range component.UpStream {
-		component.pipelineComponentMap[up.Id] = componentMap[up.Id]
+	for _, up := range pipeline.UpStream {
+		pipeline.pipelineComponentMap[up.Id] = componentMap[up.Id]
 	}
 	// 获取下游组件,并初始化pipelineComponentMap
-	initPipelineComponentMap(ctx, component.DownStream, component.pipelineComponentMap)
+	initPipelineComponentMap(ctx, input, pipeline.DownStream, pipeline.pipelineComponentMap)
 
 	return nil
 }
 
 // initPipelineComponentMap 初始化流水线的组件map,递归处理
-func initPipelineComponentMap(ctx context.Context, components []*Component, pipelineComponentMap map[string]IComponent) error {
+func initPipelineComponentMap(ctx context.Context, input map[string]interface{}, components []*Component, pipelineComponentMap map[string]IComponent) error {
 	for i := 0; i < len(components); i++ {
 		component := components[i]
 		id := component.Id             //组件id
@@ -191,6 +191,8 @@ func initPipelineComponentMap(ctx context.Context, components []*Component, pipe
 				FuncLogError(ctx, err)
 				continue
 			}
+			//初始化组件
+			component.Initialization(ctx, input)
 			pipelineComponentMap[id] = component
 		}
 		cs := make([]*Component, 0)
@@ -202,7 +204,7 @@ func initPipelineComponentMap(ctx context.Context, components []*Component, pipe
 		}
 		// 递归处理
 		if len(cs) > 0 {
-			initPipelineComponentMap(ctx, cs, pipelineComponentMap)
+			initPipelineComponentMap(ctx, input, cs, pipelineComponentMap)
 		}
 
 	}
@@ -210,18 +212,12 @@ func initPipelineComponentMap(ctx context.Context, components []*Component, pipe
 	return nil
 }
 
-func (component *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
-	if component.RunExpression != "" {
-		// 使用text/template进行表达式计算
-		return nil
-	}
-	if len(component.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
-		//remove(component.UpStream, upStreamId)
-	}
+func (pipeline *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
+
 	// 执行下游的流水线组件
-	return component.runProcess(ctx, input, component.DownStream)
+	return runProcess(ctx, input, nil, pipeline.DownStream, pipeline.pipelineComponentMap)
 }
-func (pipeline *Pipeline) runProcess(ctx context.Context, input map[string]interface{}, downStream []*Component) error {
+func runProcess(ctx context.Context, input map[string]interface{}, upStream *Component, downStream []*Component, pipelineComponentMap map[string]IComponent) error {
 	if len(downStream) < 1 {
 		return nil
 	}
@@ -229,10 +225,34 @@ func (pipeline *Pipeline) runProcess(ctx context.Context, input map[string]inter
 		component := downStream[i]
 		id := component.Id //组件id
 
-		if pipeline.pipelineComponentMap[id] == nil {
+		if pipelineComponentMap[id] == nil {
 			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
 		}
-		pipelineComponent := pipeline.pipelineComponentMap[id]
+		pipelineComponent := pipelineComponentMap[id]
+		//@TODO 这里是不是要提前处理下RunExpression和UpStream,这样后面的组件都不需要处理了,组件传递消息还是inputMap实现的
+		if component.RunExpression != "" {
+			// 使用text/template进行表达式计算
+			continue
+		}
+		if len(component.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
+			//remove(component.UpStream, upStreamId)
+			upId := upStream.Id
+			index := -1
+			for i := 0; i < len(component.UpStream); i++ {
+				if component.UpStream[index].Id == upId {
+					index = i
+					break
+				}
+			}
+			if index >= 0 {
+				component.UpStream = append(component.UpStream[:index], component.UpStream[index+1:]...)
+			}
+			if len(component.UpStream) > 0 {
+				continue // 还有上游组件没有执行完,跳过
+			}
+
+		}
+
 		err := pipelineComponent.Run(ctx, input)
 		if err != nil {
 			input[errorKey] = err
@@ -249,7 +269,7 @@ func (pipeline *Pipeline) runProcess(ctx context.Context, input map[string]inter
 		if has && nextComponentObj.(string) != "" {
 			nextComponens = make([]*Component, 0)
 			nextComponentId := nextComponentObj.(string)
-			nextComponent := pipeline.pipelineComponentMap[nextComponentId]
+			nextComponent := pipelineComponentMap[nextComponentId]
 			if nextComponent == nil {
 				return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), nextComponentId)
 			}
@@ -257,7 +277,7 @@ func (pipeline *Pipeline) runProcess(ctx context.Context, input map[string]inter
 		}
 
 		if len(nextComponens) > 0 {
-			return pipeline.runProcess(ctx, input, nextComponens)
+			return runProcess(ctx, input, component, nextComponens, pipelineComponentMap)
 		}
 	}
 	return nil
