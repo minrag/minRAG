@@ -111,7 +111,7 @@ func initComponentMap() {
 	ctx := context.Background()
 	zorm.Query(ctx, finder, &cs, nil)
 
-	// 流水线组
+	// 流水线组件,以后有可以单独初始化一个,不用启动时全部初始化
 	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType=? order by sortNo asc", "Pipeline")
 	finderPipeline.SelectTotalCount = false
 	csPipeline := make([]Component, 0)
@@ -156,14 +156,17 @@ func initComponentMap() {
 
 // PipelineComponent 流水线组件的结构体
 type PipelineComponent struct {
-	// Id 组件ID,可以根据ID获取声明的公共组件,也可以是自定义组件
+	// Id 流水线组件的ID,唯一标识
 	Id string `json:"id,omitempty"`
+	// BaseComponentId 基础组件ID,对应组件表的ID,为空时,默认为ID.比如一个基础组件被多次引用,ID不同,BaseComponentId相同
+	BaseComponentId string `json:"baseComponentId,omitempty"`
 
 	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
 	Parameter string `json:"parameter,omitempty"`
 
 	// RunExpression 运行表达式,组件运行时先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
-	RunExpression string `json:"runExpression,omitempty"`
+	RunExpression string             `json:"runExpression,omitempty"`
+	t             *template.Template `json:"-"`
 
 	// 流水线里的所有组件都放到一个map<Id,PipelineComponent>,可以根据ID获取单例,避免使用指针,因为每个流水线的组件要互相隔离
 	// UpStream 上游组件,必须上游组件都执行完成后,才会执行当前组件.默认为空,只有一个上游时,可以为空
@@ -192,7 +195,11 @@ func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]i
 	pipeline.pipelineComponentMap = make(map[string]*PipelineComponent, 0)
 	// 获取上游组件,流水线的上游只能是流水线组件
 	for _, up := range pipeline.UpStream {
-		up.Component = componentMap[up.Id]
+		baseComponentId := up.BaseComponentId
+		if baseComponentId == "" {
+			baseComponentId = up.Id
+		}
+		up.Component = componentMap[baseComponentId]
 		pipeline.pipelineComponentMap[up.Id] = up
 	}
 	// 获取下游组件,并初始化pipelineComponentMap
@@ -202,36 +209,47 @@ func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]i
 }
 
 // initPipelineComponentMap 初始化流水线的组件map,递归处理
-func initPipelineComponentMap(ctx context.Context, input map[string]interface{}, components []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
-	for i := 0; i < len(components); i++ {
-		component := components[i]
-		id := component.Id             //组件id
-		if component.Parameter == "" { // 没有参数,直接从公共map获取
-			component.Component = componentMap[id]
+func initPipelineComponentMap(ctx context.Context, input map[string]interface{}, pipelineComponents []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
+	for i := 0; i < len(pipelineComponents); i++ {
+		pipelineComponent := pipelineComponents[i]
+		baseComponentId := pipelineComponent.BaseComponentId //基础组件id
+		if baseComponentId == "" {                           // 没有设置基础组件id,默认使用当前组件id
+			baseComponentId = pipelineComponent.Id
+		}
+		if pipelineComponent.Parameter == "" { // 没有参数,直接从公共map获取
+			pipelineComponent.Component = componentMap[baseComponentId]
 		} else {
-			componentType := componentMap[id]
+			baseComponent := componentMap[baseComponentId]
 			// 使用反射动态创建一个结构体的指针实例
-			cType := reflect.TypeOf(componentType).Elem()
+			cType := reflect.TypeOf(baseComponent).Elem()
 			cPtr := reflect.New(cType)
 			// 将反射对象转换为接口类型
-			component.Component = cPtr.Interface().(IComponent)
+			pipelineComponent.Component = cPtr.Interface().(IComponent)
 			//有参数,进行实例化
-			err := json.Unmarshal([]byte(component.Parameter), component.Component)
+			err := json.Unmarshal([]byte(pipelineComponent.Parameter), pipelineComponent.Component)
 			if err != nil {
 				FuncLogError(ctx, err)
 				continue
 			}
 			//初始化组件
-			component.Component.Initialization(ctx, input)
+			pipelineComponent.Component.Initialization(ctx, input)
 		}
-
-		pipelineComponentMap[id] = component
+		if pipelineComponent.RunExpression != "" {
+			tmpl := template.New("pipelineComponentMap-" + pipelineComponent.Id)
+			var err error
+			pipelineComponent.t, err = tmpl.Parse(pipelineComponent.RunExpression)
+			if err != nil {
+				FuncLogError(ctx, err)
+				continue
+			}
+		}
+		pipelineComponentMap[pipelineComponent.Id] = pipelineComponent
 		cs := make([]*PipelineComponent, 0)
-		if component.UpStream != nil {
-			cs = append(cs, component.UpStream...)
+		if pipelineComponent.UpStream != nil {
+			cs = append(cs, pipelineComponent.UpStream...)
 		}
-		if component.DownStream != nil {
-			cs = append(cs, component.DownStream...)
+		if pipelineComponent.DownStream != nil {
+			cs = append(cs, pipelineComponent.DownStream...)
 		}
 		// 递归处理
 		if len(cs) > 0 {
@@ -253,32 +271,42 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 		return nil
 	}
 	for i := 0; i < len(downStream); i++ {
-		component := downStream[i]
-		id := component.Id //组件id
-
+		id := downStream[i].Id //组件id
 		if pipelineComponentMap[id] == nil {
 			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
 		}
 		pipelineComponent := pipelineComponentMap[id]
-		//@TODO 这里是不是要提前处理下RunExpression和UpStream,这样后面的组件都不需要处理了,组件传递消息还是inputMap实现的
-		if component.RunExpression != "" {
-			// 使用text/template进行表达式计算
-			continue
+		// 使用text/template进行表达式计算
+		if pipelineComponent.t != nil {
+			// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
+			var buf bytes.Buffer
+			// 执行模板并将结果写入到 bytes.Buffer
+			if err := pipelineComponent.t.Execute(&buf, input); err != nil {
+				input[errorKey] = err
+				return err
+			}
+			// 获取编译后的内容
+			result := strings.TrimSpace(buf.String())
+			// 如果结果不是 true,则跳过该组件的执行
+			if strings.ToLower(result) != "true" {
+				continue
+			}
+
 		}
-		if len(component.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
+		if len(pipelineComponent.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
 			//remove(component.UpStream, upStreamId)
 			upId := upStream.Id
 			index := -1
-			for i := 0; i < len(component.UpStream); i++ {
-				if component.UpStream[index].Id == upId {
-					index = i
+			for j := 0; j < len(pipelineComponent.UpStream); j++ {
+				if pipelineComponent.UpStream[index].Id == upId {
+					index = j
 					break
 				}
 			}
 			if index >= 0 {
-				component.UpStream = append(component.UpStream[:index], component.UpStream[index+1:]...)
+				pipelineComponent.UpStream = append(pipelineComponent.UpStream[:index], pipelineComponent.UpStream[index+1:]...)
 			}
-			if len(component.UpStream) > 0 {
+			if len(pipelineComponent.UpStream) > 0 {
 				continue // 还有上游组件没有执行完,跳过
 			}
 
@@ -295,7 +323,7 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 		if input[endKey] != nil {
 			return nil
 		}
-		nextComponens := component.DownStream
+		nextComponens := pipelineComponent.DownStream
 		nextComponentObj, has := input[nextComponentKey]
 		if has && nextComponentObj.(string) != "" {
 			nextComponens = make([]*PipelineComponent, 0)
@@ -308,7 +336,11 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 		}
 
 		if len(nextComponens) > 0 {
-			return runProcess(ctx, input, component, nextComponens, pipelineComponentMap)
+			err := runProcess(ctx, input, pipelineComponent, nextComponens, pipelineComponentMap)
+			if err != nil {
+				FuncLogError(ctx, err)
+				return err
+			}
 		}
 	}
 	return nil
