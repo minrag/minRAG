@@ -208,8 +208,13 @@ func initPipelineComponentMap(ctx context.Context, input map[string]interface{},
 		id := component.Id             //组件id
 		if component.Parameter == "" { // 没有参数,直接从公共map获取
 			component.Component = componentMap[id]
-			pipelineComponentMap[id] = component
 		} else {
+			componentType := componentMap[id]
+			// 使用反射动态创建一个结构体的指针实例
+			cType := reflect.TypeOf(componentType).Elem()
+			cPtr := reflect.New(cType)
+			// 将反射对象转换为接口类型
+			component.Component = cPtr.Interface().(IComponent)
 			//有参数,进行实例化
 			err := json.Unmarshal([]byte(component.Parameter), component.Component)
 			if err != nil {
@@ -218,8 +223,9 @@ func initPipelineComponentMap(ctx context.Context, input map[string]interface{},
 			}
 			//初始化组件
 			component.Component.Initialization(ctx, input)
-			pipelineComponentMap[id] = component
 		}
+
+		pipelineComponentMap[id] = component
 		cs := make([]*PipelineComponent, 0)
 		if component.UpStream != nil {
 			cs = append(cs, component.UpStream...)
