@@ -197,11 +197,9 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 		pipelineComponent := pipelineComponentMap[id]
 		//异步并行执行downStream的组件
 		//@TODO 组件如果有输出,会有乱序,组件需要增加参数控制是否输出
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			runDownStreamComponent(ctx, input, upStream, pipelineComponent, pipelineComponentMap)
-		}()
+		})
 		wg.Wait() // 等待所有goroutine完成
 
 		/*
