@@ -157,10 +157,10 @@ func initComponentMap() {
 // PipelineComponent 流水线组件的结构体
 type PipelineComponent struct {
 	// Id 组件ID,可以根据ID获取声明的公共组件,也可以是自定义组件
-	Id string `column:"id" json:"id,omitempty"`
+	Id string `json:"id,omitempty"`
 
 	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
-	Parameter string `column:"parameter" json:"parameter,omitempty"`
+	Parameter string `json:"parameter,omitempty"`
 
 	// RunExpression 运行表达式,组件运行时先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
 	RunExpression string `json:"runExpression,omitempty"`
