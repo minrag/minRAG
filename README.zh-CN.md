@@ -95,74 +95,77 @@ java -jar tika-server-standard-3.1.0.jar --host=0.0.0.0 --port=9998
 或者下载[tika-windows](https://pan.baidu.com/s/1OR0DaAroxf8dBTwz36Ceww?pwd=1234)   ```start.bat```启动tika.  
 注意修改```indexPipeline```流水线的参数,把原来的```MarkdownConverter```替换为```TikaConverter```:
 ```json
-{ 
-    "id":"indexPipeline",
-    "downStream":[
-        {
-            "id":"TikaConverter",
-             "downStream":[{
-                "id":"DocumentSplitter",
-                 "downStream":[{
-                    "id":"OpenAIDocumentEmbedder",
-                     "downStream":[{
-                        "id":"SQLiteVecDocumentStore"
-                     }]
-                 }]
-             }]
-        }
-
-    ]
-    
+{
+  "id": "indexPipeline",
+  "downStream": [
+    {
+      "id": "TikaConverter",
+      "downStream": [{"id": "DocumentSplitter"}]
+    },
+    {
+      "id": "DocumentSplitter",
+      "downStream": [{"id": "OpenAIDocumentEmbedder"}]
+    },
+    {
+      "id": "OpenAIDocumentEmbedder",
+      "downStream": [{"id": "SQLiteVecDocumentStore"}]
+    },
+    {
+      "id": "SQLiteVecDocumentStore"
+    }
+  ]
 }
-
 ```
 
 ## Agentic AI
 index组件配置:  
 ```json
-{ 
-    "id":"indexPipeline",
-    "downStream":[
-        {
-            "id":"MarkdownConverter",
-             "downStream":[{
-                "id":"MarkdownIndex",
-                 "downStream":[{
-                    "id":"SQLiteVecDocumentStore"
-                 }]
-             }]
-        }
-
-    ]
-    
+{
+  "id": "indexPipeline",
+  "downStream": [
+    {
+      "id": "MarkdownConverter",
+      "downStream": [{"id": "MarkdownIndex"}]
+    },
+    {
+      "id": "MarkdownIndex",
+      "downStream": [{"id": "SQLiteVecDocumentStore"}]
+    },
+    {
+      "id": "SQLiteVecDocumentStore"
+    }
+  ]
 }
 ```
 default组件配置: 
 ```json
-{ 
-    "id":"default",
-    "downStream":[
-        {
-            "id":"MarkdownRetriever",
-             "downStream":[{
-                "id":"FtsKeywordRetriever",
-                 "downStream":[{
-                    "id":"PromptBuilder",
-                     "downStream":[{
-                        "id":"OpenAIChatMemory",
-                         "downStream":[{
-                            "id":"OpenAIChatGenerator",
-                             "downStream":[{
-                                "id":"ChatMessageLogStore"
-                             }]
-                         }]
-                     }]
-                 }]
-             }]
-        }
-
-    ]
-    
+{
+  "id": "default",
+  "downStream": [
+    {
+      "id": "MarkdownRetriever",
+      "downStream": [{"id": "FtsKeywordRetriever"}]
+    },
+    {
+      "id": "FtsKeywordRetriever",
+      "downStream": [{"id": "PromptBuilder"}]
+    },
+    {
+      "id": "PromptBuilder",
+      "downStream": [{"id": "OpenAIChatMemory"}]
+    },
+    {
+      "id": "OpenAIChatMemory",
+      "downStream": [{"id": "OpenAIChatGenerator"}]
+    },
+    {
+      "id": "OpenAIChatGenerator",
+      "downStream": [{"id": "ChatMessageLogStore"}]
+    },
+    {
+      "id": "ChatMessageLogStore"
+    }
+  ]
 }
 ```
 

@@ -56,6 +56,7 @@ flowchart TD
 有运行表达式RunExpression,组件运行前先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
 
 有上游节点UpStream和下游节点DownStream,都是[]*PipelineComponent类型,上游节点默认为空,当有多个节点时,要全部完成才能进行下游节点
+下游节点DownStream的JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
 
 有参数Parameter,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,如果流水线里有多个相同基础组件的组件,必须使用BaseComponentId,使用ID来区分不同的组件实例
 
@@ -80,6 +81,7 @@ type PipelineComponent struct {
 	UpStream []*PipelineComponent `json:"upstream,omitempty"`
 
 	// DownStream 下游组件,多个节点时,一般指定runExpression,同时执行多个下游节点
+	// JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
 	DownStream []*PipelineComponent `json:"downstream,omitempty"`
 
 	// Component 组件实例对象,运行时使用
@@ -99,25 +101,31 @@ type Pipeline struct {
 func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
 	// 初始化流水线的组件map
 	pipeline.pipelineComponentMap = make(map[string]*PipelineComponent, 0)
-	// 获取上游组件,流水线的上游只能是流水线组件
+	// 获取上游组件
 	for _, up := range pipeline.UpStream {
 		baseComponentId := up.BaseComponentId
 		if baseComponentId == "" {
 			baseComponentId = up.Id
 		}
 		up.Component = baseComponentMap[baseComponentId]
+		if up.Component == nil { //查找流水线
+			pipeline, err := findPipelineById(ctx, baseComponentId, input)
+			if err != nil && pipeline != nil {
+				up.Component = pipeline
+			}
+		}
 		pipeline.pipelineComponentMap[up.Id] = up
 	}
 	// 获取下游组件,并初始化pipelineComponentMap
-	initPipelineComponentMap(ctx, input, pipeline.DownStream, pipeline.pipelineComponentMap)
+	pipeline.initPipelineComponentMap(ctx, input)
 
 	return nil
 }
 
 // initPipelineComponentMap 初始化流水线的组件map,递归处理
-func initPipelineComponentMap(ctx context.Context, input map[string]interface{}, pipelineComponents []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
-	for i := 0; i < len(pipelineComponents); i++ {
-		pipelineComponent := pipelineComponents[i]
+func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input map[string]interface{}) error {
+	for i := 0; i < len(pipeline.DownStream); i++ {
+		pipelineComponent := pipeline.DownStream[i]
 		baseComponentId := pipelineComponent.BaseComponentId //基础组件id
 		if baseComponentId == "" {                           // 没有设置基础组件id,默认使用当前组件id
 			baseComponentId = pipelineComponent.Id
@@ -149,18 +157,22 @@ func initPipelineComponentMap(ctx context.Context, input map[string]interface{},
 				continue
 			}
 		}
-		pipelineComponentMap[pipelineComponent.Id] = pipelineComponent
-		cs := make([]*PipelineComponent, 0)
-		if pipelineComponent.UpStream != nil {
-			cs = append(cs, pipelineComponent.UpStream...)
-		}
-		if pipelineComponent.DownStream != nil {
-			cs = append(cs, pipelineComponent.DownStream...)
-		}
-		// 递归处理
-		if len(cs) > 0 {
-			initPipelineComponentMap(ctx, input, cs, pipelineComponentMap)
-		}
+		pipeline.pipelineComponentMap[pipelineComponent.Id] = pipelineComponent
+		/*
+			//按照顺序包装所有的组件,等于两层处理,不再递归处理
+			cs := make([]*PipelineComponent, 0)
+			if pipelineComponent.UpStream != nil {
+				cs = append(cs, pipelineComponent.UpStream...)
+			}
+			if pipelineComponent.DownStream != nil {
+				cs = append(cs, pipelineComponent.DownStream...)
+			}
+
+			// 递归处理
+			if len(cs) > 0 {
+				initPipelineComponentMap(ctx, input, cs, pipelineComponentMap)
+			}
+		*/
 
 	}
 
@@ -168,9 +180,10 @@ func initPipelineComponentMap(ctx context.Context, input map[string]interface{},
 }
 
 func (pipeline *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
-
-	// 执行下游的流水线组件
-	return runProcess(ctx, input, &pipeline.PipelineComponent, pipeline.DownStream, pipeline.pipelineComponentMap)
+	// 流水线的第一个组件,作为开始的组件
+	downStream := make([]*PipelineComponent, 0)
+	downStream = append(downStream, pipeline.DownStream[0])
+	return runProcess(ctx, input, &pipeline.PipelineComponent, downStream, pipeline.pipelineComponentMap)
 }
 func runProcess(ctx context.Context, input map[string]interface{}, upStream *PipelineComponent, downStream []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
 	if len(downStream) < 1 {
