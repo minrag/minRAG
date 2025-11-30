@@ -52,12 +52,12 @@ flowchart TD
 流水线组件有ID和基础组件ID,基础组件ID,对应组件表的ID,为空时,默认为ID.比如一个基础组件被多次引用,ID不同,BaseComponentId相同
 所有组件都放到了pipelineComponentMap map[流水线组件id]*PipelineComponent,每个流水线组件的所有组件都是互相隔离的,都是新的实例
 
-有上游节点UpStream和下游节点DownStream,都是[]*PipelineComponent类型,上游节点默认为空,当有多个节点时,要全部完成才能进行下游节点.
+上游节点UpStream和下游节点DownStream,都是[]*PipelineComponent类型,上游节点默认为空,当有多个节点时,要全部完成才能进行下游节点.有upStreamCondition时,UpStream必须有值
 从UpStreamCondition map[upStreamID]Condition 获取上游节点进入的表达式,组件运行前先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
 
-下游节点DownStream的JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
+UpStream和DownStream的只有节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
 
-有参数Parameter,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,如果流水线里有多个相同基础组件的组件,必须使用BaseComponentId,使用ID来区分不同的组件实例
+有参数Parameter,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,如果流水线里有多个相同基础组件的组件,必须指定BaseComponentId,使用ID来区分不同的组件实例
 
 **/
 
@@ -71,14 +71,15 @@ type PipelineComponent struct {
 	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
 	Parameter string `json:"parameter,omitempty"`
 
-	// 流水线里的所有组件都放到一个map<Id,PipelineComponent>,可以根据ID获取单例,避免使用指针,因为每个流水线的组件要互相隔离
-	// UpStream 上游组件,必须上游组件都执行完成后,才会执行当前组件.默认为空,只有一个上游时,可以为空
+	// UpStream 上游组件,必须上游组件都执行完成后,才会执行当前组件.默认为空,只有一个上游时,可以为空.有upStreamCondition时,UpStream必须有值
+	// 流水线组件都在pipelineComponentMap[Id]*PipelineComponent,每个流水线的所有组件都是互相隔离的,都是新的实例.
+	// UpStream和DownStream的只有节点的ID,完整对象从pipelineComponentMap获取,例如:  "upStream":[{"id":"FtsKeywordRetriever"}]
 	UpStream []*PipelineComponent `json:"upStream,omitempty"`
 	// UpStreamCondition  map[upStreamId]Condition  上游组件条件表达式,先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
 	UpStreamCondition map[string]string `json:"upStreamCondition,omitempty"`
 
 	// DownStream 下游组件,多个节点时,一般指定runCondition,同时执行多个下游节点
-	// JSON中只写下游节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
+	// UpStream和DownStream的只有节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
 	DownStream []*PipelineComponent `json:"downStream,omitempty"`
 
 	// Component 组件实例对象,运行时使用
