@@ -97,7 +97,7 @@ func init() {
 func initBaseComponentMap() {
 	baseComponentMap = make(map[string]IComponent, 0)
 
-	// 普通组件,没有 Pipeline
+	// 基础组件,没有 Pipeline
 	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType!=? order by sortNo asc", "Pipeline")
 	finder.SelectTotalCount = false
 	cs := make([]Component, 0)
