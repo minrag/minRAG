@@ -84,6 +84,9 @@ type PipelineComponent struct {
 
 	// Component 组件实例对象,运行时使用
 	Component IComponent `json:"-"`
+
+	// Status 组件状态,0未开始,1进行中,2阻塞,3完成,4失败
+	Status int `json:"-"`
 }
 
 // Pipeline 流水线,也是IComponent实现
@@ -181,6 +184,7 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 	if len(downStream) < 1 {
 		return nil
 	}
+	//@TODO 这里可以优化,根据Status可以异步并行执行UpStream的组件.找到所有下游的上游组件,根据Status并行执行
 	for i := 0; i < len(downStream); i++ {
 		id := downStream[i].Id //组件id
 		if pipelineComponentMap[id] == nil {
@@ -230,13 +234,21 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 				pipelineComponent.UpStream = append(pipelineComponent.UpStream[:index], pipelineComponent.UpStream[index+1:]...)
 			}
 			if len(pipelineComponent.UpStream) > 0 {
-				continue // 还有上游组件没有执行完,跳过
+				pipelineComponent.Status = 2 //阻塞
+				continue                     // 还有上游组件没有执行完,跳过
+			} else {
+				pipelineComponent.Status = 0 //重置为未开始
 			}
 
 		}
-
+		if pipelineComponent.Status != 0 { //已经在执行或者执行过的组件
+			continue
+		}
+		pipelineComponent.Status = 1 //进行中
 		err := pipelineComponent.Component.Run(ctx, input)
 		if err != nil {
+			pipelineComponent.Status = 4 //失败
+			FuncLogError(ctx, err)
 			input[errorKey] = err
 			return err
 		}
@@ -246,6 +258,7 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 		if input[endKey] != nil {
 			return nil
 		}
+		pipelineComponent.Status = 3 //完成
 		nextComponens := pipelineComponent.DownStream
 		nextComponentObj, has := input[nextComponentKey]
 		if has && nextComponentObj.(string) != "" {

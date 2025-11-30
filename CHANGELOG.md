@@ -1,4 +1,5 @@
 v0.1.6
+- 增加```Status```组件执行状态
 - ```servicePipeline```重命名为```componentPipeline```
 - 完善注释,文档
 
