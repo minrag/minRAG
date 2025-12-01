@@ -19,14 +19,14 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 免费或者付费的token
 - ```OpenAITextEmbedder``` 默认使用 ```Qwen3-Embedding-8B``` 模型  
 - ```DocumentChunkReranker```默认使用 ```Qwen3-Reranker-8B``` 模型    
-- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3.2-Exp``` 模型  
+- ```OpenAIChatGenerator``` 建议使用 ```DeepSeek-V3.2``` 模型  
 
 ### 腾讯云LKE知识引擎
 - 注册或设置页面的AI平台```base_url``` 填写 ```SecretId```  ,或在组件参数配置```{"SecretId":"xxx"}```
 - 注册或设置页面的AI平台```api_key```  填写 ```SecretKey``` ,或在组件参数配置```{"SecretKey":"xxx"}```
 - ```LKETextEmbedder和LKEDocumentEmbedder``` 默认使用 ```lke-text-embedding-v2``` 模型  
 - ```LKEDocumentChunkReranker``` 默认使用 ```lke-reranker-base``` 模型
-- ```OpenAIChatGenerator``` [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 ```{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}```  
+- ```OpenAIChatGenerator``` [使用OpenAI SDK方式接入](https://console.cloud.tencent.com/lkeap),组件参数配置 ```{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2"}```  
 - 记得修改流水线中的组件
 
 ### 百度千帆
@@ -42,7 +42,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 默认使用 ```text-embedding-v3``` 模型,1024维度 
 - ```BaiLianDocumentChunkReranker``` 组件参数配置 ```{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}```  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2-exp``` 模型 
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3.2``` 模型 
 - 记得修改流水线中的组件
 
 ### 字节火山引擎
@@ -50,7 +50,7 @@ AI平台默认是 [Gitee AI](https://ai.gitee.com),Gitee AI每天100次免费调
 - 注册或设置页面的AI平台```api_key```  填写 申请的API KEY
 - ```OpenAITextEmbedder```和```OpenAIDocumentEmbedder``` 建议使用```doubao-embedding```模型,兼容1024维度 
 - ```DocumentChunkReranker``` 火山引擎暂时没有Reranker模型,建议使用其他平台的Reranker模型或者去掉  
-- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3-1-terminus```模型  
+- ```OpenAIChatGenerator``` 建议使用 ```deepseek-v3-2```模型  
 - 记得修改流水线中的组件
 
 ## markitdown集成(默认)

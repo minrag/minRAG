@@ -9,5 +9,5 @@
  "locale":"zh-CN",
  "aiBaseURL":"https://ai.gitee.com/v1",
  "aiAPIkey":"A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11",
- "llmModel":"DeepSeek-V3.2-Exp"
+ "llmModel":"DeepSeek-V3.2"
 }

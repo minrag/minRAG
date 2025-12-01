@@ -18,14 +18,14 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with a free or paid token.    
 - `OpenAITextEmbedder` defaults to using the `Qwen3-Embedding-8B` model.  
 - `DocumentChunkReranker` defaults to using the `Qwen3-Reranker-8B` model. 
-- `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3.2-Exp` model.  
+- `OpenAIChatGenerator` is recommended to use the `DeepSeek-V3.2` model.  
 
 ### Tencent Cloud LKE Knowledge Engine
 - On the registration or settings page, fill in `base_url` for the AI platform as `SecretId`, or configure it in the component parameters as `{"SecretId":"xxx"}`.    
 - On the registration or settings page, fill in `api_key` as `SecretKey`, or configure it in the component parameters as `{"SecretKey":"xxx"}`.
 - `LKETextEmbedder` and `LKEDocumentEmbedder` default to using the `lke-text-embedding-v2` model.  
 - `LKEDocumentChunkReranker` defaults to using the `lke-reranker-base` model.  
-- `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2-exp"}`.  
+- `OpenAIChatGenerator` [connects using the OpenAI SDK method](https://console.cloud.tencent.com/lkeap). The component parameter configuration is `{"base_url":"https://api.lkeap.cloud.tencent.com/v1","api_key":"xxx","model":"deepseek-v3.2"}`.  
 - Remember to modify the components in the pipeline.  
 
 ### Baidu QianFan  
@@ -41,7 +41,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with the applied API KEY.
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` default to using the `text-embedding-v3` model, with 1024 dimensions.
 - The component parameter configuration for `BaiLianDocumentChunkReranker` is `{"base_url":"https://dashscope.aliyuncs.com/api/v1/services/rerank/text-rerank/text-rerank","model":"qwen3-rerank","top_n":5,"score":0.1}`.
-- `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2-exp` model.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3.2` model.
 - Remember to modify the components in the pipeline.  
 
 ### ByteDance Volcano Engine  
@@ -49,7 +49,7 @@ The default AI platform is [Gitee AI](https://ai.gitee.com). Gitee AI offers 100
 - On the registration or settings page, fill in `api_key` with the applied API KEY.  
 - `OpenAITextEmbedder` and `OpenAIDocumentEmbedder` are recommended to use the `doubao-embedding` model, compatible with 1024 dimensions.
 - Volcano Engine does not currently have a Reranker model, so it is recommended to use Reranker models from other platforms or remove it.
-- `OpenAIChatGenerator` is recommended to use the `deepseek-v3-1-terminus` model.
+- `OpenAIChatGenerator` is recommended to use the `deepseek-v3-2` model.
 - Remember to modify the components in the pipeline.
 
 ## UI Preview

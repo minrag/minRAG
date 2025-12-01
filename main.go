@@ -38,7 +38,7 @@ var config, site = loadInstallConfig()
 var httpServerPath = "http://"
 
 // hertz对象,可以在其他地方使用
-var h = server.Default(server.WithHostPorts(config.ServerPort), server.WithBasePath(config.BasePath), server.WithMaxRequestBodySize(config.MaxRequestBodySize), server.WithKeepAliveTimeout(time.Second*time.Duration(180)))
+var h = server.Default(server.WithHostPorts(config.ServerPort), server.WithBasePath(config.BasePath), server.WithMaxRequestBodySize(config.MaxRequestBodySize), server.WithKeepAliveTimeout(time.Second*time.Duration(600)))
 
 func init() {
 
