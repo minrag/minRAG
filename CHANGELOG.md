@@ -1,5 +1,5 @@
 v0.1.6
-- 默认使用DeepSeek-v3.2
+- 默认使用DeepSeek-V3.2
 - 异步执行下游组件
 - 增加```Status```组件执行状态
 - ```servicePipeline```重命名为```componentPipeline```
