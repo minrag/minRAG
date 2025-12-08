@@ -84,9 +84,9 @@ var baseComponentMap = make(map[string]IComponent, 0)
 // IComponent 组件的接口
 type IComponent interface {
 	// Initialization 初始化方法
-	Initialization(ctx context.Context, input map[string]interface{}) error
+	Initialization(ctx context.Context, input map[string]any) error
 	// Run 执行方法
-	Run(ctx context.Context, input map[string]interface{}) error
+	Run(ctx context.Context, input map[string]any) error
 }
 
 func init() {
@@ -148,7 +148,7 @@ type TikaConverter struct {
 	client         *http.Client      `json:"-"`
 }
 
-func (component *TikaConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *TikaConverter) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Timeout == 0 {
 		component.Timeout = 180
 	}
@@ -181,7 +181,7 @@ func (component *TikaConverter) Initialization(ctx context.Context, input map[st
 
 	return nil
 }
-func (component *TikaConverter) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *TikaConverter) Run(ctx context.Context, input map[string]any) error {
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of TikaConverter cannot be empty"))
 		input[errorKey] = err
@@ -227,7 +227,7 @@ type MarkdownConverter struct {
 	FilePath        string `json:"filePath,omitempty"`
 }
 
-func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownConverter) Initialization(ctx context.Context, input map[string]any) error {
 
 	if component.BaseURL == "" {
 		component.BaseURL = config.AIBaseURL
@@ -260,7 +260,7 @@ func (component *MarkdownConverter) Initialization(ctx context.Context, input ma
 
 	return nil
 }
-func (component *MarkdownConverter) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownConverter) Run(ctx context.Context, input map[string]any) error {
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of MarkdownConverter cannot be empty"))
 		input[errorKey] = err
@@ -345,7 +345,7 @@ type WebScraper struct {
 
 var userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 Edg/141.0.0.0"
 
-func (component *WebScraper) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *WebScraper) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Timeout == 0 {
 		component.Timeout = 60
 	}
@@ -395,7 +395,7 @@ func (component *WebScraper) Initialization(ctx context.Context, input map[strin
 
 	return nil
 }
-func (component *WebScraper) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *WebScraper) Run(ctx context.Context, input map[string]any) error {
 
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of WebScraper cannot be empty"))
@@ -413,7 +413,7 @@ func (component *WebScraper) Run(ctx context.Context, input map[string]interface
 }
 
 // FetchPage 抓取网页,方便后期扩展为递归
-func (component *WebScraper) FetchPage(ctx context.Context, document *Document, input map[string]interface{}) ([]string, error) {
+func (component *WebScraper) FetchPage(ctx context.Context, document *Document, input map[string]any) ([]string, error) {
 	webURL, has := input["webScraper_webURL"].(string)
 	if webURL == "" || (!has) {
 		webURL = component.WebURL
@@ -544,10 +544,10 @@ func (component *WebScraper) convertMarkdown(ctx context.Context, title string, 
 type HtmlCleaner struct {
 }
 
-func (component *HtmlCleaner) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *HtmlCleaner) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *HtmlCleaner) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *HtmlCleaner) Run(ctx context.Context, input map[string]any) error {
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
 		input[errorKey] = err
@@ -609,10 +609,10 @@ type DocumentSplitter struct {
 	SplitOverlap int      `json:"splitOverlap,omitempty"`
 }
 
-func (component *DocumentSplitter) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentSplitter) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *DocumentSplitter) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentSplitter) Run(ctx context.Context, input map[string]any) error {
 
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
@@ -665,11 +665,11 @@ type MarkdownIndex struct {
 	OpenAIChatGenerator
 }
 
-func (component *MarkdownIndex) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownIndex) Initialization(ctx context.Context, input map[string]any) error {
 	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
-func (component *MarkdownIndex) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownIndex) Run(ctx context.Context, input map[string]any) error {
 
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of DocumentSplitter cannot be empty"))
@@ -796,7 +796,7 @@ type OpenAIDocumentEmbedder struct {
 	OpenAIChatGenerator
 }
 
-func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		return errors.New("Initialization OpenAIDocumentEmbedder error:Model is empty")
 	}
@@ -806,7 +806,7 @@ func (component *OpenAIDocumentEmbedder) Initialization(ctx context.Context, inp
 	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
-func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[string]any) error {
 
 	if input["documentChunks"] == nil {
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
@@ -814,7 +814,7 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 	documentChunks := input["documentChunks"].([]DocumentChunk)
 	vecDocumentChunks := make([]VecDocumentChunk, 0)
 	for i := 0; i < len(documentChunks); i++ {
-		bodyMap := make(map[string]interface{}, 0)
+		bodyMap := make(map[string]any, 0)
 		bodyMap["input"] = []string{documentChunks[i].Markdown}
 		bodyMap["model"] = component.Model
 		bodyMap["encoding_format"] = "float"
@@ -866,10 +866,10 @@ func (component *OpenAIDocumentEmbedder) Run(ctx context.Context, input map[stri
 type SQLiteVecDocumentStore struct {
 }
 
-func (component *SQLiteVecDocumentStore) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *SQLiteVecDocumentStore) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[string]any) error {
 	var document *Document
 	if input["document"] == nil {
 		err := errors.New(funcT("The document of SQLiteVecDocumentStore cannot be empty"))
@@ -943,7 +943,7 @@ type OpenAITextEmbedder struct {
 	OpenAIChatGenerator
 }
 
-func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		return errors.New("Initialization OpenAITextEmbedder error:Model is empty")
 	}
@@ -953,13 +953,13 @@ func (component *OpenAITextEmbedder) Initialization(ctx context.Context, input m
 	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
-func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAITextEmbedder) Run(ctx context.Context, input map[string]any) error {
 
 	if input["query"] == nil {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 	query := input["query"].(string)
-	bodyMap := make(map[string]interface{}, 0)
+	bodyMap := make(map[string]any, 0)
 	bodyMap["input"] = []string{query}
 	bodyMap["model"] = component.Model
 	bodyMap["encoding_format"] = "float"
@@ -1001,10 +1001,10 @@ type VecEmbeddingRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
-func (component *VecEmbeddingRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *VecEmbeddingRetriever) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[string]any) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topN := 0
@@ -1116,10 +1116,10 @@ type FtsKeywordRetriever struct {
 	Score float32 `json:"score,omitempty"`
 }
 
-func (component *FtsKeywordRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *FtsKeywordRetriever) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *FtsKeywordRetriever) Run(ctx context.Context, input map[string]any) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topN := 0
@@ -1204,7 +1204,7 @@ type MarkdownRetriever struct {
 	t              *template.Template `json:"-"`
 }
 
-func (component *MarkdownRetriever) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownRetriever) Initialization(ctx context.Context, input map[string]any) error {
 	if component.TopN == 0 {
 		component.TopN = 5
 	}
@@ -1221,7 +1221,7 @@ func (component *MarkdownRetriever) Initialization(ctx context.Context, input ma
 
 	return nil
 }
-func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]any) error {
 	documentID := ""
 	knowledgeBaseID := ""
 	topN := 0
@@ -1280,7 +1280,7 @@ func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]in
 		return nil
 	}
 
-	tocMap := map[string]interface{}{
+	tocMap := map[string]any{
 		"documents": documents,
 	}
 
@@ -1319,7 +1319,7 @@ func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]in
 
 // llmJSONResult 请求大模型获得json结果
 func llmJSONResult(ctx context.Context, component OpenAIChatGenerator, message string) (string, error) {
-	bodyMap := make(map[string]interface{})
+	bodyMap := make(map[string]any)
 	bodyMap["messages"] = []ChatMessage{{Role: "user", Content: message}}
 	bodyMap["model"] = component.Model
 	if component.Temperature != 0 {
@@ -1361,7 +1361,7 @@ type DocumentChunkReranker struct {
 	Score float32 `json:"score,omitempty"`
 }
 
-func (component *DocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunkReranker) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		return errors.New("Initialization DocumentChunkReranker error:Model is empty")
 	}
@@ -1373,7 +1373,7 @@ func (component *DocumentChunkReranker) Initialization(ctx context.Context, inpu
 	component.OpenAIChatGenerator.Initialization(ctx, input)
 	return nil
 }
-func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *DocumentChunkReranker) Run(ctx context.Context, input map[string]any) error {
 
 	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
 	if err != nil {
@@ -1383,7 +1383,7 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 	if documentChunks == nil {
 		return nil
 	}
-	bodyMap := map[string]interface{}{
+	bodyMap := map[string]any{
 		"model":     component.Model,
 		"query":     query,
 		"top_n":     topN,
@@ -1429,7 +1429,7 @@ func (component *DocumentChunkReranker) Run(ctx context.Context, input map[strin
 }
 
 // checkRerankParameter 检查input里的参数,返回 query,topN,score,documentChunks,documents,error
-func (component *DocumentChunkReranker) checkRerankParameter(ctx context.Context, input map[string]interface{}) (string, int, float32, []DocumentChunk, []string, error) {
+func (component *DocumentChunkReranker) checkRerankParameter(ctx context.Context, input map[string]any) (string, int, float32, []DocumentChunk, []string, error) {
 	topN := 0
 	var score float32 = 0.0
 
@@ -1502,7 +1502,7 @@ type WebSearch struct {
 	TopN int `json:"top_n,omitempty"`
 }
 
-func (component *WebSearch) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *WebSearch) Initialization(ctx context.Context, input map[string]any) error {
 	if component.TopN == 0 {
 		component.TopN = 5
 	}
@@ -1510,7 +1510,7 @@ func (component *WebSearch) Initialization(ctx context.Context, input map[string
 	return err
 }
 
-func (component *WebSearch) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *WebSearch) Run(ctx context.Context, input map[string]any) error {
 	// input 中的tools对象
 	var tools []interface{}
 	if input["tools"] != nil {
@@ -1528,7 +1528,7 @@ type PromptBuilder struct {
 	t              *template.Template `json:"-"`
 }
 
-func (component *PromptBuilder) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *PromptBuilder) Initialization(ctx context.Context, input map[string]any) error {
 	var err error
 	tmpl := template.New("minrag-promptBuilder")
 	component.t, err = tmpl.Parse(component.PromptTemplate)
@@ -1537,7 +1537,7 @@ func (component *PromptBuilder) Initialization(ctx context.Context, input map[st
 	}
 	return nil
 }
-func (component *PromptBuilder) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *PromptBuilder) Run(ctx context.Context, input map[string]any) error {
 	_, has := input[ifEmptyStop]
 	if has {
 
@@ -1572,10 +1572,10 @@ type OpenAIChatMemory struct {
 	MemoryLength int `json:"memoryLength,omitempty"`
 }
 
-func (component *OpenAIChatMemory) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatMemory) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
-func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]any) error {
 
 	if input["prompt"] == nil {
 		err := errors.New(funcT("input['prompt'] cannot be empty"))
@@ -1691,7 +1691,7 @@ type OpenAIChatGenerator struct {
 	client *http.Client `json:"-"`
 }
 
-func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		component.Model = config.LLMModel
 	}
@@ -1720,7 +1720,7 @@ func (component *OpenAIChatGenerator) Initialization(ctx context.Context, input 
 	}
 	return nil
 }
-func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]any) error {
 	defer func() {
 		if err := recover(); err != nil {
 			FuncLogError(ctx, fmt.Errorf("panic recovered: %v", err))
@@ -1741,7 +1741,7 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 		messages = append(messages, cm)
 	}
 
-	bodyMap := make(map[string]interface{})
+	bodyMap := make(map[string]any)
 
 	bodyMap["model"] = component.Model
 	if component.Temperature != 0 {
@@ -2001,11 +2001,11 @@ func (component *OpenAIChatGenerator) Run(ctx context.Context, input map[string]
 type ChatMessageLogStore struct {
 }
 
-func (component *ChatMessageLogStore) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *ChatMessageLogStore) Initialization(ctx context.Context, input map[string]any) error {
 	return nil
 }
 
-func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]any) error {
 
 	if input["c"] == nil {
 		return errors.New(`input["c"] is nil`)

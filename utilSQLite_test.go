@@ -35,7 +35,7 @@ func TestVecLikeQuery(t *testing.T) {
 func TestVecQuery(t *testing.T) {
 	ctx := context.Background()
 	embedder := baseComponentMap["OpenAITextEmbedder"]
-	input := map[string]interface{}{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."}
+	input := map[string]any{"query": "I am a technical developer from China, primarily using Java, Go, and Python as my development languages."}
 	err := embedder.Run(ctx, input)
 	if err != nil {
 		t.Fatal(err)
@@ -57,7 +57,7 @@ func TestVecQuery(t *testing.T) {
 func TestDocumentSplitter(t *testing.T) {
 	ctx := context.Background()
 	documentSplitter := baseComponentMap["DocumentSplitter"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["document"] = &Document{Markdown: "我是中国人,我爱中国。圣诞节,了大家安康金发傲娇考虑实际得分拉萨放假啊十六分是。1。2。3。"}
 	err := documentSplitter.Run(ctx, input)
 	if err != nil {
@@ -75,7 +75,7 @@ func TestDocumentSplitter(t *testing.T) {
 func TestFtsKeywordRetriever(t *testing.T) {
 	ctx := context.Background()
 	ftsKeywordRetriever := baseComponentMap["FtsKeywordRetriever"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["query"] = "马斯克"
 	err := ftsKeywordRetriever.Run(ctx, input)
 	if err != nil {
@@ -92,7 +92,7 @@ func TestFtsKeywordRetriever(t *testing.T) {
 func TestDocumentChunkReranker(t *testing.T) {
 	ctx := context.Background()
 	documentChunkReranker := baseComponentMap["DocumentChunkReranker"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
 	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
@@ -114,7 +114,7 @@ func TestDocumentChunkReranker(t *testing.T) {
 func TestPromptBuilder(t *testing.T) {
 	ctx := context.Background()
 	promptBuilder := baseComponentMap["PromptBuilder"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
 	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}
@@ -139,7 +139,7 @@ func TestPromptBuilder(t *testing.T) {
 func TestPipline(t *testing.T) {
 	ctx := context.Background()
 	defaultPipline := baseComponentMap["default"]
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["query"] = "你在哪里?"
 	documentChunks := make([]DocumentChunk, 3)
 	documentChunks[0] = DocumentChunk{Markdown: "我在郑州"}

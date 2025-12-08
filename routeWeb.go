@@ -135,7 +135,7 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 		c.Abort()
 		return
 	}
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	// 用户发送的第一个消息
 	input["query"] = agentRequestBody.Messages[0].Content
 	// agentID
@@ -213,8 +213,8 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 }
 
 // warpRequestMap 包装请求参数为map
-func warpRequestMap(c *app.RequestContext) map[string]interface{} {
-	data := make(map[string]interface{}, 0)
+func warpRequestMap(c *app.RequestContext) map[string]any {
+	data := make(map[string]any, 0)
 	jwttoken := string(c.Cookie(config.JwttokenKey))
 	userId, _ := userIdByToken(jwttoken)
 	if userId != "" {

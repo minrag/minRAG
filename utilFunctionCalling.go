@@ -78,7 +78,7 @@ type IToolFunctionCalling interface {
 	//获取描述的Map
 	Description(ctx context.Context) interface{}
 	// Run 执行方法
-	Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error)
+	Run(ctx context.Context, arguments string, intput map[string]any) (string, error)
 }
 
 // search_document_toc_by_id_json 查询文档目录的结构树函数json字符串
@@ -104,12 +104,12 @@ var search_document_toc_by_id_json = `{
 
 // FCSearchDocumentById 查询本地知识库的文档目录
 type FCSearchDocumentTOCById struct {
-	DocumentIds    []string               `json:"documentIds,omitempty"`
-	DescriptionMap map[string]interface{} `json:"-"`
+	DocumentIds    []string       `json:"documentIds,omitempty"`
+	DescriptionMap map[string]any `json:"-"`
 }
 
 func (fc FCSearchDocumentTOCById) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
-	dm := make(map[string]interface{})
+	dm := make(map[string]any)
 	if descriptionJson == "" {
 		return fc, nil
 	}
@@ -127,7 +127,7 @@ func (fc FCSearchDocumentTOCById) Description(ctx context.Context) interface{} {
 }
 
 // Run 执行方法
-func (fc FCSearchDocumentTOCById) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+func (fc FCSearchDocumentTOCById) Run(ctx context.Context, arguments string, intput map[string]any) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -189,12 +189,12 @@ var search_content_by_node_json = `{
 
 // FCSearchContentByNode 查询本地知识库的函数
 type FCSearchContentByNode struct {
-	NodeIds        []string               `json:"nodeIds,omitempty"`
-	DescriptionMap map[string]interface{} `json:"-"`
+	NodeIds        []string       `json:"nodeIds,omitempty"`
+	DescriptionMap map[string]any `json:"-"`
 }
 
 func (fc FCSearchContentByNode) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
-	dm := make(map[string]interface{})
+	dm := make(map[string]any)
 	if descriptionJson == "" {
 		return fc, nil
 	}
@@ -212,7 +212,7 @@ func (fc FCSearchContentByNode) Description(ctx context.Context) interface{} {
 }
 
 // Run 执行方法
-func (fc FCSearchContentByNode) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+func (fc FCSearchContentByNode) Run(ctx context.Context, arguments string, intput map[string]any) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -282,11 +282,11 @@ type FCSearchDocumentByKeyword struct {
 	DocumentIds []string `json:"documentIds,omitempty"`
 	Query       string   `json:"query,omitempty"`
 
-	DescriptionMap map[string]interface{} `json:"-"`
+	DescriptionMap map[string]any `json:"-"`
 }
 
 func (fc FCSearchDocumentByKeyword) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
-	dm := make(map[string]interface{})
+	dm := make(map[string]any)
 	if descriptionJson == "" {
 		return fc, nil
 	}
@@ -304,7 +304,7 @@ func (fc FCSearchDocumentByKeyword) Description(ctx context.Context) interface{}
 }
 
 // Run 执行方法
-func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string, intput map[string]any) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -381,11 +381,11 @@ type FCWebSearch struct {
 	//接受模型返回的 arguments
 	Query string `json:"query,omitempty"`
 
-	DescriptionMap map[string]interface{} `json:"-"`
+	DescriptionMap map[string]any `json:"-"`
 }
 
 func (fc FCWebSearch) Initialization(ctx context.Context, descriptionJson string) (IToolFunctionCalling, error) {
-	dm := make(map[string]interface{})
+	dm := make(map[string]any)
 	if descriptionJson == "" {
 		return fc, nil
 	}
@@ -403,7 +403,7 @@ func (fc FCWebSearch) Description(ctx context.Context) interface{} {
 }
 
 // Run 执行方法
-func (fc FCWebSearch) Run(ctx context.Context, arguments string, intput map[string]interface{}) (string, error) {
+func (fc FCWebSearch) Run(ctx context.Context, arguments string, intput map[string]any) (string, error) {
 	if arguments == "" {
 		return "", nil
 	}
@@ -419,7 +419,7 @@ func (fc FCWebSearch) Run(ctx context.Context, arguments string, intput map[stri
 	webSearch.Depth = 2
 	webSearch.QuerySelector = []string{"li.b_algo div.b_tpcn"}
 	webURL := "https://www.bing.com/search?q=" + fc.Query
-	input1 := make(map[string]interface{}, 0)
+	input1 := make(map[string]any, 0)
 	webSearch.Initialization(ctx, input1)
 
 	document := &Document{}
@@ -447,7 +447,7 @@ func (fc FCWebSearch) Run(ctx context.Context, arguments string, intput map[stri
 			defer wg.Done()
 			document := &Document{}
 			document.Id = href
-			hrefInput := make(map[string]interface{}, 0)
+			hrefInput := make(map[string]any, 0)
 			hrefInput["document"] = document
 			hrefInput["webScraper_webURL"] = href
 			hrefWS.WebScraper.FetchPage(ctx, document, hrefInput)

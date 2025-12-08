@@ -70,7 +70,7 @@ type LKEDocumentEmbedder struct {
 	client         *http.Client      `json:"-"`
 }
 
-func (component *LKEDocumentEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *LKEDocumentEmbedder) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Host == "" {
 		component.Host = "lkeap.tencentcloudapi.com"
 	}
@@ -116,7 +116,7 @@ func (component *LKEDocumentEmbedder) Initialization(ctx context.Context, input 
 
 	return nil
 }
-func (component *LKEDocumentEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *LKEDocumentEmbedder) Run(ctx context.Context, input map[string]any) error {
 	if input["documentChunks"] == nil {
 		return errors.New(funcT("input['documentChunks'] cannot be empty"))
 	}
@@ -125,7 +125,7 @@ func (component *LKEDocumentEmbedder) Run(ctx context.Context, input map[string]
 	for i := 0; i < len(documentChunks); i++ {
 		documentChunk := documentChunks[i]
 
-		bodyMap := make(map[string]interface{}, 0)
+		bodyMap := make(map[string]any, 0)
 		bodyMap["Inputs"] = []string{documentChunk.Markdown}
 		bodyMap["Model"] = component.Model
 		bodyByte, err := httpPostLKEBody(component.client, component.SecretId, component.SecretKey, component.Host, component.Algorithm, component.Service, component.Version, component.Action, component.Region, bodyMap)
@@ -188,7 +188,7 @@ type LKETextEmbedder struct {
 	OpenAIChatGenerator
 }
 
-func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Host == "" {
 		component.Host = "lkeap.tencentcloudapi.com"
 	}
@@ -228,12 +228,12 @@ func (component *LKETextEmbedder) Initialization(ctx context.Context, input map[
 
 	return nil
 }
-func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *LKETextEmbedder) Run(ctx context.Context, input map[string]any) error {
 	if input["query"] == nil {
 		return errors.New(funcT("input['query'] cannot be empty"))
 	}
 	query := input["query"].(string)
-	bodyMap := make(map[string]interface{}, 0)
+	bodyMap := make(map[string]any, 0)
 	bodyMap["Inputs"] = []string{query}
 	bodyMap["Model"] = component.Model
 	bodyByte, err := httpPostLKEBody(component.client, component.SecretId, component.SecretKey, component.Host, component.Algorithm, component.Service, component.Version, component.Action, component.Region, bodyMap)
@@ -280,7 +280,7 @@ type LKEDocumentChunkReranker struct {
 	Timestamp int `json:"-"`
 }
 
-func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Host == "" {
 		component.Host = "lkeap.tencentcloudapi.com"
 	}
@@ -310,7 +310,7 @@ func (component *LKEDocumentChunkReranker) Initialization(ctx context.Context, i
 
 	return nil
 }
-func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[string]any) error {
 	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
 	if err != nil {
 		input[errorKey] = err
@@ -320,7 +320,7 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 		return nil
 	}
 
-	bodyMap := map[string]interface{}{
+	bodyMap := map[string]any{
 		"Query": query,
 		"Docs":  documents,
 		"Model": component.Model,
@@ -357,7 +357,7 @@ func (component *LKEDocumentChunkReranker) Run(ctx context.Context, input map[st
 }
 
 // https://github.com/TencentCloud/signature-process-demo/blob/main/signature-v3/golang/demo.go
-func httpPostLKEBody(client *http.Client, secretId, secretKey, host, algorithm, service, version, action, region string, bodyMap map[string]interface{}) ([]byte, error) {
+func httpPostLKEBody(client *http.Client, secretId, secretKey, host, algorithm, service, version, action, region string, bodyMap map[string]any) ([]byte, error) {
 	// 需要设置环境变量 TENCENTCLOUD_SECRET_ID，值为示例的 AKIDz8krbsJ5yKBZQpn74WFkmLPx3*******
 	var timestamp int64 = time.Now().Unix()
 	// step 1: build canonical request string

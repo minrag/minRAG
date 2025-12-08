@@ -27,7 +27,7 @@ import (
 
 // updateDocumentChunk 运行indexPipeline流水线,更新Document,DocumentChunk,VecDocumentChunk
 func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) {
-	input := make(map[string]interface{})
+	input := make(map[string]any)
 	input["document"] = document
 
 	indexPipeline, err := findPipelineById(ctx, "indexPipeline", input)

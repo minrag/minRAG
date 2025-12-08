@@ -100,7 +100,7 @@ type Pipeline struct {
 	pipelineComponentMap map[string]*PipelineComponent `json:"-"`
 }
 
-func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]any) error {
 	// 初始化流水线的组件map
 	pipeline.pipelineComponentMap = make(map[string]*PipelineComponent, 0)
 	// 获取上游组件
@@ -125,7 +125,7 @@ func (pipeline *Pipeline) Initialization(ctx context.Context, input map[string]i
 }
 
 // initPipelineComponentMap 初始化流水线的组件map,递归处理
-func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input map[string]interface{}) error {
+func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input map[string]any) error {
 	for i := 0; i < len(pipeline.DownStream); i++ {
 		pipelineComponent := pipeline.DownStream[i]
 		baseComponentId := pipelineComponent.BaseComponentId //基础组件id
@@ -175,7 +175,7 @@ func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input ma
 	return nil
 }
 
-func (pipeline *Pipeline) Run(ctx context.Context, input map[string]interface{}) error {
+func (pipeline *Pipeline) Run(ctx context.Context, input map[string]any) error {
 	// 流水线的第一个组件,作为开始的组件
 	downStream := make([]*PipelineComponent, 0)
 	downStream = append(downStream, pipeline.DownStream[0])
@@ -183,7 +183,7 @@ func (pipeline *Pipeline) Run(ctx context.Context, input map[string]interface{})
 }
 
 // runProcess 运行流水线的组件
-func runProcess(ctx context.Context, input map[string]interface{}, upStream *PipelineComponent, downStream []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
+func runProcess(ctx context.Context, input map[string]any, upStream *PipelineComponent, downStream []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
 	if len(downStream) < 1 {
 		return nil
 	}
@@ -215,7 +215,7 @@ func runProcess(ctx context.Context, input map[string]interface{}, upStream *Pip
 }
 
 // runDownStreamComponent 运行下游组件
-func runDownStreamComponent(ctx context.Context, input map[string]interface{}, upStream *PipelineComponent, pipelineComponent *PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
+func runDownStreamComponent(ctx context.Context, input map[string]any, upStream *PipelineComponent, pipelineComponent *PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
 	if len(pipelineComponent.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
 		upId := upStream.Id
 		index := -1
@@ -306,7 +306,7 @@ func runDownStreamComponent(ctx context.Context, input map[string]interface{}, u
 }
 
 // findPipelineById 根据ID查找流水线组件
-func findPipelineById(ctx context.Context, pipelineId string, input map[string]interface{}) (*Pipeline, error) {
+func findPipelineById(ctx context.Context, pipelineId string, input map[string]any) (*Pipeline, error) {
 	// 流水线组件,以后有可以单独初始化一个,不用启动时全部初始化
 	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType=? and id=? ", "Pipeline", pipelineId)
 	finderPipeline.SelectTotalCount = false

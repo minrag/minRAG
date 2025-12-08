@@ -30,7 +30,7 @@ type QianFanDocumentChunkReranker struct {
 	DocumentChunkReranker
 }
 
-func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		return errors.New("Initialization QianFanDocumentChunkReranker error:Model is empty")
 	}
@@ -43,7 +43,7 @@ func (component *QianFanDocumentChunkReranker) Initialization(ctx context.Contex
 
 	return nil
 }
-func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input map[string]any) error {
 	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
 	if err != nil {
 		input[errorKey] = err
@@ -53,7 +53,7 @@ func (component *QianFanDocumentChunkReranker) Run(ctx context.Context, input ma
 		return nil
 	}
 
-	bodyMap := map[string]interface{}{
+	bodyMap := map[string]any{
 		"model":     component.Model,
 		"query":     query,
 		"top_n":     topN,

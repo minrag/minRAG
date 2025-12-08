@@ -84,7 +84,7 @@ func funcBasePath() string {
 func funcConvertType(value interface{}, sourceType string, targetType string) (interface{}, error) {
 	// json字符串转成Map
 	if sourceType == "json" && targetType == "object" {
-		obj := make(map[string]interface{})
+		obj := make(map[string]any)
 		jsonStr := value.(string)
 		json.Unmarshal([]byte(jsonStr), &obj)
 		return obj, nil

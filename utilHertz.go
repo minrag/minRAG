@@ -326,7 +326,7 @@ type ResponseData struct {
 	Message string `json:"message,omitempty"`
 
 	// ExtMap 扩展的map,用于处理返回多个值的情况
-	ExtMap map[string]interface{} `json:"extMap,omitempty"`
+	ExtMap map[string]any `json:"extMap,omitempty"`
 
 	// 列表的分页对象
 	Page *zorm.Page `json:"page,omitempty"`

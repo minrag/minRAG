@@ -28,7 +28,7 @@ import (
 )
 
 // httpPostJsonBody 使用Post发送Json请求
-func httpPostJsonBody(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) ([]byte, error) {
+func httpPostJsonBody(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]any) ([]byte, error) {
 	resp, err := httpPostJsonResponse(client, authorization, url, header, bodyMap)
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func httpPostJsonBody(client *http.Client, authorization string, url string, hea
 }
 
 // httpPostJsonResponse post请求的response
-func httpPostJsonResponse(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]interface{}) (*http.Response, error) {
+func httpPostJsonResponse(client *http.Client, authorization string, url string, header map[string]string, bodyMap map[string]any) (*http.Response, error) {
 	if client == nil {
 		return nil, errors.New("httpClient is nil")
 	}

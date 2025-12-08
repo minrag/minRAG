@@ -389,7 +389,7 @@ func funcList(ctx context.Context, c *app.RequestContext) {
 	pageNoStr := c.DefaultQuery("pageNo", "1")
 	pageNo, _ := strconv.Atoi(pageNoStr)
 	q := strings.TrimSpace(c.Query("q"))
-	mapParams := make(map[string]interface{}, 0)
+	mapParams := make(map[string]any, 0)
 	//获取所有的参数
 	c.Bind(&mapParams)
 	//删除掉固定的两个
@@ -468,7 +468,7 @@ func funcDocumentList(ctx context.Context, c *app.RequestContext) {
 func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 	urlPathParam := "themeTemplate"
 	var responseData ResponseData
-	extMap := make(map[string]interface{})
+	extMap := make(map[string]any)
 	extMap["file"] = ""
 	responseData.ExtMap = extMap
 	list := make([]ThemeTemplate, 0)
@@ -742,7 +742,7 @@ func funcUpdateAgent(ctx context.Context, c *app.RequestContext) {
 
 // funcUpdateInit 初始化更新的对象参数,先从数据库查询,再更新数据
 func funcUpdateInit(ctx context.Context, c *app.RequestContext, entity zorm.IEntityStruct) bool {
-	jsontmp := make(map[string]interface{}, 0)
+	jsontmp := make(map[string]any, 0)
 	c.Bind(&jsontmp)
 	id := jsontmp["id"]
 	finder := zorm.NewSelectFinder(entity.GetTableName()).Append("WHERE id=?", id)
@@ -1023,7 +1023,7 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 				continue
 			}
 			doc.SortNo = maxSortNo + i
-			input := make(map[string]interface{}, 0)
+			input := make(map[string]any, 0)
 			input["document"] = &doc
 			//清洗html标签
 			hc := &HtmlCleaner{}
@@ -1061,7 +1061,7 @@ func recursiveScraper(ctx context.Context, documents *[]Document, webScraperHref
 	document.Id = webScraper.KnowledgeBaseID + sha256hex(webScraper.WebURL)
 	document.KnowledgeBaseID = webScraper.KnowledgeBaseID
 	document.Status = 2
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	input["document"] = document
 	err := webScraper.Initialization(ctx, input)
 	if err != nil {

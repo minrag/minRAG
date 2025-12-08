@@ -31,7 +31,7 @@ type BaiLianDocumentChunkReranker struct {
 	DocumentChunkReranker
 }
 
-func (component *BaiLianDocumentChunkReranker) Initialization(ctx context.Context, input map[string]interface{}) error {
+func (component *BaiLianDocumentChunkReranker) Initialization(ctx context.Context, input map[string]any) error {
 	if component.Model == "" {
 		return errors.New("Initialization BaiLianDocumentChunkReranker error:Model is empty")
 	}
@@ -48,7 +48,7 @@ func (component *BaiLianDocumentChunkReranker) Initialization(ctx context.Contex
 	component.DocumentChunkReranker.Initialization(ctx, input)
 	return nil
 }
-func (component *BaiLianDocumentChunkReranker) Run(ctx context.Context, input map[string]interface{}) error {
+func (component *BaiLianDocumentChunkReranker) Run(ctx context.Context, input map[string]any) error {
 	query, topN, score, documentChunks, documents, err := component.checkRerankParameter(ctx, input)
 	if err != nil {
 		input[errorKey] = err
@@ -58,13 +58,13 @@ func (component *BaiLianDocumentChunkReranker) Run(ctx context.Context, input ma
 		return nil
 	}
 
-	bodyMap := map[string]interface{}{
+	bodyMap := map[string]any{
 		"model": component.Model,
-		"input": map[string]interface{}{
+		"input": map[string]any{
 			"query":     query,
 			"documents": documents,
 		},
-		"parameters": map[string]interface{}{
+		"parameters": map[string]any{
 			"top_n":            topN,
 			"return_documents": true,
 		},

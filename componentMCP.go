@@ -87,7 +87,7 @@ func (c *MCPClient) Call(
 	callback func(data []byte) error,
 ) error {
 	// 1. 构建 MCP 协议请求体
-	reqBody := map[string]interface{}{
+	reqBody := map[string]any{
 		"jsonrpc": "2.0",
 		"method":  toolName,
 		"params":  params,

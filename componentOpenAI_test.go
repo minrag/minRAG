@@ -11,7 +11,7 @@ func TestHtmlCleaner(t *testing.T) {
 <html><body><p>这是一个示例文本。</p><a href="https://minrag.com">链接</a></body></html>
 `
 	hc := HtmlCleaner{}
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	document := &Document{Markdown: mk}
 	input["document"] = document
 	ctx := context.Background()
@@ -26,7 +26,7 @@ func TestHtmlCleaner(t *testing.T) {
 func TestWebScraper(t *testing.T) {
 	ws := WebScraper{QuerySelector: []string{"#s-top-left"}}
 	ws.Depth = 2
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	document := &Document{Markdown: ""}
 	input["document"] = document
 	ws.WebURL = "https://www.baidu.com"
@@ -45,7 +45,7 @@ func TestWebScraper(t *testing.T) {
 func TestWebSearch(t *testing.T) {
 	ws := WebSearch{}
 	ws.Depth = 2
-	input := make(map[string]interface{}, 0)
+	input := make(map[string]any, 0)
 	document := &Document{Markdown: ""}
 	input["document"] = document
 	ctx := context.Background()
