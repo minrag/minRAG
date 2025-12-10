@@ -76,8 +76,8 @@ type PipelineComponent struct {
 	// 流水线组件都在pipelineComponentMap[Id]*PipelineComponent,每个流水线的所有组件都是互相隔离的,都是新的实例.
 	// UpStream和DownStream的只有节点的ID,完整对象从pipelineComponentMap获取,例如:  "upStream":[{"id":"FtsKeywordRetriever"}]
 	UpStream []*PipelineComponent `json:"upStream,omitempty"`
-	// UpStreamCondition  map[upStreamId]Condition  上游组件条件表达式,先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
-	UpStreamCondition map[string]string `json:"upStreamCondition,omitempty"`
+	// DownStreamCondition  map[downStreamId]Condition  下游组件条件表达式,先验证表达式是否通过,可以为空. 例如 "{{.size}}>100"
+	DownStreamCondition map[string]string `json:"downStreamCondition,omitempty"`
 
 	// DownStream 下游组件,多个节点时,一般指定runCondition,同时执行多个下游节点
 	// UpStream和DownStream的只有节点的ID,完整对象从pipelineComponentMap获取,例如:  "downStream":[{"id":"FtsKeywordRetriever"}]
@@ -154,22 +154,6 @@ func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input ma
 		// 记录到map中
 		pipeline.pipelineComponentMap[pipelineComponent.Id] = pipelineComponent
 
-		/*
-			//按照顺序包装所有的组件,等于两层处理,不再递归处理
-			cs := make([]*PipelineComponent, 0)
-			if pipelineComponent.UpStream != nil {
-				cs = append(cs, pipelineComponent.UpStream...)
-			}
-			if pipelineComponent.DownStream != nil {
-				cs = append(cs, pipelineComponent.DownStream...)
-			}
-
-			// 递归处理
-			if len(cs) > 0 {
-				initPipelineComponentMap(ctx, input, cs, pipelineComponentMap)
-			}
-		*/
-
 	}
 
 	return nil
@@ -177,101 +161,31 @@ func (pipeline *Pipeline) initPipelineComponentMap(ctx context.Context, input ma
 
 func (pipeline *Pipeline) Run(ctx context.Context, input map[string]any) error {
 	// 流水线的第一个组件,作为开始的组件
-	downStream := make([]*PipelineComponent, 0)
-	downStream = append(downStream, pipeline.DownStream[0])
-	return runProcess(ctx, input, &pipeline.PipelineComponent, downStream, pipeline.pipelineComponentMap)
+	return runComponent(ctx, input, pipeline.DownStream[0], pipeline.pipelineComponentMap)
 }
 
-// runProcess 运行流水线的组件
-func runProcess(ctx context.Context, input map[string]any, upStream *PipelineComponent, downStream []*PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
-	if len(downStream) < 1 {
-		return nil
-	}
-	// 使用WaitGroup异步方案
-	var wg sync.WaitGroup
-	for i := 0; i < len(downStream); i++ {
-		id := downStream[i].Id //组件id
-		if pipelineComponentMap[id] == nil {
-			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
+// runComponent 运行组件
+func runComponent(ctx context.Context, input map[string]any, currPipelineComponent *PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
+	isRun := true
+	for _, upStream := range currPipelineComponent.UpStream {
+		status := upStream.Status
+		if status != 3 { //没有完成
+			isRun = false
+			break
 		}
-		pipelineComponent := pipelineComponentMap[id]
-		//异步并行执行downStream的组件
-		//@TODO 组件如果有输出,会有乱序,组件需要增加参数控制是否输出
-		wg.Go(func() {
-			runDownStreamComponent(ctx, input, upStream, pipelineComponent, pipelineComponentMap)
-		})
-		wg.Wait() // 等待所有goroutine完成
-
-		/*
-			err := runDownStreamComponent(ctx, input, upStream, pipelineComponent, pipelineComponentMap)
-			if err != nil {
-				FuncLogError(ctx, err)
-				return err
-			}
-		*/
-
 	}
-	return nil
-}
 
-// runDownStreamComponent 运行下游组件
-func runDownStreamComponent(ctx context.Context, input map[string]any, upStream *PipelineComponent, pipelineComponent *PipelineComponent, pipelineComponentMap map[string]*PipelineComponent) error {
-	if len(pipelineComponent.UpStream) > 0 { // 有上游组件,需要把上游组件传递过来,从数组里删除
-		upId := upStream.Id
-		index := -1
-		for j := 0; j < len(pipelineComponent.UpStream); j++ {
-			if pipelineComponent.UpStream[j].Id == upId {
-				index = j
-				break
-			}
-		}
-		if index >= 0 { //属于上游的组件
-			condition := ""
-			if pipelineComponent.UpStreamCondition != nil {
-				condition = pipelineComponent.UpStreamCondition[upId]
-			}
-			if condition != "" {
-				tmpl := template.New("pipelineComponentMap-" + upId + "-" + pipelineComponent.Id)
-				t, err := tmpl.Parse(condition)
-				if err != nil {
-					FuncLogError(ctx, err)
-					input[errorKey] = err
-					return err
-				}
-				// 使用text/template进行表达式计算
-				// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
-				var buf bytes.Buffer
-				// 执行模板并将结果写入到 bytes.Buffer
-				if err := t.Execute(&buf, input); err != nil {
-					FuncLogError(ctx, err)
-					input[errorKey] = err
-					return err
-				}
-				// 获取编译后的内容
-				result := strings.TrimSpace(buf.String())
-				// 如果结果不是 true,则跳过该组件的执行
-				if strings.ToLower(result) != "true" {
-					return nil
-				}
-			}
-			// 符合条件,删除上游组件
-			pipelineComponent.UpStream = append(pipelineComponent.UpStream[:index], pipelineComponent.UpStream[index+1:]...)
-		}
-		if len(pipelineComponent.UpStream) > 0 {
-			pipelineComponent.Status = 2 //阻塞
-			return nil                   // 还有上游组件没有执行完,跳过
-		} else {
-			pipelineComponent.Status = 0 //重置为未开始
-		}
+	if isRun { // 可以执行
+		currPipelineComponent.Status = 0 //重置为未开始
+	} else {
+		currPipelineComponent.Status = 2 //阻塞
+		return nil                       // 还有上游组件没有执行完,跳过
+	}
 
-	}
-	if pipelineComponent.Status != 0 { //已经在执行或者执行过的组件
-		return nil
-	}
-	pipelineComponent.Status = 1 //进行中
-	err := pipelineComponent.Component.Run(ctx, input)
+	currPipelineComponent.Status = 1 //进行中
+	err := currPipelineComponent.Component.Run(ctx, input)
 	if err != nil {
-		pipelineComponent.Status = 4 //失败
+		currPipelineComponent.Status = 4 //失败
 		FuncLogError(ctx, err)
 		input[errorKey] = err
 		return err
@@ -282,26 +196,57 @@ func runDownStreamComponent(ctx context.Context, input map[string]any, upStream 
 	if input[endKey] != nil {
 		return nil
 	}
-	pipelineComponent.Status = 3 //完成
-	nextComponens := pipelineComponent.DownStream
-	nextComponentObj, has := input[nextComponentKey]
-	if has && nextComponentObj.(string) != "" {
-		nextComponens = make([]*PipelineComponent, 0)
-		nextComponentId := nextComponentObj.(string)
-		nextComponent := pipelineComponentMap[nextComponentId]
-		if nextComponent == nil {
-			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), nextComponentId)
+	currPipelineComponent.Status = 3 //完成
+	// 所有的下游节点
+	downStream := currPipelineComponent.DownStream
+	downStreamCondition := currPipelineComponent.DownStreamCondition
+	// 使用WaitGroup异步方案
+	var wg sync.WaitGroup
+	for i := range downStream {
+		id := downStream[i].Id //组件id
+		if pipelineComponentMap[id] == nil {
+			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
 		}
-		nextComponens = append(nextComponens, nextComponent)
-	}
+		downPipelineComponent := pipelineComponentMap[id]
+		if downPipelineComponent.Status != 0 {
+			continue
+		}
+		// @TODO if elseif 这样的逻辑关系  有 条件组件 完成,这里只处理简单的表达式逻辑
+		// 验证下游的表达式
+		condition, has := downStreamCondition[id]
+		if has && condition != "" {
+			tmpl := template.New("pipelineComponentMap-" + id + "-" + downPipelineComponent.Id)
+			t, err := tmpl.Parse(condition)
+			if err != nil {
+				FuncLogError(ctx, err)
+				input[errorKey] = err
+				return err
+			}
+			// 使用text/template进行表达式计算
+			// 创建一个 bytes.Buffer 用于存储渲染后的 text 内容
+			var buf bytes.Buffer
+			// 执行模板并将结果写入到 bytes.Buffer
+			if err := t.Execute(&buf, input); err != nil {
+				FuncLogError(ctx, err)
+				input[errorKey] = err
+				return err
+			}
+			// 获取编译后的内容
+			result := strings.TrimSpace(buf.String())
+			// 如果结果不是 true,则跳过该组件的执行
+			if strings.ToLower(result) != "true" {
+				continue
+			}
+		}
 
-	if len(nextComponens) > 0 {
-		err := runProcess(ctx, input, pipelineComponent, nextComponens, pipelineComponentMap)
-		if err != nil {
-			FuncLogError(ctx, err)
-			return err
-		}
+		//异步并行执行downStream的组件
+		//@TODO 组件如果有输出,会有乱序,组件需要增加参数控制是否输出
+		wg.Go(func() {
+			runComponent(ctx, input, downPipelineComponent, pipelineComponentMap)
+		})
+
 	}
+	wg.Wait() // 等待所有goroutine完成
 	return nil
 }
 
