@@ -31,25 +31,6 @@ import (
 )
 
 /**
-
-flowchart TD
-    A[流水线启动] --> B[遍历pipelineComponentMap<br>初始化所有组件实例]
-    B --> C[为每个组件实例<br>加载其下游节点完整对象]
-    C --> D[从根节点开始<br>（UpStream为空的组件）]
-    D --> E{检查UpStreamCondition<br>是否全部满足？}
-    E -- 是 --> F[执行当前组件核心逻辑]
-    E -- 否 --> G[标记当前组件状态为“阻塞”]
-    F --> H[更新组件状态为“完成”]
-    G --> I[等待条件满足或超时]
-    I -.-> E
-    H --> J[通知所有下游节点<br>（DownStream中的组件）]
-    J --> K{是否所有下游节点<br>均已执行完毕？}
-    K -- 否 --> D
-    K -- 是 --> L[整条流水线执行结束]
-
-**/
-
-/**
 流水线组件有ID和基础组件ID,基础组件ID,对应组件表的ID,为空时,默认为ID.比如一个基础组件被多次引用,ID不同,BaseComponentId相同
 所有组件都放到了pipelineComponentMap map[流水线组件id]*PipelineComponent,每个流水线组件的所有组件都是互相隔离的,都是新的实例
 
@@ -208,7 +189,8 @@ func runComponent(ctx context.Context, input map[string]any, currPipelineCompone
 			return fmt.Errorf(funcT("The %s component of the pipeline does not exist"), id)
 		}
 		downPipelineComponent := pipelineComponentMap[id]
-		if downPipelineComponent.Status != 0 {
+		// 只执行 开始 挂起状态的下游组件
+		if downPipelineComponent.Status != 0 && downPipelineComponent.Status != 2 {
 			continue
 		}
 		// @TODO if elseif 这样的逻辑关系  有 条件组件 完成,这里只处理简单的表达式逻辑
