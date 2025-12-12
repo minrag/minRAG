@@ -68,7 +68,7 @@ type PipelineComponent struct {
 	Component IComponent `json:"-"`
 
 	// Status 组件状态,0未开始,1进行中,2阻塞,3完成,4失败
-	Status int `json:"-"`
+	Status int `json:"status,omitempty"`
 }
 
 // Pipeline 流水线,也是IComponent实现
