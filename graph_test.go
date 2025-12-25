@@ -15,11 +15,18 @@ internal/application/service/extract.go 中 ChunkExtractService.Extract 实现�
 internal/application/service/chat_pipline/extract_entity.go 中 PluginExtractEntity 完成 根据用户的query 抽取知识图谱的实体,用于查询知识图谱 TestGraph2
 internal/application/repository/retriever/neo4j/repository.go 完成对知识图谱数据的增删改查
 
+
+// 文档的chunk.ID 和 知识图谱的节点绑定,用于检索出实体节点时,关联查询出对应的文档chunk内容
+for _, node := range graph.Node {
+		node.Chunks = []string{chunk.ID}
+	}
+
+// 使用 知识库ID-文档ID作为NameSpace,多个文档就多次查询,然后再聚合结果
 s.graphEngine.AddGraph(ctx,
 		types.NameSpace{KnowledgeBase: chunk.KnowledgeBaseID, Knowledge: chunk.KnowledgeID},
 		[]*types.GraphData{graph},
 	)
-使用 知识库ID-文档ID作为NameSpace,多个文档就多次查询,然后再聚合结果
+
 **/
 
 type GraphEntity struct {
