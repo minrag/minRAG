@@ -93,19 +93,31 @@ func funcDeleteDocumentById(ctx context.Context, id string) error {
 	return err
 }
 
+// runeLength 计算字符串的符文长度（一个中文汉字长度算1）
+func runeLength(s string) int {
+	return len([]rune(s))
+}
+
 // recursiveSplit 递归分割实现
 func (component *DocumentSplitter) recursiveSplit(text string, depth int) []string {
-	chunks := make([]string, 0)
+	// 计算文本的符文长度
+	textLen := runeLength(text)
+	// 如果文本长度小于等于目标长度，直接返回
+	if textLen <= component.SplitLength {
+		return []string{text}
+	}
 	// 终止条件：处理完所有分隔符
 	if depth >= len(component.SplitBy) {
-		if text != "" {
-			return append(chunks, text)
-		}
-		return chunks
+		// 如果没有更多分隔符，但文本仍然很长，我们需要强制分割
+		// 这里简单按字符分割，但为了保持语义，我们可以按标点或空格分割
+		// 暂时直接按长度分割
+		return component.splitByLength(text, component.SplitLength)
 	}
 
 	currentSep := component.SplitBy[depth]
 	parts := strings.Split(text, currentSep)
+	// 收集处理后的部分
+	segments := make([]string, 0)
 	for i, part := range parts {
 		part = strings.TrimSpace(part)
 		if part == "" {
@@ -115,19 +127,18 @@ func (component *DocumentSplitter) recursiveSplit(text string, depth int) []stri
 		if i < len(parts)-1 { //不是最后一个
 			partContent = partContent + currentSep
 		}
-
-		// 处理超长内容
-		if len(part) >= component.SplitLength {
-			partLeaf := component.recursiveSplit(partContent, depth+1)
-			if len(partLeaf) > 0 {
-				chunks = append(chunks, partLeaf...)
-			}
-			continue
+		// 计算部分的符文长度
+		partLen := runeLength(part)
+		// 如果部分长度超过目标长度，递归分割
+		if partLen >= component.SplitLength {
+			subChunks := component.recursiveSplit(partContent, depth+1)
+			segments = append(segments, subChunks...)
 		} else {
-			chunks = append(chunks, partContent)
+			segments = append(segments, partContent)
 		}
 	}
-	return chunks
+	// 将部分合并成接近目标长度的块
+	return mergeSegments(segments, component.SplitLength)
 }
 
 // mergeChunks 合并短内容
@@ -135,13 +146,15 @@ func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
 	// 合并短内容
 	for i := 0; i < len(chunks); i++ {
 		chunk := chunks[i]
-		if len(chunk) >= component.SplitLength || i+1 >= len(chunks) {
+		chunkLen := runeLength(chunk)
+		if chunkLen >= component.SplitLength || i+1 >= len(chunks) {
 			continue
 		}
 		nextChunk := chunks[i+1]
+		nextChunkLen := runeLength(nextChunk)
 
-		// 汉字字符占位3个长度
-		if (len(chunk) + len(nextChunk)) > (component.SplitLength*18)/10 {
+		// 使用符文长度计算合并后的长度
+		if (chunkLen + nextChunkLen) > (component.SplitLength*18)/10 {
 			continue
 		}
 		chunks[i] = chunk + nextChunk
@@ -152,4 +165,118 @@ func (component *DocumentSplitter) mergeChunks(chunks []string) []string {
 		}
 	}
 	return chunks
+}
+
+// splitByLength 按长度分割文本，尽量在自然边界处分割
+func (component *DocumentSplitter) splitByLength(text string, maxLen int) []string {
+	if runeLength(text) <= maxLen {
+		return []string{text}
+	}
+
+	// 将文本转换为符文切片以便正确分割中文
+	runes := []rune(text)
+	result := make([]string, 0)
+
+	// 在中文文本中寻找自然分割点：标点符号、空格等
+	//naturalSplitters := []rune{'。', '！', '？', '.', '!', '?', ';', '；', ',', '，', ' ', '\n', '\t', '、'}
+
+	start := 0
+	for start < len(runes) {
+		// 计算本次分割的结束位置
+		end := start + maxLen
+		if end > len(runes) {
+			end = len(runes)
+		}
+
+		// 如果已经到了文本末尾
+		if start == end {
+			break
+		}
+
+		// 尝试在自然边界处分割
+		if end < len(runes) {
+			// 向前寻找最近的标点或空格
+			searchEnd := end
+			if searchEnd > len(runes) {
+				searchEnd = len(runes)
+			}
+			found := false
+			for j := searchEnd - 1; j > start; j-- {
+				for _, splitter := range component.SplitBy {
+					splitterRunes := []rune(splitter)
+					if len(splitterRunes) == 1 && runes[j] == splitterRunes[0] {
+						end = j + 1 // 包含分割符
+						found = true
+						break
+					}
+				}
+				if found {
+					break
+				}
+			}
+
+			// 如果没找到自然分割点，尝试向后寻找
+			if !found && end < len(runes) {
+				for j := end; j < len(runes) && j < start+maxLen*2; j++ {
+					for _, splitter := range component.SplitBy {
+						splitterRunes := []rune(splitter)
+						if len(splitterRunes) == 1 && runes[j] == splitterRunes[0] {
+							end = j + 1 // 包含分割符
+							found = true
+							break
+						}
+					}
+					if found {
+						break
+					}
+				}
+			}
+		}
+
+		// 提取块
+		chunk := string(runes[start:end])
+		result = append(result, chunk)
+
+		// 移动到下一个位置
+		start = end
+	}
+
+	return result
+}
+
+// mergeSegments 合并小片段成接近目标长度的块
+func mergeSegments(segments []string, targetLen int) []string {
+	if len(segments) == 0 {
+		return segments
+	}
+
+	result := make([]string, 0)
+	current := ""
+
+	for _, segment := range segments {
+		segmentLen := runeLength(segment)
+		currentLen := runeLength(current)
+
+		// 如果当前块为空，直接开始新块
+		if current == "" {
+			current = segment
+			continue
+		}
+
+		// 如果将当前片段加入不会超过目标长度的120%，则合并
+		if currentLen+segmentLen <= targetLen*120/100 {
+			current += segment
+		} else {
+			// 否则，保存当前块并开始新块
+			result = append(result, current)
+			current = segment
+		}
+	}
+
+	// 添加最后一个块
+	if current != "" {
+		result = append(result, current)
+	}
+
+	return result
 }

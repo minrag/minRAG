@@ -16,6 +16,7 @@ natsdata/
 *.db.fail
 .vscode/
 .VSCodeCounter/
+.claude/
 minragdatadir/markitdown/
 
 *.swp
