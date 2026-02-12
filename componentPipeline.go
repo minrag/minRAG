@@ -235,7 +235,7 @@ func runComponent(ctx context.Context, input map[string]any, currPipelineCompone
 // findPipelineById 根据ID查找流水线组件
 func findPipelineById(ctx context.Context, pipelineId string, input map[string]any) (*Pipeline, error) {
 	// 流水线组件,以后有可以单独初始化一个,不用启动时全部初始化
-	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType=? and id=? ", "Pipeline", pipelineId)
+	finderPipeline := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and component_type=? and id=? ", "Pipeline", pipelineId)
 	finderPipeline.SelectTotalCount = false
 	pipeline := &Pipeline{}
 	component := &Component{}

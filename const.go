@@ -35,7 +35,7 @@ const (
 	tableSiteName = "site"
 
 	// 知识库 knowledgeBase
-	tableKnowledgeBaseName = "knowledgeBase"
+	tableKnowledgeBaseName = "knowledge_base"
 
 	// 文档
 	tableDocumentName = "document"

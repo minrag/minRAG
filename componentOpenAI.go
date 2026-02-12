@@ -98,7 +98,7 @@ func initBaseComponentMap() {
 	baseComponentMap = make(map[string]IComponent, 0)
 
 	// 基础组件,没有 Pipeline
-	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and componentType!=? order by sortNo asc", "Pipeline")
+	finder := zorm.NewSelectFinder(tableComponentName).Append("WHERE status=1 and component_type!=? order by sortno asc", "Pipeline")
 	finder.SelectTotalCount = false
 	cs := make([]Component, 0)
 	ctx := context.Background()
@@ -893,12 +893,12 @@ func (component *SQLiteVecDocumentStore) Run(ctx context.Context, input map[stri
 		document.Status = 1
 		zorm.Insert(ctx, document)
 		// 删除关联的数据,重新插入
-		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", document.Id)
+		finderDeleteChunk := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE document_id=?", document.Id)
 		count, err := zorm.UpdateFinder(ctx, finderDeleteChunk)
 		if err != nil {
 			return count, err
 		}
-		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", document.Id)
+		finderDeleteVec := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE document_id=?", document.Id)
 		count, err = zorm.UpdateFinder(ctx, finderDeleteVec)
 		if err != nil {
 			return count, err
@@ -1061,14 +1061,14 @@ func (component *VecEmbeddingRetriever) Run(ctx context.Context, input map[strin
 	}
 	finder := zorm.NewSelectFinder(tableVecDocumentChunkName, "rowid,distance as score,*").Append("WHERE embedding MATCH ?", query)
 	if documentID != "" {
-		finder.Append(" and documentID=?", documentID)
+		finder.Append(" and document_id=?", documentID)
 	}
 
 	if knowledgeBaseID != "" {
 		// Only one of EQUALS, GREATER_THAN, LESS_THAN_OR_EQUAL, LESS_THAN, GREATER_THAN_OR_EQUAL, NOT_EQUALS is allowed
 		// vec不支持 like
-		//finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
-		finder.Append(" and knowledgeBaseID = ?", knowledgeBaseID)
+		//finder.Append(" and knowledge_base_id like ?", knowledge_base_id+"%")
+		finder.Append(" and knowledge_base_id = ?", knowledgeBaseID)
 	}
 	// Only one of EQUALS, GREATER_THAN, LESS_THAN_OR_EQUAL, LESS_THAN, GREATER_THAN_OR_EQUAL, NOT_EQUALS is allowed
 	// vec不支持 范围查询
@@ -1263,10 +1263,10 @@ func (component *MarkdownRetriever) Run(ctx context.Context, input map[string]an
 	// 查询文档的目录
 	finder := zorm.NewFinder().Append("SELECT id,name,summary from " + tableDocumentName + " WHERE 1=1")
 	if documentID != "" {
-		finder.Append(" and documentID=?", documentID)
+		finder.Append(" and document_id=?", documentID)
 	}
 	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		finder.Append(" and knowledge_base_id like ?", knowledgeBaseID+"%")
 	}
 
 	documents := make([]Document, 0)
@@ -1625,7 +1625,7 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]any
 
 	messageLogs := make([]MessageLog, 0)
 	if roomID != "" && component.MemoryLength > 0 {
-		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE roomID=? order by createTime desc", roomID)
+		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE room_id=? order by create_time desc", roomID)
 		finder.SelectTotalCount = false
 		page := zorm.NewPage()
 		page.PageSize = component.MemoryLength

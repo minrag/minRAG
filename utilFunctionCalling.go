@@ -147,7 +147,7 @@ func (fc FCSearchDocumentTOCById) Run(ctx context.Context, arguments string, int
 	f_dc := zorm.NewSelectFinder(tableDocumentName, "id,name,toc").Append("WHERE 1=1 ")
 	f_dc.SelectTotalCount = false
 	if knowledgeBaseID != "" {
-		f_dc.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		f_dc.Append(" and knowledge_base_id like ?", knowledgeBaseID+"%")
 	}
 	if len(fc.DocumentIds) > 0 {
 		f_dc.Append("and id in (?)", fc.DocumentIds)
@@ -232,7 +232,7 @@ func (fc FCSearchContentByNode) Run(ctx context.Context, arguments string, intpu
 	f_dc := zorm.NewSelectFinder(tableDocumentChunkName, "id,markdown").Append("WHERE 1=1 ")
 	f_dc.SelectTotalCount = false
 	if knowledgeBaseID != "" {
-		f_dc.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		f_dc.Append(" and knowledge_base_id like ?", knowledgeBaseID+"%")
 	}
 	if len(fc.NodeIds) > 0 {
 		f_dc.Append("and id in (?)", fc.NodeIds)
@@ -334,10 +334,10 @@ func (fc FCSearchDocumentByKeyword) Run(ctx context.Context, arguments string, i
 	finder.SelectTotalCount = false
 	finder.Append(" and markdown !=?  and markdown is not null", "")
 	if len(fc.DocumentIds) > 0 {
-		finder.Append(" and documentID in (?)", fc.DocumentIds)
+		finder.Append(" and document_id in (?)", fc.DocumentIds)
 	}
 	if knowledgeBaseID != "" {
-		finder.Append(" and knowledgeBaseID like ?", knowledgeBaseID+"%")
+		finder.Append(" and knowledge_base_id like ?", knowledgeBaseID+"%")
 	}
 	if score > 0.0 { // BM25的FTS5实现在返回结果之前将结果乘以-1,查询时再乘以-1
 		finder.Append("and -1*rank >= ?", score)

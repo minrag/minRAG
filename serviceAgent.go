@@ -33,7 +33,7 @@ type AgentRequestBody struct {
 
 // findAllAgentList 查询所有的智能体
 func findAllAgentList(ctx context.Context) ([]Agent, error) {
-	finder := zorm.NewSelectFinder(tableAgentName).Append("order by sortNo desc")
+	finder := zorm.NewSelectFinder(tableAgentName).Append("order by sortno desc")
 	list := make([]Agent, 0)
 	err := zorm.Query(ctx, finder, &list, nil)
 	return list, err

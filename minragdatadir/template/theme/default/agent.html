@@ -1,8 +1,8 @@
 <!-- 查询 agent -->
-{{ $agentSQL := "* FROM agent WHERE id=? and status=1 order by status desc, sortNo desc" }}
+{{ $agentSQL := "* FROM agent WHERE id=? and status=1 order by status desc, sortno desc" }}
 
 {{ if eq .userType 1}}
-  {{ $agentSQL ="* FROM agent WHERE id=? order by sortNo desc" }}
+  {{ $agentSQL ="* FROM agent WHERE id=? order by sortno desc" }}
 {{end}}
 
 {{ $agent := selectOne "agent" $agentSQL .agentID }}

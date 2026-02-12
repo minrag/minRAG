@@ -223,21 +223,21 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | columnName  | 类型        | 说明         |  备注       | 
 | ----------- | ----------- | ----------- | ----------- |
 | id          | string      | 主键        |minrag_config |
-| basePath    | string      | 基础路径    |  默认 /      |
-| jwtSecret   | string      | jwt密钥     | 随机生成     |
-| jwttokenKey | string      | jwt的key    |  默认 jwttoken  |
-| serverPort  | string      | IP:端口     |  默认 :738  |
+| base_path    | string      | 基础路径    |  默认 /      |
+| jwt_secret   | string      | jwt密钥     | 随机生成     |
+| jwt_token_key | string      | jwt的key    |  默认 jwttoken  |
+| server_port  | string      | IP:端口     |  默认 :738  |
 | timeout     | int         | jwt超时时间秒|  默认 7200  |
-| maxRequestBodySize | int  | 最大请求     |  默认 20M  |
+| max_request_body_size | int  | 最大请求     |  默认 20M  |
 | locale      | string      | 语言包       |  默认 zh-CN,en-US |
 | proxy       | string      | http代理地址 |             |
-| aiBaseURL   | string      | AI平台base_url |             |
-| aiAPIKey    | string      | AI平台api_key |             |
-| llmModel    | string      | 默认的LLM模型 |             |
-| createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
-| updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
-| createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  倒序  |
+| ai_base_url   | string      | AI平台base_url |             |
+| ai_api_key    | string      | AI平台api_key |             |
+| llm_model    | string      | 默认的LLM模型 |             |
+| create_time  | string      | 创建时间     |  2006-01-02 15:04:05  |
+| update_time  | string      | 更新时间     |  2006-01-02 15:04:05  |
+| create_user  | string      | 创建人       |  初始化 system  |
+| sortno      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 用户(表名:user)
@@ -248,11 +248,11 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | id          | string      | 主键        | minrag_admin |
 | account     | string      | 登录名称    |  默认admin  |
 | passWord    | string      | 密码        |    -  |
-| userName    | string      | 说明        |    -  |
-| createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
-| updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
-| createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  倒序  |
+| user_name    | string      | 说明        |    -  |
+| create_time  | string      | 创建时间     |  2006-01-02 15:04:05  |
+| update_time  | string      | 更新时间     |  2006-01-02 15:04:05  |
+| create_user  | string      | 创建人       |  初始化 system  |
+| sortno      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 站点信息(表名:site)
@@ -265,28 +265,28 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | keyword     | string      | 关键字       |     -  |
 | description | string      | 站点描述    |     -  |
 | theme       | string      | 默认主题     | 默认使用default  |
-| themePC     | string      | PC主题      | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
-| themeWAP    | string      | 手机主题    | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
-| themeWX     | string      | 微信主题    | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
+| theme_pc     | string      | PC主题      | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
+| theme_wap    | string      | 手机主题    | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
+| theme_wx     | string      | 微信主题    | 先从cookie获取,如果没有从Header头取值,写入cookie,默认使用default  |
 | logo        | string      | logo       |     -  |
 | favicon     | string      | Favicon    |     -  |
-| createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
-| updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
-| createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  倒序  |
+| create_time  | string      | 创建时间     |  2006-01-02 15:04:05  |
+| update_time  | string      | 更新时间     |  2006-01-02 15:04:05  |
+| create_user  | string      | 创建人       |  初始化 system  |
+| sortno      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
-### 知识库(表名:knowledgeBase)
+### 知识库(表名:knowledge_base)
 | columnName    | 类型         | 说明    |  备注       | 
 | ----------- | ----------- | ----------- | ----------- |
 | id          | string      | 主键         | URL路径,用/隔开,例如/web/ |
 | name        | string      | 知识库名称     |    -  |
 | pid         | string      | 父知识库ID     | 父知识库ID  |
-| knowledgeBaseType  | int      | 知识库类型       | -  |
-| createTime  | string      | 创建时间     |  2006-01-02 15:04:05  |
-| updateTime  | string      | 更新时间     |  2006-01-02 15:04:05  |
-| createUser  | string      | 创建人       |  初始化 system  |
-| sortNo      | int         | 排序         |  倒序  |
+| knowledge_base_type  | int      | 知识库类型       | -  |
+| create_time  | string      | 创建时间     |  2006-01-02 15:04:05  |
+| update_time  | string      | 更新时间     |  2006-01-02 15:04:05  |
+| create_user  | string      | 创建人       |  初始化 system  |
+| sortno      | int         | 排序         |  倒序  |
 | status      | int         | 状态     |  禁用(0),可用(1)  |
 
 ### 文档(表名:document)
@@ -294,18 +294,18 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | URL路径,用/隔开,例如/web/nginx-use-hsts |
 | name        | string      | 文档名称     | 否      |    -    |
-| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
-| knowledgeBaseName | string | 知识库名称   | 否      |    -    |
+| knowledge_base_id  | string | 知识库ID     | 否      |    -    |
+| knowledge_base_name | string | 知识库名称   | 否      |    -    |
 | toc         | string      | 目录         | 否      |      -  |
 | summary     | string      | 摘要         | 否      |      -  |
 | markdown    | string      | Markdown内容 | 否      | - |
-| filePath    | string      | 文件路径     | 否      |                         |
-| fileSize    | int      | 文件大小 | 否   |                         |
-| fileExt     | string      | 文件扩展名   | 否   |                         |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
-| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
-| createUser  | string      | 创建人       | -       |  初始化 system          |
-| sortNo      | int         | 排序         | -       |  倒序                   |
+| file_path    | string      | 文件路径     | 否      |                         |
+| file_size    | int      | 文件大小 | 否   |                         |
+| file_ext     | string      | 文件扩展名   | 否   |                         |
+| create_time  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| update_time  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| create_user  | string      | 创建人       | -       |  初始化 system          |
+| sortno      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态     | - | 禁用(0),可用(1),处理中(2),处理失败(3) |
 
 
@@ -313,30 +313,30 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
-| documentID  | string      | 文档ID     | 否      |    -    |
-| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
+| document_id  | string      | 文档ID     | 否      |    -    |
+| knowledge_base_id  | string | 知识库ID     | 否      |    -    |
 | title       | string      | 标题         | 否      |    -    |
-| parentID    | string      | 上级ID      | 否      |    -    |
-| preID       | string      | 上一个节点ID | 否      |    -    |
-| nextID      | string      | 下一个节点ID | 否      |    -    |
+| parent_id    | string      | 上级ID      | 否      |    -    |
+| pre_id       | string      | 上一个节点ID | 否      |    -    |
+| next_id      | string      | 下一个节点ID | 否      |    -    |
 | level       | int         | 标题级别     | 否      |    -    |
 | markdown    | string      | Markdown内容 | 是      | 使用 jieba 分词器 |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
-| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
-| createUser  | string      | 创建人       | -       |  初始化 system          |
-| sortNo      | int         | 排序         | -       |  倒序                   |
+| create_time  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| update_time  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| create_user  | string      | 创建人       | -       |  初始化 system          |
+| sortno      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态     | - | 禁用(0),可用(1),处理中(2),处理失败(3) |
 
 ### 组件(表名:component)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
-| componentType| string     | 组件类型     | 否      |    -    |
+| component_type| string     | 组件类型     | 否      |    -    |
 | parameter  | string       | 组件参数     | 否      |    -    |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
-| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
-| createUser  | string      | 创建人       | -       |  初始化 system          |
-| sortNo      | int         | 排序         | -       |  倒序                   |
+| create_time  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| update_time  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| create_user  | string      | 创建人       | -       |  初始化 system          |
+| sortno      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态         | -       | 禁用(0),可用(1) |
 
 ### 智能体(表名:agent)
@@ -344,19 +344,19 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
 | name        | string      | 智能体名称    | 否      |    -    |
-| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
-| pipelineID  | string      | 流水线ID     | 否      |    -    |
-| defaultReply  | string    | 默认回复     | 否      |    -    |
-| agentType   | int         | 智能体类型     | 否      |    -    |
-| agentPrompt | string      | 智能体提示词 | 否      |    -    |
+| knowledge_base_id  | string | 知识库ID     | 否      |    -    |
+| pipeline_id  | string      | 流水线ID     | 否      |    -    |
+| default_reply  | string    | 默认回复     | 否      |    -    |
+| agent_type   | int         | 智能体类型     | 否      |    -    |
+| agent_prompt | string      | 智能体提示词 | 否      |    -    |
 | avatar      | string      | 智能体头像   | 否      |    -    |
 | welcome     | string      | 欢迎语       | 否      |    -    |
 | tools       | string      | 调用的函数   | 否      |    -    |
-| memoryLength| int         | 上下文记忆长度| 否      |    -    |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
-| updateTime  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
-| createUser  | string      | 创建人       | -       |  初始化 system          |
-| sortNo      | int         | 排序         | -       |  倒序                   |
+| memory_length| int         | 上下文记忆长度| 否      |    -    |
+| create_time  | string      | 创建时间     | -       |  2006-01-02 15:04:05    |
+| update_time  | string      | 更新时间     | -       |  2006-01-02 15:04:05    |
+| create_user  | string      | 创建人       | -       |  初始化 system          |
+| sortno      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态         | -       | 禁用(0),可用(1) |
 
 ### 聊天室(表名:chat_room)
@@ -364,24 +364,24 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
 | name        | string      | 名称         | 否      |    -    |
-| agentID     | string      | 智能体ID     | 否      |    -    |
-| pipelineID  | string      | 流水线ID     | 否      |    -    |
-| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
-| userID      | string      | 用户ID       | 否      |    -    |
-| createTime  | string      | 创建时间     | -       |  2006-01-02 15:04:05 |
+| agent_id     | string      | 智能体ID     | 否      |    -    |
+| pipeline_id  | string      | 流水线ID     | 否      |    -    |
+| knowledge_base_id  | string | 知识库ID     | 否      |    -    |
+| user_id      | string      | 用户ID       | 否      |    -    |
+| create_time  | string      | 创建时间     | -       |  2006-01-02 15:04:05 |
 
 ### 消息日志(表名:message_log)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
-| agentID     | string      | 智能体ID     | 否      |    -    |
-| roomID      | string      | 聊天室ID     | 否      |    -    |
-| pipelineID  | string      | 流水线ID     | 否      |    -    |
-| knowledgeBaseID  | string | 知识库ID     | 否      |    -    |
-| userMessage | string      | 用户的消息    | 否      |    -    |
-| aiMessage   | string      | AI回复的消息 | 否      |    -    |
-| userID      | string      | 用户ID       | 否      |    -    |
-| createTime  | string      | 创建时间     | -       | 2006-01-02 15:04:05 |
+| agent_id     | string      | 智能体ID     | 否      |    -    |
+| room_id      | string      | 聊天室ID     | 否      |    -    |
+| pipeline_id  | string      | 流水线ID     | 否      |    -    |
+| knowledge_base_id  | string | 知识库ID     | 否      |    -    |
+| user_message | string      | 用户的消息    | 否      |    -    |
+| ai_message   | string      | AI回复的消息 | 否      |    -    |
+| user_id      | string      | 用户ID       | 否      |    -    |
+| create_time  | string      | 创建时间     | -       | 2006-01-02 15:04:05 |
 
 
 ## 版权软著说明

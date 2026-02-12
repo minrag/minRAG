@@ -52,7 +52,7 @@ func updateDocumentChunk(ctx context.Context, document *Document) (bool, error) 
 
 // findDocumentIdByFilePath 根据文档路径查询文档ID
 func findDocumentIdByFilePath(ctx context.Context, filePath string) (string, error) {
-	finder := zorm.NewSelectFinder(tableDocumentName, "id").Append("WHERE filePath=?", filePath)
+	finder := zorm.NewSelectFinder(tableDocumentName, "id").Append("WHERE file_path=?", filePath)
 	id := ""
 	_, err := zorm.QueryRow(ctx, finder, &id)
 	return id, err
@@ -82,12 +82,12 @@ func funcDeleteDocumentById(ctx context.Context, id string) error {
 		if err != nil {
 			return count, err
 		}
-		f2 := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE documentID=?", id)
+		f2 := zorm.NewDeleteFinder(tableDocumentChunkName).Append("WHERE document_id=?", id)
 		count, err = zorm.UpdateFinder(ctx, f2)
 		if err != nil {
 			return count, err
 		}
-		f3 := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE documentID=?", id)
+		f3 := zorm.NewDeleteFinder(tableVecDocumentChunkName).Append("WHERE document_id=?", id)
 		return zorm.UpdateFinder(ctx, f3)
 	})
 	return err

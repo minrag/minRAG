@@ -26,7 +26,7 @@ import (
 )
 
 func TestVecLikeQuery(t *testing.T) {
-	finder := zorm.NewSelectFinder(tableVecDocumentChunkName).Append("WHERE knowledgeBaseID like ?  LIMIT 5", "%")
+	finder := zorm.NewSelectFinder(tableVecDocumentChunkName).Append("WHERE knowledge_base_id like ?  LIMIT 5", "%")
 	list, _ := zorm.QueryMap(context.Background(), finder, nil)
 	fmt.Println(len(list))
 	fmt.Println(list)

@@ -213,12 +213,12 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 		}
 
 		i := strings.Index(whereSQL, " where ")
-		// fst5 搜索相关性排序 ORDER BY rank; 后期再进行修改调整,先按照sortNo排序
+		// fst5 搜索相关性排序 ORDER BY rank; 后期再进行修改调整,先按照sortno排序
 		if i < 0 { // 没有where
 			finder.Append(sql, values...)
-			finder.Append(" where id in (select documentID from fts_document_chunk where fts_document_chunk match jieba_query(?) ) ", q)
+			finder.Append(" where id in (select document_id from fts_document_chunk where fts_document_chunk match jieba_query(?) ) ", q)
 		} else {
-			finder.Append(sql[:i+7]+" id in (select documentID from fts_document_chunk where fts_document_chunk match jieba_query(?) ) and ", q)
+			finder.Append(sql[:i+7]+" id in (select document_id from fts_document_chunk where fts_document_chunk match jieba_query(?) ) and ", q)
 			finder.Append(sql[i+7:], values...)
 		}
 		finder.Append(orderBy)
@@ -226,7 +226,7 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 		finder.Append(sql, values...)
 	}
 
-	//finder.Append("order by sortNo desc")
+	//finder.Append("order by sortno desc")
 	page := zorm.NewPage()
 	page.PageNo = pageNo
 	if pageSize > 1000 {
@@ -500,7 +500,7 @@ func funcLocale() string {
 
 // funcMaxSortNo 查询最大的排序号并+1
 func funcMaxSortNo(tableName string) int {
-	finder := zorm.NewSelectFinder(tableName, "max(sortNo)")
+	finder := zorm.NewSelectFinder(tableName, "max(sortno)")
 	maxSortNo := 0
 	zorm.QueryRow(context.Background(), finder, &maxSortNo)
 	return maxSortNo + 1
@@ -519,7 +519,7 @@ func funcComponentType() []string {
 // funcKnowledgeBases 查询可用的知识库
 func funcKnowledgeBases() []KnowledgeBase {
 	data := make([]KnowledgeBase, 0)
-	finder := zorm.NewSelectFinder(tableKnowledgeBaseName).Append("WHERE status=1 order by sortNo desc")
+	finder := zorm.NewSelectFinder(tableKnowledgeBaseName).Append("WHERE status=1 order by sortno desc")
 	zorm.Query(context.Background(), finder, &data, nil)
 	return data
 }
@@ -528,7 +528,7 @@ func funcKnowledgeBases() []KnowledgeBase {
 func funcPipelineIDs() []string {
 	pipelineIDs := make([]string, 0)
 	// indexPipeline 比较特殊,不让Agent绑定上
-	finder := zorm.NewSelectFinder(tableComponentName, "id").Append("WHERE componentType=? and status=1 and id!=? order by sortNo desc", "Pipeline", "indexPipeline")
+	finder := zorm.NewSelectFinder(tableComponentName, "id").Append("WHERE component_type=? and status=1 and id!=? order by sortno desc", "Pipeline", "indexPipeline")
 	finder.SelectTotalCount = false
 	zorm.Query(context.Background(), finder, &pipelineIDs, nil)
 	return pipelineIDs

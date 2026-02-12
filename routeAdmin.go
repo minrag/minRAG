@@ -408,7 +408,7 @@ func funcList(ctx context.Context, c *app.RequestContext) {
 		where = where + " and " + k + "=? "
 		values = append(values, value)
 	}
-	sql := "* from " + urlPathParam + where + " order by sortNo desc "
+	sql := "* from " + urlPathParam + where + " order by sortno desc "
 	var responseData ResponseData
 	var err error
 	if len(values) == 0 {
@@ -442,10 +442,10 @@ func funcDocumentList(ctx context.Context, c *app.RequestContext) {
 	values := make([]interface{}, 0)
 	sql := ""
 	if id != "" {
-		sql = " * from document where knowledgeBaseID like ?  order by sortNo desc "
+		sql = " * from document where knowledge_base_id like ?  order by sortno desc "
 		values = append(values, id+"%")
 	} else {
-		sql = " * from document order by sortNo desc "
+		sql = " * from document order by sortno desc "
 	}
 	var responseData ResponseData
 	var err error
@@ -541,7 +541,7 @@ func funcListThemeTemplate(ctx context.Context, c *app.RequestContext) {
 func funcComponentList(ctx context.Context, c *app.RequestContext) {
 	urlPathParam := "component"
 	listFile := "admin/" + urlPathParam + "/list.html"
-	finder := zorm.NewSelectFinder(tableComponentName).Append("order by sortNo desc")
+	finder := zorm.NewSelectFinder(tableComponentName).Append("order by sortno desc")
 	list := make([]Component, 0)
 	err := zorm.Query(ctx, finder, &list, nil)
 	if err != nil {
@@ -859,7 +859,7 @@ func funcSaveDocument(ctx context.Context, c *app.RequestContext) {
 		entity.UpdateTime = now
 	}
 
-	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", entity.KnowledgeBaseID)
+	f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledge_base_name").Append(" where id =?", entity.KnowledgeBaseID)
 	zorm.QueryRow(ctx, f, entity)
 
 	count, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
@@ -1034,7 +1034,7 @@ func funcWebScraper(ctx context.Context, c *app.RequestContext) {
 			}
 			doc.CreateTime = now
 			doc.UpdateTime = now
-			f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledgeBaseName").Append(" where id =?", doc.KnowledgeBaseID)
+			f := zorm.NewSelectFinder(tableKnowledgeBaseName, "name as knowledge_base_name").Append(" where id =?", doc.KnowledgeBaseID)
 			zorm.QueryRow(ctx, f, &doc)
 			_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 				zorm.Delete(ctx, &doc) //先删除

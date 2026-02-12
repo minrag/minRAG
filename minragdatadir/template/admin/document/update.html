@@ -12,7 +12,7 @@
 <link rel="stylesheet" type="text/css" href="{{basePath}}admin/js/cherry-markdown/cherry-markdown.min.css" />
 <script type="text/javascript" src="{{basePath}}admin/js/cherry-markdown/cherry-markdown.min.js"></script>
 {{template "admin/bodystart.html"}} 
-{{ $knowledgeBases := selectList "knowledgeBase" "" 1 1000 "* FROM knowledgeBase order by sortNo desc" }} 
+{{ $knowledgeBases := selectList "knowledge_base" "" 1 1000 "* FROM knowledge_base order by sortno desc" }} 
 
 <div class="layui-panel" style="padding: 5px;height: 100%;">
 	<form class="layui-form" id="minrag-form" action="{{basePath}}admin/{{.UrlPathParam}}/update" method="POST" onsubmit="return false;" style="height:100%;display: flex;flex-direction: column;">
@@ -172,7 +172,7 @@
 		// 提交事件
 		form.on('submit(minrag-form-ajax-update)', function (data) {
 			var field = data.field; // 获取表单字段值
-			//field.sortNo = field.sortNo - 0;
+			//field.sortno = field.sortno - 0;
 			field.status = field.status - 0;
 			field.knowledgeBaseName = $("#knowledgeBaseID").find("option:selected").text();
 			field.markdown = cherry.getMarkdown();

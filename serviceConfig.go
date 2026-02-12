@@ -118,7 +118,7 @@ func updateConfigAI(ctx context.Context, aiBaseURL string, aiAPIKey string, llmM
 		return nil
 	}
 	_, err := zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		finder := zorm.NewUpdateFinder(tableConfigName).Append("aiBaseURL=?,aiAPIKey=?,llmModel=? WHERE id=?", aiBaseURL, aiAPIKey, llmModel, "minrag_config")
+		finder := zorm.NewUpdateFinder(tableConfigName).Append("ai_base_url=?,ai_api_key=?,llm_model=? WHERE id=?", aiBaseURL, aiAPIKey, llmModel, "minrag_config")
 		return zorm.UpdateFinder(ctx, finder)
 	})
 	if err != nil {
@@ -133,17 +133,12 @@ func findConfig() (Config, error) {
 
 	finder := zorm.NewSelectFinder(tableConfigName)
 
-	m, err := zorm.QueryRowMap(context.Background(), finder)
-
 	config := defaultConfig
-	if err != nil {
+	has, err := zorm.QueryRow(context.Background(), finder, &config)
+
+	if err != nil || !has {
 		return config, err
 	}
-	b, err := json.Marshal(m)
-	if err != nil {
-		return config, err
-	}
-	json.Unmarshal(b, &config)
 
 	if config.BasePath == "" {
 		config.BasePath = "/"

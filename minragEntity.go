@@ -30,22 +30,22 @@ type Config struct {
 	Id string `column:"id" json:"id,omitempty"`
 
 	// BasePath 根路径,默认/
-	BasePath string `column:"basePath" json:"basePath,omitempty"`
+	BasePath string `column:"base_path" json:"basePath,omitempty"`
 
 	// JwtSecret jwt加密密钥
-	JwtSecret string `column:"jwtSecret" json:"jwtSecret,omitempty"`
+	JwtSecret string `column:"jwt_secret" json:"jwtSecret,omitempty"`
 
 	// JwttokenKey jwt加密密钥
-	JwttokenKey string `column:"jwttokenKey" json:"jwttokenKey,omitempty"`
+	JwttokenKey string `column:"jwt_token_key" json:"jwttokenKey,omitempty"`
 
 	// ServerPort 服务器端口
-	ServerPort string `column:"serverPort" json:"serverPort,omitempty"`
+	ServerPort string `column:"server_port" json:"serverPort,omitempty"`
 
 	// Timeout 超时时间,单位秒
 	Timeout int `column:"timeout" json:"timeout,omitempty"`
 
 	// MaxRequestBodySize 最大请求
-	MaxRequestBodySize int `column:"maxRequestBodySize" json:"maxRequestBodySize,omitempty"`
+	MaxRequestBodySize int `column:"max_request_body_size" json:"maxRequestBodySize,omitempty"`
 
 	// Locale 语言包
 	Locale string `column:"locale" json:"locale,omitempty"`
@@ -54,25 +54,25 @@ type Config struct {
 	Proxy string `column:"proxy" json:"proxy,omitempty"`
 
 	// AIBaseURL AI平台base_url
-	AIBaseURL string `column:"aiBaseURL" json:"aiBaseURL,omitempty"`
+	AIBaseURL string `column:"ai_base_url" json:"aiBaseURL,omitempty"`
 
 	// AIAPIkey AI平台api_key
-	AIAPIkey string `column:"aiAPIKey" json:"aiAPIKey,omitempty"`
+	AIAPIkey string `column:"ai_api_key" json:"aiAPIKey,omitempty"`
 
 	// LLMModel 默认的LLM模型
-	LLMModel string `column:"llmModel" json:"llmModel,omitempty"`
+	LLMModel string `column:"llm_model" json:"llmModel,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
@@ -107,19 +107,19 @@ type KnowledgeBase struct {
 	Pid string `column:"pid" json:"pid,omitempty"`
 
 	// KnowledgeBaseType 知识库类型
-	KnowledgeBaseType int `column:"knowledgeBaseType" json:"knowledgeBaseType,omitempty"`
+	KnowledgeBaseType int `column:"knowledge_base_type" json:"knowledgeBaseType,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
@@ -154,10 +154,10 @@ type Document struct {
 	Name string `column:"name" json:"name,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
 	// KnowledgeBaseName 知识库
-	KnowledgeBaseName string `column:"knowledgeBaseName" json:"knowledgeBaseName,omitempty"`
+	KnowledgeBaseName string `column:"knowledge_base_name" json:"knowledgeBaseName,omitempty"`
 
 	// Toc 目录
 	Toc string `column:"toc" json:"toc,omitempty"`
@@ -169,25 +169,25 @@ type Document struct {
 	Markdown string `column:"markdown" json:"markdown,omitempty"`
 
 	// FilePath 上传的文件路径
-	FilePath string `column:"filePath" json:"filePath,omitempty"`
+	FilePath string `column:"file_path" json:"filePath,omitempty"`
 
 	// FileSize 上传的文件大小,单位k
-	FileSize int `column:"fileSize" json:"fileSize,omitempty"`
+	FileSize int `column:"file_size" json:"fileSize,omitempty"`
 
 	// FileExt 文档后缀
-	FileExt string `column:"fileExt" json:"fileExt,omitempty"`
+	FileExt string `column:"file_ext" json:"fileExt,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
@@ -225,31 +225,31 @@ type DocumentChunk struct {
 	Id string `column:"id" json:"id,omitempty"`
 
 	// DocumentID 文档ID
-	DocumentID string `column:"documentID" json:"documentID,omitempty"`
+	DocumentID string `column:"document_id" json:"documentID,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
-	Title    string `column:"title" json:"title,omitempty"`       // 标题
-	ParentID string `column:"parentID" json:"parentID,omitempty"` // 上级ID
-	PreID    string `column:"preID" json:"preID,omitempty"`       // 上一个节点ID
-	NextID   string `column:"nextID" json:"nextID,omitempty"`     // 下一个节点ID
-	Level    int    `column:"level" json:"level,omitempty"`       // 标题级别
+	Title    string `column:"title" json:"title,omitempty"`        // 标题
+	ParentID string `column:"parent_id" json:"parentID,omitempty"` // 上级ID
+	PreID    string `column:"pre_id" json:"preID,omitempty"`       // 上一个节点ID
+	NextID   string `column:"next_id" json:"nextID,omitempty"`     // 下一个节点ID
+	Level    int    `column:"level" json:"level,omitempty"`        // 标题级别
 
 	// Markdown Markdown内容
 	Markdown string `column:"markdown" json:"markdown,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
@@ -289,10 +289,10 @@ type VecDocumentChunk struct {
 	Id string `column:"id" json:"id,omitempty"`
 
 	// DocumentID 文档ID
-	DocumentID string `column:"documentID" json:"documentID,omitempty"`
+	DocumentID string `column:"document_id" json:"documentID,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
 	// Markdown Markdown内容
 	Markdown string `json:"markdown,omitempty"`
@@ -301,7 +301,7 @@ type VecDocumentChunk struct {
 	Embedding []byte `column:"embedding" json:"embedding,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1),处理中(2),处理失败(3)
 	Status int `column:"status" json:"status,omitempty"`
@@ -336,22 +336,22 @@ type Component struct {
 	Id string `column:"id" json:"id,omitempty"`
 
 	// ComponentType 组件类型,和componentTypeMap关联
-	ComponentType string `column:"componentType" json:"componentType,omitempty"`
+	ComponentType string `column:"component_type" json:"componentType,omitempty"`
 
 	// Parameter 参数,json格式字符串.如果有值,必须是完整的参数,为空可用只保留id,从map中获取
 	Parameter string `column:"parameter" json:"parameter,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
@@ -384,19 +384,19 @@ type Agent struct {
 	Name string `column:"name" json:"name,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
 	// PipelineID 流水线ID
-	PipelineID string `column:"pipelineID" json:"pipelineID,omitempty"`
+	PipelineID string `column:"pipeline_id" json:"pipelineID,omitempty"`
 
 	// DefaultReply 默认回复
-	DefaultReply string `column:"defaultReply" json:"defaultReply,omitempty"`
+	DefaultReply string `column:"default_reply" json:"defaultReply,omitempty"`
 
 	// AgentType 智能体类型
-	AgentType int `column:"agentType" json:"agentType,omitempty"`
+	AgentType int `column:"agent_type" json:"agentType,omitempty"`
 
 	// AgentPrompt 智能体的提示词
-	AgentPrompt string `column:"agentPrompt" json:"agentPrompt,omitempty"`
+	AgentPrompt string `column:"agent_prompt" json:"agentPrompt,omitempty"`
 
 	// Avatar 头像
 	Avatar string `column:"avatar" json:"avatar,omitempty"`
@@ -408,19 +408,19 @@ type Agent struct {
 	Tools string `column:"tools" json:"tools,omitempty"`
 
 	// MemoryLength 上下文记忆的长度
-	MemoryLength int `column:"memoryLength" json:"memoryLength,omitempty"`
+	MemoryLength int `column:"memory_length" json:"memoryLength,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
@@ -453,19 +453,19 @@ type ChatRoom struct {
 	Name string `column:"name" json:"name,omitempty"`
 
 	// AgentID 智能体ID
-	AgentID string `column:"agentID" json:"agentID,omitempty"`
+	AgentID string `column:"agent_id" json:"agentID,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
 	// PipelineID 流水线ID
-	PipelineID string `column:"pipelineID" json:"pipelineID,omitempty"`
+	PipelineID string `column:"pipeline_id" json:"pipelineID,omitempty"`
 
 	// UserID 用户ID
-	UserID string `column:"userID" json:"userID,omitempty"`
+	UserID string `column:"user_id" json:"userID,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 }
 
 // GetTableName 获取表名称
@@ -492,28 +492,28 @@ type MessageLog struct {
 	Id string `column:"id" json:"id,omitempty"`
 
 	// AgentID 智能体ID
-	AgentID string `column:"agentID" json:"agentID,omitempty"`
+	AgentID string `column:"agent_id" json:"agentID,omitempty"`
 
 	// RoomID 聊天室ID
-	RoomID string `column:"roomID" json:"roomID,omitempty"`
+	RoomID string `column:"room_id" json:"roomID,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
-	KnowledgeBaseID string `column:"knowledgeBaseID" json:"knowledgeBaseID,omitempty"`
+	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`
 
 	// PipelineID 流水线ID
-	PipelineID string `column:"pipelineID" json:"pipelineID,omitempty"`
+	PipelineID string `column:"pipeline_id" json:"pipelineID,omitempty"`
 
 	// UserMessage 用户发送的消息
-	UserMessage string `column:"userMessage" json:"userMessage,omitempty"`
+	UserMessage string `column:"user_message" json:"userMessage,omitempty"`
 
 	// AIMessage AI发送的信息
-	AIMessage string `column:"aiMessage" json:"aiMessage,omitempty"`
+	AIMessage string `column:"ai_message" json:"aiMessage,omitempty"`
 
 	// UserID 用户ID
-	UserID string `column:"userID" json:"userID,omitempty"`
+	UserID string `column:"user_id" json:"userID,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 }
 
 // GetTableName 获取表名称
@@ -557,13 +557,13 @@ type Site struct {
 	Theme string `column:"theme" json:"theme,omitempty"`
 
 	// ThemePC PC主题
-	ThemePC string `column:"themePC" json:"themePC,omitempty"`
+	ThemePC string `column:"theme_pc" json:"themePC,omitempty"`
 
 	// ThemeWAP WAP主题WAP
-	ThemeWAP string `column:"themeWAP" json:"themeWAP,omitempty"`
+	ThemeWAP string `column:"theme_wap" json:"themeWAP,omitempty"`
 
 	// ThemeWX 微信主题
-	ThemeWX string `column:"themeWX" json:"themeWX,omitempty"`
+	ThemeWX string `column:"theme_wx" json:"themeWX,omitempty"`
 
 	// Logo 站点logo
 	Logo string `column:"logo" json:"logo,omitempty"`
@@ -575,16 +575,16 @@ type Site struct {
 	Footer string `column:"footer" json:"footer,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`
@@ -619,19 +619,19 @@ type User struct {
 	Password string `column:"password" json:"password,omitempty"`
 
 	// UserName 用户名
-	UserName string `column:"userName" json:"userName,omitempty"`
+	UserName string `column:"user_name" json:"userName,omitempty"`
 
 	// CreateTime 创建时间
-	CreateTime string `column:"createTime" json:"createTime,omitempty"`
+	CreateTime string `column:"create_time" json:"createTime,omitempty"`
 
 	// UpdateTime 更新时间
-	UpdateTime string `column:"updateTime" json:"updateTime,omitempty"`
+	UpdateTime string `column:"update_time" json:"updateTime,omitempty"`
 
 	// CreateUser 创建人,初始化 system
-	CreateUser string `column:"createUser" json:"createUser,omitempty"`
+	CreateUser string `column:"create_user" json:"createUser,omitempty"`
 
 	// SortNo 排序
-	SortNo int `column:"sortNo" json:"sortNo,omitempty"`
+	SortNo int `column:"sortno" json:"sortno,omitempty"`
 
 	// Status 状态 禁用(0),可用(1)
 	Status int `column:"status" json:"status,omitempty"`

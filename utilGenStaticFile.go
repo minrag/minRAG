@@ -47,14 +47,14 @@ func genStaticFile() error {
 	ctx := context.Background()
 	documents := make([]Document, 0)
 
-	f_post := zorm.NewSelectFinder(tableDocumentName, "id").Append(" WHERE status=1 order by status desc, sortNo desc")
+	f_post := zorm.NewSelectFinder(tableDocumentName, "id").Append(" WHERE status=1 order by status desc, sortno desc")
 	err := zorm.Query(ctx, f_post, &documents, nil)
 	if err != nil {
 		return err
 	}
 	//生成知识库的静态网页
 	knowledgeBaseIDs := make([]string, 0)
-	f_knowledgeBase := zorm.NewSelectFinder(tableKnowledgeBaseName, "id").Append(" WHERE status=1 order by status desc,sortNo desc")
+	f_knowledgeBase := zorm.NewSelectFinder(tableKnowledgeBaseName, "id").Append(" WHERE status=1 order by status desc,sortno desc")
 	err = zorm.Query(ctx, f_knowledgeBase, &knowledgeBaseIDs, nil)
 	if err != nil {
 		return err

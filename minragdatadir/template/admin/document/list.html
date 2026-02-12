@@ -1,4 +1,4 @@
-{{ $knowledgeBase := selectList "knowledgeBase" "" 1 1000 "* FROM knowledgeBase order by sortNo desc" }}
+{{ $knowledgeBase := selectList "knowledge_base" "" 1 1000 "* FROM knowledge_base order by sortno desc" }}
 {{ $convertJson := convertType  $knowledgeBase.Data "object" "json" }}
 {{template "admin/header.html"}}
 <title>{{T "Knowledge Base"}} - MINRAG</title>

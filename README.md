@@ -208,21 +208,21 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | columnName  | Type| Description | Remarks       | 
 |-|---|-|-----|
 | id  | string      | Primary Key | minrag_config |
-| basePath    | string      | Base Path   | Default /     |
-| jwtSecret   | string      | JWT Secret Key      | Randomly generated |
-| jwttokenKey | string      | JWT Key     | Default jwttoken |
-| serverPort  | string      | IP:Port     | Default :738  |
+| base_path    | string      | Base Path   | Default /     |
+| jwt_secret   | string      | JWT Secret Key      | Randomly generated |
+| jwt_token_key | string      | JWT Key     | Default jwttoken |
+| server_port  | string      | IP:Port     | Default :738  |
 | timeout     | int | JWT Timeout in seconds | Default 7200 |
-| maxRequestBodySize  | int | Maximum Request Body Size | Default 20M |
+| max_request_body_size  | int | Maximum Request Body Size | Default 20M |
 | locale      | string      | Language Pack       | Default zh-CN,en-US |
 | proxy       | string      | HTTP Proxy Address  |       |
-| aiBaseURL   | string      | AI base_url |             |
-| aiAPIKey    | string      | AI api_key |             |
-| llmModel    | string      | default LLM Model |             |
-| createTime  | string      | Creation Time       | 2006-01-02 15:04:05 |
-| updateTime  | string      | Update Time | 2006-01-02 15:04:05 |
-| createUser  | string      | Creator     | Initialized as system |
-| sortNo      | int | Sort Order  | Descending    |
+| ai_base_url   | string      | AI base_url |             |
+| ai_api_key    | string      | AI api_key |             |
+| llm_model    | string      | default LLM Model |             |
+| create_time  | string      | Creation Time       | 2006-01-02 15:04:05 |
+| update_time  | string      | Update Time | 2006-01-02 15:04:05 |
+| create_user  | string      | Creator     | Initialized as system |
+| sortno      | int | Sort Order  | Descending    |
 | status      | int | Status      | Disabled(0), Enabled(1) |
 
 ### User (Table Name: user)
@@ -231,11 +231,11 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | id  | string      | Primary Key | minrag_admin  |
 | account     | string      | Login Name  | Default admin |
 | passWord    | string      | Password    | -     |
-| userName    | string      | Description | -     |
-| createTime  | string      | Creation Time       | 2006-01-02 15:04:05 |
-| updateTime  | string      | Update Time | 2006-01-02 15:04:05 |
-| createUser  | string      | Creator     | Initialized as system |
-| sortNo      | int | Sort Order  | Descending    |
+| user_name    | string      | Description | -     |
+| create_time  | string      | Creation Time       | 2006-01-02 15:04:05 |
+| update_time  | string      | Update Time | 2006-01-02 15:04:05 |
+| create_user  | string      | Creator     | Initialized as system |
+| sortno      | int | Sort Order  | Descending    |
 | status      | int | Status      | Disabled(0), Enabled(1) |
 
 ### Site Information (Table Name: site)
@@ -246,28 +246,28 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | keyword       | string      | Keywords    | -     |
 | description   | string      | Site Description    | -     |
 | theme | string      | Default Theme       | Default is default |
-| themePC       | string      | PC Theme    | Fetched from cookie first, if not, from Header, then written to cookie, default is default |
-| themeWAP      | string      | Mobile Theme| Fetched from cookie first, if not, from Header, then written to cookie, default is default |
-| themeWX       | string      | WeChat Theme| Fetched from cookie first, if not, from Header, then written to cookie, default is default |
+| theme_pc       | string      | PC Theme    | Fetched from cookie first, if not, from Header, then written to cookie, default is default |
+| theme_wap      | string      | Mobile Theme| Fetched from cookie first, if not, from Header, then written to cookie, default is default |
+| theme_wx       | string      | WeChat Theme| Fetched from cookie first, if not, from Header, then written to cookie, default is default |
 | logo  | string      | Logo| -     |
 | favicon       | string      | Favicon     | -     |
-| createTime    | string      | Creation Time       | 2006-01-02 15:04:05 |
-| updateTime    | string      | Update Time | 2006-01-02 15:04:05 |
-| createUser    | string      | Creator     | Initialized as system |
-| sortNo| int | Sort Order  | Descending    |
+| create_time    | string      | Creation Time       | 2006-01-02 15:04:05 |
+| update_time    | string      | Update Time | 2006-01-02 15:04:05 |
+| create_user    | string      | Creator     | Initialized as system |
+| sortno| int | Sort Order  | Descending    |
 | status| int | Status      | Disabled(0), Enabled(1) |
 
-### Knowledge Base (Table Name: knowledgeBase)
+### Knowledge Base (Table Name: knowledge_base)
 | columnName  | Type| Description | Remarks       | 
 |-|---|-|-----|
 | id  | string      | Primary Key | URL path, separated by /, e.g., /web/ |
 | name| string      | Knowledge Base Name | -     |
 | pid | string      | Parent Knowledge Base ID | Parent Knowledge Base ID |
-| knowledgeBaseType   | int | Knowledge Base Type | -     |
-| createTime  | string      | Creation Time       | 2006-01-02 15:04:05 |
-| updateTime  | string      | Update Time | 2006-01-02 15:04:05 |
-| createUser  | string      | Creator     | Initialized as system |
-| sortNo      | int | Sort Order  | Descending    |
+| knowledge_base_type   | int | Knowledge Base Type | -     |
+| create_time  | string      | Creation Time       | 2006-01-02 15:04:05 |
+| update_time  | string      | Update Time | 2006-01-02 15:04:05 |
+| create_user  | string      | Creator     | Initialized as system |
+| sortno      | int | Sort Order  | Descending    |
 | status      | int | Status      | Disabled(0), Enabled(1) |
 
 ### Document (Table Name: document)
@@ -275,49 +275,49 @@ Reads ```minragdatadir/install_config.json``` during installation.
 |-|---|-|-|------|
 | id  | string      | Primary Key | No| URL path, separated by /, e.g., /web/nginx-use-hsts |
 | name| string      | Document Name       | No| -|
-| knowledgeBaseID     | string      | Knowledge Base ID   | No| -|
-| knowledgeBaseName   | string      | Knowledge Base Name | No| -|
+| knowledge_base_id     | string      | Knowledge Base ID   | No| -|
+| knowledge_base_name   | string      | Knowledge Base Name | No| -|
 | toc | string      | Table of Contents   | No| -|
 | summary     | string      | Summary     | No| -|
 | markdown    | string      | Markdown Content    | No| -|
-| filePath    | string      | File Path   | No| -|
-| fileSize    | int | File Size   | No| -|
-| fileExt     | string      | File Extension      | No| -|
-| createTime  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
-| updateTime  | string      | Update Time | - | 2006-01-02 15:04:05      |
-| createUser  | string      | Creator     | - | Initialized as system    |
-| sortNo      | int | Sort Order  | - | Descending       |
+| file_path    | string      | File Path   | No| -|
+| file_size    | int | File Size   | No| -|
+| file_ext     | string      | File Extension      | No| -|
+| create_time  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
+| update_time  | string      | Update Time | - | 2006-01-02 15:04:05      |
+| create_user  | string      | Creator     | - | Initialized as system    |
+| sortno      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1), Processing(2), Failed(3) |
 
 ### Document Chunk (Table Name: document_chunk)
 | columnName  | Type| Description | Tokenized | Remarks  | 
 |-|---|-|-|------|
 | id  | string      | Primary Key | No| -|
-| documentID  | string      | Document ID | No| -|
-| knowledgeBaseID     | string      | Knowledge Base ID   | No| -|
-| knowledgeBaseName   | string      | Knowledge Base Name | No| -|
+| document_id  | string      | Document ID | No| -|
+| knowledge_base_id     | string      | Knowledge Base ID   | No| -|
+| knowledge_base_name   | string      | Knowledge Base Name | No| -|
 | title       | string      | title         | -      |    -    |
-| parentID    | string      | parentID      | -      |    -    |
-| preID       | string      | pre node ID   | -      |    -    |
-| nextID      | string      | nextID        | -      |    -    |
+| parent_id    | string      | parent_id      | -      |    -    |
+| pre_id       | string      | pre node ID   | -      |    -    |
+| next_id      | string      | next_id        | -      |    -    |
 | level       | int         | title level   | -      |    -    |
 | markdown    | string      | Markdown Content    | Yes       | Using jieba tokenizer    |
-| createTime  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
-| updateTime  | string      | Update Time | - | 2006-01-02 15:04:05      |
-| createUser  | string      | Creator     | - | Initialized as system    |
-| sortNo      | int | Sort Order  | - | Descending       |
+| create_time  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
+| update_time  | string      | Update Time | - | 2006-01-02 15:04:05      |
+| create_user  | string      | Creator     | - | Initialized as system    |
+| sortno      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1), Processing(2), Failed(3) |
 
 ### Component (Table Name: component)
 | columnName  | Type| Description | Tokenized | Remarks  | 
 |-|---|-|-|------|
 | id  | string      | Primary Key | No| -|
-| componentType       | string      | Component Type      | No| -|
+| component_type       | string      | Component Type      | No| -|
 | parameter   | string      | Component Parameters| No| -|
-| createTime  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
-| updateTime  | string      | Update Time | - | 2006-01-02 15:04:05      |
-| createUser  | string      | Creator     | - | Initialized as system    |
-| sortNo      | int | Sort Order  | - | Descending       |
+| create_time  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
+| update_time  | string      | Update Time | - | 2006-01-02 15:04:05      |
+| create_user  | string      | Creator     | - | Initialized as system    |
+| sortno      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1)  |
 
 ### Agent (Table Name: agent)
@@ -325,19 +325,19 @@ Reads ```minragdatadir/install_config.json``` during installation.
 |-|---|-|-|------|
 | id  | string      | Primary Key | No| -|
 | name| string      | Agent Name  | No| -|
-| knowledgeBaseID     | string      | Knowledge Base ID   | No| -|
-| pipelineID  | string      | Pipeline ID | No| -|
-| defaultReply| string      | Default Reply       | No| -|
-| agentType   | int | Agent Type  | No| -|
-| agentPrompt | string      | Agent Prompt| No| -|
+| knowledge_base_id     | string      | Knowledge Base ID   | No| -|
+| pipeline_id  | string      | Pipeline ID | No| -|
+| default_reply| string      | Default Reply       | No| -|
+| agent_type   | int | Agent Type  | No| -|
+| agent_prompt | string      | Agent Prompt| No| -|
 | avatar      | string      | Agent Avatar| No| -|
 | welcome     | string      | Welcome Message     | No| -|
 | tools       | string      | Functions to Call   | No| -|
-| memoryLength| int | Context Memory Length| No| -|
-| createTime  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
-| updateTime  | string      | Update Time | - | 2006-01-02 15:04:05      |
-| createUser  | string      | Creator     | - | Initialized as system    |
-| sortNo      | int | Sort Order  | - | Descending       |
+| memory_length| int | Context Memory Length| No| -|
+| create_time  | string      | Creation Time       | - | 2006-01-02 15:04:05      |
+| update_time  | string      | Update Time | - | 2006-01-02 15:04:05      |
+| create_user  | string      | Creator     | - | Initialized as system    |
+| sortno      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1)  |
 
 ### Chat Room (Table Name: chat_room)
@@ -345,24 +345,24 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | ---              | ---         | ---            | -------   | ------    |
 | id               | string      | Primary Key         | No   |    -  |
 | name             | string      | Chat Room Name        | No   |    -  |
-| agentID          | string      | Agent ID            | No   |    -  |
-| pipelineID       | string      | Pipeline ID         | No   |    -  |
-| knowledgeBaseID  | string      | Knowledge Base ID   | No   |    -  |
-| userID           | string      | User ID             | No   |    -  |
-| createTime       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
+| agent_id          | string      | Agent ID            | No   |    -  |
+| pipeline_id       | string      | Pipeline ID         | No   |    -  |
+| knowledge_base_id  | string      | Knowledge Base ID   | No   |    -  |
+| user_id           | string      | User ID             | No   |    -  |
+| create_time       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
 
 ### Message Log (Table Name: message_log)
 | Column Name      | Type        | Description    | Tokenized |  Remarks  | 
 | ---              | ---         | ---            | -------   | ------    |
 | id               | string      | Primary Key         | No   |    -  |
-| agentID          | string      | Agent ID            | No   |    -  |
-| roomID           | string      | Chat Room ID        | No   |    -  |
-| pipelineID       | string      | Pipeline ID         | No   |    -  |
-| knowledgeBaseID  | string      | Knowledge Base ID   | No   |    -  |
-| userMessage      | string      | User's Message      | No   |    -  |
-| aiMessage        | string      | AI's Response       | No   |    -  |
-| userID           | string      | User ID             | No   |    -  |
-| createTime       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
+| agent_id          | string      | Agent ID            | No   |    -  |
+| room_id           | string      | Chat Room ID        | No   |    -  |
+| pipeline_id       | string      | Pipeline ID         | No   |    -  |
+| knowledge_base_id  | string      | Knowledge Base ID   | No   |    -  |
+| user_message      | string      | User's Message      | No   |    -  |
+| ai_message        | string      | AI's Response       | No   |    -  |
+| user_id           | string      | User ID             | No   |    -  |
+| create_time       | string      | Creation Time       |No    | 2006-01-02 15:04:05|
 
 ## Copyright and Software Copyright Description
 * The software copyright registration number of this minRAG is 2025SR0616004
