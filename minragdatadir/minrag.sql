@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS config (
 		status           INT  
 	 ) strict ;
 
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS userinfo (
 		id TEXT PRIMARY KEY   NOT NULL,
 		account          TEXT NOT NULL,
 		password         TEXT NOT NULL,

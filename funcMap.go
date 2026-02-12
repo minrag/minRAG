@@ -239,8 +239,8 @@ func funcSelectList(urlPathParam string, q string, pageNo int, pageSize int, sql
 		data := make([]Config, 0)
 		zorm.Query(ctx, finder, &data, page)
 		responseData.Data = data
-	case tableUserName:
-		data := make([]User, 0)
+	case tableUserinfoName:
+		data := make([]Userinfo, 0)
 		zorm.Query(ctx, finder, &data, page)
 		responseData.Data = data
 	case tableSiteName:
@@ -296,13 +296,13 @@ func funcSelectOne(urlPathParam string, sql string, values ...interface{}) (inte
 		} else {
 			selectOneData = Config{}
 		}
-	case tableUserName:
-		data := make([]User, 0)
+	case tableUserinfoName:
+		data := make([]Userinfo, 0)
 		zorm.Query(ctx, finder, &data, page)
 		if len(data) > 0 {
 			selectOneData = data[0]
 		} else {
-			selectOneData = User{}
+			selectOneData = Userinfo{}
 		}
 	case tableSiteName:
 		data := make([]Site, 0)

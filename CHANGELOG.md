@@ -1,4 +1,5 @@
 v0.1.7
+- user 修改为 userinfo
 - room 修改为 conversation
 - 数据库字段名有驼峰修改为下划线小写
 - 升级go 1.26

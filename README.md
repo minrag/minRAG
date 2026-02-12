@@ -225,7 +225,7 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | sortno      | int | Sort Order  | Descending    |
 | status      | int | Status      | Disabled(0), Enabled(1) |
 
-### User (Table Name: user)
+### Userinfo (Table Name: userinfo)
 | columnName  | Type| Description | Remarks       | 
 |---|---|-|-----|
 | id  | string      | Primary Key | minrag_admin  |
