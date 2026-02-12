@@ -440,8 +440,8 @@ func (entity *Agent) GetPKColumnName() string {
 	return "id"
 }
 
-// ChatRoom 聊天室
-type ChatRoom struct {
+// Conversation 聊天室
+type Conversation struct {
 
 	// 引入默认的struct,隔离IEntityStruct的方法改动
 	zorm.EntityStruct
@@ -470,7 +470,7 @@ type ChatRoom struct {
 
 // GetTableName 获取表名称
 // IEntityStruct 接口的方法,实体类需要实现!!!
-func (entity *ChatRoom) GetTableName() string {
+func (entity *Conversation) GetTableName() string {
 	return tableConversationName
 }
 
@@ -478,7 +478,7 @@ func (entity *ChatRoom) GetTableName() string {
 // 不支持联合主键,变通认为无主键,业务控制实现(艰难取舍)
 // 如果没有主键,也需要实现这个方法, return "" 即可
 // IEntityStruct 接口的方法,实体类需要实现!!!
-func (entity *ChatRoom) GetPKColumnName() string {
+func (entity *Conversation) GetPKColumnName() string {
 	return "id"
 }
 

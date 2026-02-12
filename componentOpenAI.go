@@ -2054,25 +2054,25 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	messageLog.AIMessage = choice.Message.Content
 
 	finder := zorm.NewSelectFinder(tableConversationName).Append("WHERE id=?", conversationID)
-	chatRoom := &ChatRoom{}
-	zorm.QueryRow(ctx, finder, chatRoom)
-	chatRoom.CreateTime = now
-	chatRoom.KnowledgeBaseID = agent.KnowledgeBaseID
-	chatRoom.AgentID = agentID
-	chatRoom.PipelineID = agent.PipelineID
-	chatRoom.UserID = userId
-	if chatRoom.Name == "" {
+	conversation := &Conversation{}
+	zorm.QueryRow(ctx, finder, conversation)
+	conversation.CreateTime = now
+	conversation.KnowledgeBaseID = agent.KnowledgeBaseID
+	conversation.AgentID = agentID
+	conversation.PipelineID = agent.PipelineID
+	conversation.UserID = userId
+	if conversation.Name == "" {
 		qLen := len(query)
 		if qLen > 20 {
 			qLen = 20
 		}
-		chatRoom.Name = query[:qLen]
+		conversation.Name = query[:qLen]
 	}
 
 	_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
-		if chatRoom.Id == "" {
-			chatRoom.Id = messageLog.ConversationID
-			count, err := zorm.Insert(ctx, chatRoom)
+		if conversation.Id == "" {
+			conversation.Id = messageLog.ConversationID
+			count, err := zorm.Insert(ctx, conversation)
 			if err != nil {
 				return count, err
 			}
