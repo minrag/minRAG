@@ -1621,11 +1621,11 @@ func (component *OpenAIChatMemory) Run(ctx context.Context, input map[string]any
 		}
 	}
 
-	roomID, _ := input["roomID"].(string)
+	conversationID, _ := input["conversationID"].(string)
 
 	messageLogs := make([]MessageLog, 0)
-	if roomID != "" && component.MemoryLength > 0 {
-		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE room_id=? order by create_time desc", roomID)
+	if conversationID != "" && component.MemoryLength > 0 {
+		finder := zorm.NewSelectFinder(tableMessageLogName).Append("WHERE conversation_id=? order by create_time desc", conversationID)
 		finder.SelectTotalCount = false
 		page := zorm.NewPage()
 		page.PageSize = component.MemoryLength
@@ -2012,10 +2012,10 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	}
 	c := input["c"].(*app.RequestContext)
 
-	if input["roomID"] == nil {
-		return errors.New(`input["roomID"] is nil`)
+	if input["conversationID"] == nil {
+		return errors.New(`input["conversationID"] is nil`)
 	}
-	roomID := input["roomID"].(string)
+	conversationID := input["conversationID"].(string)
 
 	if input["agentID"] == nil {
 		return errors.New(`input["agentID"] is nil`)
@@ -2045,7 +2045,7 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	messageLog := &MessageLog{}
 	messageLog.Id = FuncGenerateStringID()
 	messageLog.CreateTime = now
-	messageLog.RoomID = roomID
+	messageLog.ConversationID = conversationID
 	messageLog.KnowledgeBaseID = agent.KnowledgeBaseID
 	messageLog.AgentID = agentID
 	messageLog.PipelineID = agent.PipelineID
@@ -2053,7 +2053,7 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 	messageLog.UserMessage = query
 	messageLog.AIMessage = choice.Message.Content
 
-	finder := zorm.NewSelectFinder(tableChatRoomName).Append("WHERE id=?", roomID)
+	finder := zorm.NewSelectFinder(tableConversationName).Append("WHERE id=?", conversationID)
 	chatRoom := &ChatRoom{}
 	zorm.QueryRow(ctx, finder, chatRoom)
 	chatRoom.CreateTime = now
@@ -2071,7 +2071,7 @@ func (component *ChatMessageLogStore) Run(ctx context.Context, input map[string]
 
 	_, err = zorm.Transaction(ctx, func(ctx context.Context) (interface{}, error) {
 		if chatRoom.Id == "" {
-			chatRoom.Id = messageLog.RoomID
+			chatRoom.Id = messageLog.ConversationID
 			count, err := zorm.Insert(ctx, chatRoom)
 			if err != nil {
 				return count, err

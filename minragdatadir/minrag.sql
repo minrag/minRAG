@@ -120,29 +120,29 @@ INSERT INTO component (status,sortno,create_user,update_time,create_time,paramet
 CREATE TABLE IF NOT EXISTS agent (
 		id TEXT PRIMARY KEY NOT NULL,
 		name              TEXT NOT NULL,
-		knowledge_base_id   TEXT NOT NULL,
-		pipeline_id        TEXT NOT NULL,
-		default_reply      TEXT NOT NULL,
-		agent_type         INT  NOT NULL,
-		agent_prompt       TEXT NOT NULL,
+		knowledge_base_id TEXT NOT NULL,
+		pipeline_id       TEXT NOT NULL,
+		default_reply     TEXT NOT NULL,
+		agent_type        INT  NOT NULL,
+		agent_prompt      TEXT NOT NULL,
 		avatar            TEXT,
 		welcome           TEXT,
 		tools             TEXT,
-		memory_length      INT,
-		create_time        TEXT,
-		update_time        TEXT,
-		create_user        TEXT,
+		memory_length     INT,
+		create_time       TEXT,
+		update_time       TEXT,
+		create_user       TEXT,
 		sortno            INT NOT NULL,
 		status            INT NOT NULL
 	 ) strict ;
 INSERT INTO agent (status,sortno,create_user,update_time,create_time,memory_length,tools,welcome,avatar,agent_prompt,agent_type,default_reply,pipeline_id,knowledge_base_id,name,id) VALUES (1,1,'','2025-10-24 10:24:00','2025-10-24 10:24:00',0,'','您好,有什么可以帮助您吗?','','我是一个AI私人助手',0,'非常抱歉,可用聊其他话题吗?','default','/default/','默认智能体','default');
 
-CREATE TABLE IF NOT EXISTS chat_room (
+CREATE TABLE IF NOT EXISTS conversation (
 		id TEXT PRIMARY KEY NOT NULL,
-		name              TEXT NOT NULL,
+		name               TEXT NOT NULL,
 		agent_id           TEXT NOT NULL,
 		pipeline_id        TEXT NOT NULL,
-		knowledge_base_id   TEXT NOT NULL,
+		knowledge_base_id  TEXT NOT NULL,
 		user_id            TEXT,
 		create_time        TEXT NOT NULL
 	 ) strict ;
@@ -150,9 +150,9 @@ CREATE TABLE IF NOT EXISTS chat_room (
 CREATE TABLE IF NOT EXISTS message_log (
 		id TEXT PRIMARY KEY NOT NULL,
 		agent_id           TEXT NOT NULL,
-		room_id            TEXT NOT NULL,
+		conversation_id    TEXT NOT NULL,
 		pipeline_id        TEXT NOT NULL,
-		knowledge_base_id   TEXT NOT NULL,
+		knowledge_base_id  TEXT NOT NULL,
 		user_message       TEXT NOT NULL,
 		ai_message         TEXT NOT NULL,
 		user_id            TEXT,

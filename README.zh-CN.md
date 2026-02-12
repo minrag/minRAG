@@ -359,7 +359,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | sortno      | int         | 排序         | -       |  倒序                   |
 | status      | int         | 状态         | -       | 禁用(0),可用(1) |
 
-### 聊天室(表名:chat_room)
+### 聊天室(表名:conversation)
 | columnName  | 类型        | 说明        | 是否分词 |  备注                  | 
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
@@ -375,7 +375,7 @@ ID默认使用时间戳(23位)+随机数(9位),全局唯一.
 | ----------- | ----------- | ----------- | ------- | ---------------------- |
 | id          | string      | 主键         |   否    | - |
 | agent_id     | string      | 智能体ID     | 否      |    -    |
-| room_id      | string      | 聊天室ID     | 否      |    -    |
+| conversation_id      | string      | 聊天室ID     | 否      |    -    |
 | pipeline_id  | string      | 流水线ID     | 否      |    -    |
 | knowledge_base_id  | string | 知识库ID     | 否      |    -    |
 | user_message | string      | 用户的消息    | 否      |    -    |

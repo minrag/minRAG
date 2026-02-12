@@ -53,7 +53,7 @@ const (
 	tableAgentName = "agent"
 
 	// 聊天室
-	tableChatRoomName = "chat_room"
+	tableConversationName = "conversation"
 
 	// 消息日志
 	tableMessageLogName = "message_log"

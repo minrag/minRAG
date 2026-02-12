@@ -70,13 +70,13 @@ function generateStringID() {
     const result = `${pk}${randomNum}`;
     return result;
 }
-var roomID=generateStringID();
+var conversationID=generateStringID();
 
-var oldRoomID=localStorage.getItem("roomID");
-if(!!oldRoomID){
-    roomID=oldRoomID;
+var oldConversationID=localStorage.getItem("conversationID");
+if(!!oldConversationID){
+    conversationID=oldConversationID;
 }else{
-    localStorage.setItem("roomID", roomID);
+    localStorage.setItem("conversationID", conversationID);
 }
 
 $(document).ready(function() {
@@ -108,7 +108,7 @@ async function fetchSSE(aiMessageId,messageText) {
             },
             body:JSON.stringify({
                 "messages": [{"role":"user","content":messageText}],
-                "user":roomID,
+                "user":conversationID,
             }),
         });
 

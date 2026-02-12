@@ -449,7 +449,7 @@ type ChatRoom struct {
 	// ID
 	Id string `column:"id" json:"id,omitempty"`
 
-	// RoomID 聊天室名称
+	// ConversationID 聊天室名称
 	Name string `column:"name" json:"name,omitempty"`
 
 	// AgentID 智能体ID
@@ -471,7 +471,7 @@ type ChatRoom struct {
 // GetTableName 获取表名称
 // IEntityStruct 接口的方法,实体类需要实现!!!
 func (entity *ChatRoom) GetTableName() string {
-	return tableChatRoomName
+	return tableConversationName
 }
 
 // GetPKColumnName 获取数据库表的主键字段名称.因为要兼容Map,只能是数据库的字段名称
@@ -494,8 +494,8 @@ type MessageLog struct {
 	// AgentID 智能体ID
 	AgentID string `column:"agent_id" json:"agentID,omitempty"`
 
-	// RoomID 聊天室ID
-	RoomID string `column:"room_id" json:"roomID,omitempty"`
+	// ConversationID 聊天室ID
+	ConversationID string `column:"conversation_id" json:"conversationID,omitempty"`
 
 	// KnowledgeBaseID 知识库ID
 	KnowledgeBaseID string `column:"knowledge_base_id" json:"knowledgeBaseID,omitempty"`

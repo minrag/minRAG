@@ -340,7 +340,7 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | sortno      | int | Sort Order  | - | Descending       |
 | status      | int | Status      | - | Disabled(0), Enabled(1)  |
 
-### Chat Room (Table Name: chat_room)
+### Conversation (Table Name: conversation)
 | Column Name      | Type        | Description    | Tokenized |  Remarks  | 
 | ---              | ---         | ---            | -------   | ------    |
 | id               | string      | Primary Key         | No   |    -  |
@@ -356,7 +356,7 @@ Reads ```minragdatadir/install_config.json``` during installation.
 | ---              | ---         | ---            | -------   | ------    |
 | id               | string      | Primary Key         | No   |    -  |
 | agent_id          | string      | Agent ID            | No   |    -  |
-| room_id           | string      | Chat Room ID        | No   |    -  |
+| conversation_id           | string      | Chat Room ID        | No   |    -  |
 | pipeline_id       | string      | Pipeline ID         | No   |    -  |
 | knowledge_base_id  | string      | Knowledge Base ID   | No   |    -  |
 | user_message      | string      | User's Message      | No   |    -  |

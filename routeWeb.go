@@ -43,7 +43,7 @@ func init() {
 	// agent 页面
 	h.GET("/agent/:agentID", funcAgentPre)
 
-	// 兼容OpenAI模型接口,api_key是agentID,user是roomID
+	// 兼容OpenAI模型接口,api_key是agentID,user是conversationID
 	h.POST("/v1/chat/completions", funcChatCompletions)
 }
 
@@ -66,7 +66,7 @@ func funcAgentPre(ctx context.Context, c *app.RequestContext) {
 	cHtml(c, http.StatusOK, "agent.html", data)
 }
 
-// funcChatCompletions 兼容OpenAI模型接口,api_key是agentID,user是roomID
+// funcChatCompletions 兼容OpenAI模型接口,api_key是agentID,user是conversationID
 func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 
 	// 设置响应头
@@ -140,10 +140,10 @@ func funcChatCompletions(ctx context.Context, c *app.RequestContext) {
 	input["query"] = agentRequestBody.Messages[0].Content
 	// agentID
 	input["agentID"] = agentID
-	// 获取roomID,可能会空
-	roomID := agentRequestBody.User
-	if roomID != "" && len(roomID) == 32 {
-		input["roomID"] = roomID
+	// 获取conversationID,可能会空
+	conversationID := agentRequestBody.User
+	if conversationID != "" && len(conversationID) == 32 {
+		input["conversationID"] = conversationID
 	}
 
 	if stream {
