@@ -1,5 +1,5 @@
 # 构建阶段
-FROM rockylinux/rockylinux:10.0 AS builder
+FROM rockylinux/rockylinux:10.1 AS builder
 
 # 安装编译依赖
 RUN dnf update -y && dnf install -y gcc g++ unzip wget
@@ -7,9 +7,9 @@ RUN dnf update -y && dnf install -y gcc g++ unzip wget
 # 设置工作目录
 WORKDIR /app
 
-RUN wget https://golang.google.cn/dl/go1.25.3.linux-amd64.tar.gz && \
+RUN wget https://golang.google.cn/dl/go1.26.0.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && \
-    tar -C /usr/local -xzf go1.25.3.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.26.0.linux-amd64.tar.gz
 
 # 设置国内代理
 #RUN /usr/local/go/bin/go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
@@ -42,7 +42,7 @@ python3 build.py
 
 
 # 运行阶段,vec0 需要依赖glibc,使用rockylinux镜像
-FROM rockylinux/rockylinux:10.0
+FROM rockylinux/rockylinux:10.1
 
 # 安装运行时依赖
 RUN dnf update -y 
