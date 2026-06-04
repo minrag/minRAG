@@ -55,7 +55,7 @@ type GraphRelation struct {
 
 const api_key = "A4FTACZVPGAIV8PZCKIBEUGV7ZBMXTIBEGUGNC11"
 const api_url = "https://ai.gitee.com/v1/chat/completions"
-const model_name = "DeepSeek-V3.2"
+const model_name = "DeepSeek-V4-Pro"
 
 const demoStr = `公元2023年秋，北京中关村某人工智能实验室，研究员林远与项目负责人苏雯在“时空图神经网络”（TGNN）研发中形成紧密协作关系。该事件聚焦于构建基于时间序列的动态图模型，以提升城市交通流量预测的准确率。林远作为核心算法设计者，负责属性嵌入与时间感知注意力机制的实现；苏雯则主导系统集成与跨模态数据融合。实验内容涉及对10万条GPS轨迹数据的时空特征提取，采用图卷积网络（GCN）与LSTM的混合架构，实现对高峰时段拥堵传播路径的建模。该成果发表于IEEE TKDE期刊，作者署名为Lin Y.与Su W.，标志着在时空数据挖掘领域的重要进展。`
 
