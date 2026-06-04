@@ -7,9 +7,9 @@ RUN dnf update -y && dnf install -y gcc g++ unzip wget
 # 设置工作目录
 WORKDIR /app
 
-RUN wget https://golang.google.cn/dl/go1.26.0.linux-amd64.tar.gz && \
+RUN wget https://golang.google.cn/dl/go1.26.4.linux-amd64.tar.gz && \
     rm -rf /usr/local/go && \
-    tar -C /usr/local -xzf go1.26.0.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.26.4.linux-amd64.tar.gz
 
 # 设置国内代理
 #RUN /usr/local/go/bin/go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/,direct
@@ -27,7 +27,7 @@ RUN rm -rf /app/minragdatadir/dict && \
     rm -rf /app/minragdatadir/dict.zip
 
 # 构建markitdown
-FROM python:3.12.12 AS markitdown
+FROM python:3.12.13 AS markitdown
 
 # 设置工作目录
 WORKDIR /app
